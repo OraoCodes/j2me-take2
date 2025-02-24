@@ -24,14 +24,14 @@ const SERVICE_TYPES = [
   "Education & Tutoring",
   "Tech Services",
   "Other"
-];
+] as const;
 
 const REQUEST_RANGES = [
   "1-10",
   "11-50",
   "51-100",
   "100+"
-];
+] as const;
 
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,27 +59,29 @@ const Onboarding = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        company_name: businessName,
-        service_type: serviceType,
-        service_requests_per_month: requestsPerMonth,
-      })
-      .eq("id", user.id);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          company_name: businessName,
+          service_type: serviceType,
+          service_requests_per_month: requestsPerMonth,
+        })
+        .eq('id', user.id);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your business details have been saved!",
+      });
+      navigate("/pricing");
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to save your business details. Please try again.",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Your business details have been saved!",
-      });
-      navigate("/dashboard");
     }
     
     setIsLoading(false);
