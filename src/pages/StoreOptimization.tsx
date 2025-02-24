@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -21,14 +22,14 @@ const StoreOptimization = () => {
       id: "instantBooking",
       name: "Enable Instant Booking",
       description: "Clients can book your services automatically without manual confirmation.",
-      icon: <Calendar className="w-6 h-6" />,
+      icon: <Calendar className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
     },
     {
       id: "whatsappBot",
       name: "WhatsApp Auto-Responses",
       description: "Automate replies & confirmations for client inquiries.",
-      icon: <MessageSquareMore className="w-6 h-6" />,
+      icon: <MessageSquareMore className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
       plan: "BUSINESS",
     },
@@ -36,7 +37,7 @@ const StoreOptimization = () => {
       id: "loyalty",
       name: "Client Loyalty & Rewards",
       description: "Offer discounts & exclusive deals for repeat clients.",
-      icon: <Gift className="w-6 h-6" />,
+      icon: <Gift className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
       plan: "BUSINESS",
     },
@@ -44,7 +45,7 @@ const StoreOptimization = () => {
       id: "customDomain",
       name: "Custom Domain & Branding",
       description: "Use your own domain & remove platform branding.",
-      icon: <Globe className="w-6 h-6" />,
+      icon: <Globe className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
       plan: "PREMIUM",
     },
@@ -52,7 +53,7 @@ const StoreOptimization = () => {
       id: "onlinePayments",
       name: "Accept Online Payments",
       description: "Enable MPesa, Card, PayPal, and other payment options.",
-      icon: <CreditCard className="w-6 h-6" />,
+      icon: <CreditCard className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
       plan: "PREMIUM",
     },
@@ -60,7 +61,7 @@ const StoreOptimization = () => {
       id: "reminders",
       name: "Send SMS & Email Reminders",
       description: "Automatically remind clients of upcoming appointments.",
-      icon: <Mail className="w-6 h-6" />,
+      icon: <Mail className="w-6 h-6 text-gebeya-pink" />,
       enabled: false,
     },
   ]);
@@ -105,7 +106,7 @@ const StoreOptimization = () => {
 
         {/* Main Content */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
             Optimize Your Service Page & Enhance Your Branding
           </h1>
           <p className="text-gray-600 text-lg">
@@ -118,7 +119,7 @@ const StoreOptimization = () => {
           {options.map((option) => (
             <div
               key={option.id}
-              className="bg-white rounded-xl border border-gray-100 p-4"
+              className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -129,8 +130,8 @@ const StoreOptimization = () => {
                       {option.plan && (
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           option.plan === "BUSINESS" 
-                            ? "bg-[#E6F0FF] text-[#3B82F6]" 
-                            : "bg-[#F0E6FF] text-[#9333EA]"
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600" 
+                            : "bg-gradient-to-r from-purple-50 to-purple-100 text-purple-600"
                         }`}>
                           {option.plan}
                         </span>
@@ -142,6 +143,7 @@ const StoreOptimization = () => {
                 <Switch
                   checked={option.enabled}
                   onCheckedChange={() => toggleOption(option.id)}
+                  className="data-[state=checked]:bg-gebeya-pink"
                 />
               </div>
             </div>
@@ -152,7 +154,7 @@ const StoreOptimization = () => {
         <div className="mt-12">
           <Button
             onClick={() => navigate("/pricing")}
-            className="w-full h-12 bg-[#2A2A2A] hover:opacity-90 text-white"
+            className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white font-medium"
           >
             Continue
           </Button>
