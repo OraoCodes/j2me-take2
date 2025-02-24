@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Import, Filter, ArrowUpDown, FileExport, Info, Plus, Trash2 } from "lucide-react";
+import { Import, Filter, ArrowUpDown, FileDown, Info, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,7 +120,7 @@ const Services = () => {
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="icon">
-                  <FileExport className="h-4 w-4" />
+                  <FileDown className="h-4 w-4" />
                 </Button>
               </div>
             </div>
