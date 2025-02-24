@@ -15,10 +15,13 @@ import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { LogOut, UserCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export const Header = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,7 +30,7 @@ export const Header = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfileImage(session.user.id);
+        fetchProfile(session.user.id);
       }
     });
 
@@ -35,9 +38,9 @@ export const Header = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfileImage(session.user.id);
+        fetchProfile(session.user.id);
       } else {
-        setProfileImage(null);
+        setProfile(null);
       }
     });
 
@@ -46,15 +49,17 @@ export const Header = () => {
     };
   }, []);
 
-  const fetchProfileImage = async (userId: string) => {
+  const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('profile_image_url')
+      .select('*')
       .eq('id', userId)
       .single();
 
-    if (!error && data) {
-      setProfileImage(data.profile_image_url);
+    if (error) {
+      console.error('Error fetching profile:', error);
+    } else {
+      setProfile(data);
     }
   };
 
@@ -97,9 +102,9 @@ export const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-9 w-9 border-2 border-gebeya-pink cursor-pointer hover:opacity-90 transition-opacity">
-                  <AvatarImage src={profileImage || undefined} alt="Profile" />
+                  <AvatarImage src={profile?.profile_image_url || undefined} alt="Profile" />
                   <AvatarFallback className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white">
-                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                    {profile?.company_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
