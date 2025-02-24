@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,17 @@ export const ProfilePage = () => {
     fetchProfile();
   }, []);
 
+  const createProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([{ id: userId }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -31,18 +43,11 @@ export const ProfilePage = () => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code === 'PGRST116') {
+      if (!profileData) {
         // Profile doesn't exist, create one
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert([{ id: user.id }])
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        profileData = newProfile;
+        profileData = await createProfile(user.id);
       } else if (error) {
         throw error;
       }
@@ -74,16 +79,19 @@ export const ProfilePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // First, upload the file to storage
       const { error: uploadError } = await supabase.storage
         .from('profiles')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
 
+      // Update the profile with the new image URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ profile_image_url: publicUrl })
@@ -133,7 +141,7 @@ export const ProfilePage = () => {
         description: "Profile updated successfully",
       });
       
-      fetchProfile();
+      await fetchProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
