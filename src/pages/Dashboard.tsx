@@ -41,6 +41,7 @@ import { CategoryItem } from "@/components/categories/CategoryItem";
 import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
 import { Input } from "@/components/ui/input";
 import { EditCategoryDialog } from "@/components/categories/EditCategoryDialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface Category {
   id: string;
@@ -58,6 +59,7 @@ interface Service {
   is_active: boolean;
   description: string | null;
   image_url: string | null;
+  category_id: string | null;
 }
 
 const Dashboard = () => {
@@ -75,6 +77,8 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showServices, setShowServices] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -284,6 +288,28 @@ const Dashboard = () => {
         description: "Category deleted successfully.",
       });
       fetchCategories();
+    }
+  };
+
+  const handleUpdateServiceCategory = async (serviceId: string, categoryId: string) => {
+    const { error } = await supabase
+      .from('services')
+      .update({ category_id: categoryId })
+      .eq('id', serviceId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update service category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Service category updated successfully.",
+      });
+      fetchServices();
+      setSelectedServiceId(null);
     }
   };
 
@@ -622,7 +648,22 @@ const Dashboard = () => {
                           <h3 className="font-medium text-gray-900">{service.name}</h3>
                           <p className="text-gebeya-pink font-medium">KSh {service.price.toFixed(2)}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
+                          <Select
+                            value={service.category_id || ""}
+                            onValueChange={(value) => handleUpdateServiceCategory(service.id, value)}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Button
                             variant="ghost"
                             size="sm"
