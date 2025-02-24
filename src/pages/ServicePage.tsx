@@ -3,24 +3,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Service {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  image_url?: string;
-  user_id: string;
-  created_at: string;
-  is_active: boolean;
-}
-
-interface Profile {
-  id: string;
-  company_name: string | null;
-  profile_image_url: string | null;
-  service_page_link: string | null;
-}
+type Service = Database['public']['Tables']['services']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const ServicePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
