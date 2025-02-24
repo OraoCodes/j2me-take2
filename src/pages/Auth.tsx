@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Get the default tab from URL parameters
   const defaultTab = searchParams.get("tab") || "signin";
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,7 +25,7 @@ const Auth = () => {
     const password = formData.get("password") as string;
     const fullName = formData.get("fullName") as string;
 
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -46,9 +44,9 @@ const Auth = () => {
     } else {
       toast({
         title: "Success",
-        description: "Please check your email to confirm your account.",
+        description: "Account created successfully!",
       });
-      navigate("/");
+      navigate("/onboarding");
     }
     setIsLoading(false);
   };
