@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Info, DragHandleDots2Icon } from "lucide-react";
+import { Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Category {
@@ -22,6 +22,8 @@ interface Category {
   name: string;
   is_visible: boolean;
   sequence: number;
+  user_id: string;
+  created_at: string;
 }
 
 const ServiceCategories = () => {
@@ -48,7 +50,7 @@ const ServiceCategories = () => {
         description: "Failed to fetch categories. Please try again.",
       });
     } else {
-      setCategories(data || []);
+      setCategories(data as Category[]);
     }
   };
 
@@ -62,12 +64,16 @@ const ServiceCategories = () => {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { error } = await supabase
       .from('service_categories')
       .insert([
         {
           name: newCategoryName.trim(),
           sequence: categories.length,
+          user_id: user.id
         }
       ]);
 
@@ -168,7 +174,7 @@ const ServiceCategories = () => {
                   className="flex items-center justify-between p-4 border-b last:border-b-0"
                 >
                   <div className="flex items-center gap-3">
-                    <DragHandleDots2Icon className="h-5 w-5 text-gray-400" />
+                    <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
                     <span>{category.name}</span>
                   </div>
                   <Button
@@ -190,7 +196,7 @@ const ServiceCategories = () => {
                   className="flex items-center justify-between p-4 border-b last:border-b-0"
                 >
                   <div className="flex items-center gap-3">
-                    <DragHandleDots2Icon className="h-5 w-5 text-gray-400" />
+                    <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
                     <span>{category.name}</span>
                   </div>
                   <Button
