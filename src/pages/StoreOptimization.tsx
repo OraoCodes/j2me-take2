@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -152,10 +151,7 @@ const StoreOptimization = () => {
         {/* Navigation */}
         <div className="mt-12">
           <Button
-            onClick={() => {
-              // Navigate to next page
-              navigate("/next-page");
-            }}
+            onClick={() => navigate("/pricing")}
             className="w-full h-12 bg-[#2A2A2A] hover:opacity-90 text-white"
           >
             Continue
