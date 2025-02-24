@@ -17,19 +17,41 @@ import {
   BadgeDollarSign,
   ChevronRight,
   MessagesSquare,
-  ScrollText
+  ScrollText,
+  ChevronDown,
+  ChevronUp,
+  Storefront,
+  CreditCard,
+  Palette,
+  Menu as MenuIcon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [isDesignOpen, setIsDesignOpen] = useState(false);
+
+  const designMenuItems = [
+    { icon: <Storefront className="w-4 h-4" />, label: "Storefront" },
+    { icon: <CreditCard className="w-4 h-4" />, label: "Checkout" },
+    { icon: <Palette className="w-4 h-4" />, label: "Appearance" },
+    { icon: <MenuIcon className="w-4 h-4" />, label: "Menu" },
+  ];
 
   const sidebarItems = [
-    { icon: <Home />, label: "Dashboard", active: true },
+    { icon: <Home />, label: "Dashboard" },
     { icon: <Grid />, label: "Orders" },
     { icon: <Package />, label: "Products" },
     { icon: <Users />, label: "Customers" },
-    { icon: <PenTool />, label: "Design" },
+    { 
+      icon: <PenTool />, 
+      label: "Design",
+      hasSubmenu: true,
+      isOpen: isDesignOpen,
+      submenuItems: designMenuItems,
+      onClick: () => setIsDesignOpen(!isDesignOpen)
+    },
     { icon: <Settings />, label: "Settings" },
   ];
 
@@ -73,18 +95,42 @@ const Dashboard = () => {
         {/* Main Menu */}
         <nav className="space-y-1 px-3">
           {sidebarItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                item.active 
-                  ? "bg-gray-100 text-gray-900" 
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </a>
+            <div key={item.label}>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (item.onClick) item.onClick();
+                }}
+                className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
+                  item.hasSubmenu && item.isOpen
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  {item.label}
+                </div>
+                {item.hasSubmenu && (
+                  item.isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                )}
+              </a>
+              {item.hasSubmenu && item.isOpen && (
+                <div className="ml-9 mt-1 space-y-1">
+                  {item.submenuItems?.map((subItem) => (
+                    <a
+                      key={subItem.label}
+                      href="#"
+                      className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
+                    >
+                      {subItem.icon}
+                      {subItem.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
