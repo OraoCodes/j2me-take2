@@ -158,7 +158,7 @@ const ServicePage = () => {
                         <Button 
                           className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
                         >
-                          Order Now
+                          Request Service
                         </Button>
                       </div>
                     </Card>
