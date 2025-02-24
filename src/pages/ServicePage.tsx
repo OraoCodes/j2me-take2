@@ -30,27 +30,26 @@ const ServicePage = () => {
           if (user) {
             targetUserId = user.id;
           } else {
-            throw new Error("No user ID provided");
+            throw new Error("No user ID provided and no user is logged in");
           }
         }
-        
+
         // Fetch profile information
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, company_name, profile_image_url, service_page_link')
           .eq('id', targetUserId)
-          .single();
+          .maybeSingle();
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          throw new Error("Failed to fetch profile information");
+        }
+
         if (profileData) {
-          // Only set the fields we need
-          const displayProfile: ProfileDisplay = {
-            id: profileData.id,
-            company_name: profileData.company_name,
-            profile_image_url: profileData.profile_image_url,
-            service_page_link: profileData.service_page_link
-          };
-          setProfile(displayProfile);
+          setProfile(profileData);
+        } else {
+          console.log('No profile found for user:', targetUserId);
         }
 
         // Fetch services
@@ -60,11 +59,16 @@ const ServicePage = () => {
           .eq('user_id', targetUserId)
           .eq('is_active', true);
 
-        if (servicesError) throw servicesError;
-        if (servicesData) setServices(servicesData);
+        if (servicesError) {
+          console.error('Services fetch error:', servicesError);
+          throw new Error("Failed to fetch services");
+        }
+
+        setServices(servicesData || []);
+
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError("Failed to load services");
+        setError(error instanceof Error ? error.message : "Failed to load services");
       } finally {
         setLoading(false);
       }
@@ -77,14 +81,6 @@ const ServicePage = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gebeya-pink"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500">{error}</p>
       </div>
     );
   }
@@ -124,45 +120,53 @@ const ServicePage = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800 text-center">Services</h2>
-        {services.length === 0 ? (
-          <div className="text-center text-gray-600 py-12">
-            No services available at the moment.
+        {error ? (
+          <div className="text-center text-red-500 py-12">
+            {error}
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {services.map((service) => (
-                <Card 
-                  key={service.id} 
-                  className="overflow-hidden border-gebeya-pink/10 hover:border-gebeya-pink/20 transition-all duration-300 hover:shadow-lg group"
-                >
-                  {service.image_url && (
-                    <div className="relative overflow-hidden">
-                      <img 
-                        src={service.image_url} 
-                        alt={service.name}
-                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-800">{service.name}</h3>
-                    <p className="text-gebeya-pink font-medium mt-1">
-                      Ksh {service.price.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">{service.description}</p>
-                    <Button 
-                      className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
+          <>
+            <h2 className="text-xl font-semibold mb-6 text-gray-800 text-center">Services</h2>
+            {services.length === 0 ? (
+              <div className="text-center text-gray-600 py-12">
+                No services available at the moment.
+              </div>
+            ) : (
+              <div className="max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {services.map((service) => (
+                    <Card 
+                      key={service.id} 
+                      className="overflow-hidden border-gebeya-pink/10 hover:border-gebeya-pink/20 transition-all duration-300 hover:shadow-lg group"
                     >
-                      Order Now
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
+                      {service.image_url && (
+                        <div className="relative overflow-hidden">
+                          <img 
+                            src={service.image_url} 
+                            alt={service.name}
+                            className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-800">{service.name}</h3>
+                        <p className="text-gebeya-pink font-medium mt-1">
+                          Ksh {service.price.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">{service.description}</p>
+                        <Button 
+                          className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
+                        >
+                          Order Now
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
