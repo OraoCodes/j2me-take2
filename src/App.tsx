@@ -10,6 +10,7 @@ import Onboarding from "./pages/Onboarding";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import CreateService from "./pages/CreateService";
+import ServiceCreated from "./pages/ServiceCreated";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/create-service" element={<CreateService />} />
+          <Route path="/service-created" element={<ServiceCreated />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

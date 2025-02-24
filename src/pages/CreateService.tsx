@@ -97,12 +97,7 @@ const CreateService = () => {
         throw new Error("Failed to update profile");
       }
 
-      toast({
-        title: "Success!",
-        description: "Your service page has been created.",
-      });
-
-      navigate('/dashboard');
+      navigate('/service-created');
     } catch (error) {
       console.error('Submission error:', error);
       toast({
