@@ -2,9 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { Wallet, Banknote } from "lucide-react";
+import { Wallet, Banknote, ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PaymentMethod {
   id: string;
@@ -13,8 +16,17 @@ interface PaymentMethod {
   enabled: boolean;
 }
 
+interface MpesaDetails {
+  idType: string;
+  phoneNumber: string;
+}
+
 const PaymentMethods = () => {
   const navigate = useNavigate();
+  const [mpesaDetails, setMpesaDetails] = useState<MpesaDetails>({
+    idType: "",
+    phoneNumber: "",
+  });
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
       id: "mpesa",
@@ -91,16 +103,68 @@ const PaymentMethods = () => {
           {paymentMethods.map((method) => (
             <div
               key={method.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100"
+              className="bg-white rounded-xl border border-gray-100 overflow-hidden"
             >
-              <div className="flex items-center gap-3">
-                {method.icon}
-                <span className="font-medium">{method.name}</span>
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  {method.icon}
+                  <span className="font-medium">{method.name}</span>
+                </div>
+                <Switch
+                  checked={method.enabled}
+                  onCheckedChange={() => togglePaymentMethod(method.id)}
+                />
               </div>
-              <Switch
-                checked={method.enabled}
-                onCheckedChange={() => togglePaymentMethod(method.id)}
-              />
+              
+              {/* Mpesa Details Section */}
+              {method.id === "mpesa" && method.enabled && (
+                <div className="border-t border-gray-100 p-4 space-y-4 animate-fade-in">
+                  <div className="space-y-2">
+                    <Label htmlFor="idType" className="text-sm font-medium flex gap-1">
+                      ID type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={mpesaDetails.idType}
+                      onValueChange={(value) => 
+                        setMpesaDetails(prev => ({ ...prev, idType: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Phone number" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="phone">Phone number</SelectItem>
+                        <SelectItem value="tillNumber">Till Number</SelectItem>
+                        <SelectItem value="paybill">Paybill</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phoneNumber" className="text-sm font-medium flex gap-1">
+                      Phone <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex gap-2">
+                      <div className="w-24">
+                        <Input
+                          value="+254"
+                          disabled
+                          className="bg-gray-50"
+                        />
+                      </div>
+                      <Input
+                        id="phoneNumber"
+                        value={mpesaDetails.phoneNumber}
+                        onChange={(e) => 
+                          setMpesaDetails(prev => ({ ...prev, phoneNumber: e.target.value }))
+                        }
+                        placeholder="Enter phone number"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
