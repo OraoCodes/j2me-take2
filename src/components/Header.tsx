@@ -75,6 +75,10 @@ export const Header = () => {
     navigate(`/auth?tab=${defaultTab}`);
   };
 
+  const navigateToProfile = () => {
+    navigate('/profile');
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -105,6 +109,10 @@ export const Header = () => {
                   <span className="truncate">{user.email}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={navigateToProfile} className="cursor-pointer">
+                  <UserCircle className="h-4 w-4 mr-2" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                   <LogOut className="h-4 w-4 mr-2" />
                   <span>Log out</span>
