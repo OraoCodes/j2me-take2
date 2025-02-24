@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Clock, MapPin } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Header } from "@/components/Header";
 import { FormSection } from "@/components/service-form/FormSection";
@@ -22,11 +22,16 @@ interface CreateServiceProps {
   onSuccess?: () => void;
 }
 
+interface ImagePreview {
+  file: File;
+  previewUrl: string;
+}
+
 const CreateService = ({ onSuccess }: CreateServiceProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<ImagePreview[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     visibility: "public",
@@ -37,7 +42,6 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
     duration: "1-hour",
     customQuote: false,
     description: "",
-    profileImage: null as File | null,
     instantBooking: true,
     whatsappEnabled: true,
     serviceMode: "online",
@@ -46,30 +50,47 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newImages: ImagePreview[] = [];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Invalid file type",
-          description: "Please upload an image file.",
+          description: `${file.name} is not an image file.`,
           variant: "destructive",
         });
-        return;
+        continue;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > maxSize) {
         toast({
           title: "File too large",
-          description: "Image size should be less than 5MB.",
+          description: `${file.name} is larger than 5MB.`,
           variant: "destructive",
         });
-        return;
+        continue;
       }
 
       const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setFormData(prev => ({ ...prev, profileImage: file }));
+      newImages.push({ file, previewUrl });
     }
+
+    setImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      URL.revokeObjectURL(newImages[index].previewUrl);
+      newImages.splice(index, 1);
+      return newImages;
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -83,42 +104,58 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("No user found");
       }
 
-      let profileImageUrl = null;
-      if (formData.profileImage) {
-        const fileExt = formData.profileImage.name.split('.').pop();
+      // First create the service
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('services')
+        .insert({
+          name: formData.name,
+          price: parseFloat(formData.price) || 0,
+          description: formData.description,
+          is_active: formData.visibility === 'public',
+          user_id: user.id,
+          category_id: formData.category || null,
+        })
+        .select()
+        .single();
+
+      if (serviceError) {
+        throw new Error("Failed to create service");
+      }
+
+      // Then upload all images and create image records
+      for (let i = 0; i < images.length; i++) {
+        const { file } = images[i];
+        const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Math.random()}.${fileExt}`;
         
         const { error: uploadError, data } = await supabase.storage
           .from('profile-images')
-          .upload(fileName, formData.profileImage, {
+          .upload(fileName, file, {
             cacheControl: '3600',
             upsert: false
           });
 
         if (uploadError) {
-          throw new Error("Failed to upload image");
+          console.error('Error uploading image:', uploadError);
+          continue;
         }
 
         const { data: { publicUrl } } = supabase.storage
           .from('profile-images')
           .getPublicUrl(fileName);
 
-        profileImageUrl = publicUrl;
-      }
+        // Create image record
+        const { error: imageError } = await supabase
+          .from('service_images')
+          .insert({
+            service_id: serviceData.id,
+            image_url: publicUrl,
+            sequence: i
+          });
 
-      const { error: createError } = await supabase
-        .from('services')
-        .insert({
-          name: formData.name,
-          price: parseFloat(formData.price) || 0,
-          description: formData.description,
-          image_url: profileImageUrl,
-          is_active: formData.visibility === 'public',
-          user_id: user.id
-        });
-
-      if (createError) {
-        throw new Error("Failed to create service");
+        if (imageError) {
+          console.error('Error creating image record:', imageError);
+        }
       }
 
       if (onSuccess) {
@@ -295,27 +332,34 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
                 <div>
                   <Label>Images / Portfolio</Label>
                   <div className="mt-1">
-                    <div className="flex items-center justify-center w-full">
-                      <label className="w-full cursor-pointer">
-                        <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors relative">
-                          {imagePreview ? (
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-full h-full object-contain rounded-lg"
-                            />
-                          ) : (
-                            <>
-                              <Upload className="w-8 h-8 text-gebeya-pink" />
-                              <span className="mt-2 text-sm text-gray-500">Upload images</span>
-                              <span className="text-xs text-gray-400">Maximum size: 5MB</span>
-                            </>
-                          )}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                      {images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image.previewUrl}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full aspect-square object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors">
+                          <Upload className="w-8 h-8 text-gebeya-pink" />
+                          <span className="mt-2 text-sm text-gray-500">Upload images</span>
+                          <span className="text-xs text-gray-400">Maximum size: 5MB</span>
                         </div>
                         <input
                           type="file"
                           className="hidden"
                           accept="image/*"
+                          multiple
                           onChange={handleImageUpload}
                         />
                       </label>
