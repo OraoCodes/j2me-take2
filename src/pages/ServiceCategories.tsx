@@ -26,6 +26,7 @@ const ServiceCategories = () => {
   const [activeTab, setActiveTab] = useState("visible");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -192,6 +193,7 @@ const ServiceCategories = () => {
                   onCancelEditing={cancelEditing}
                   onEditingNameChange={setEditingName}
                   onToggleVisibility={toggleVisibility}
+                  onEditCategory={setSelectedCategory}
                 />
               ))}
             </div>
@@ -210,6 +212,7 @@ const ServiceCategories = () => {
                   onCancelEditing={cancelEditing}
                   onEditingNameChange={setEditingName}
                   onToggleVisibility={toggleVisibility}
+                  onEditCategory={setSelectedCategory}
                 />
               ))}
             </div>
