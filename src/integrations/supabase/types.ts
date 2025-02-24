@@ -9,75 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          id: string
-          updated_at: string
-          username: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          id: string
-          updated_at?: string
-          username?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-          username?: string | null
-        }
-        Relationships: []
-      }
-      site_content: {
-        Row: {
-          address: string | null
-          created_at: string
-          description: string | null
-          email: string | null
-          id: string
-          image_url: string | null
-          phone: string | null
-          price: string | null
-          section: Database["public"]["Enums"]["section_type"]
-          title: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          id?: string
-          image_url?: string | null
-          phone?: string | null
-          price?: string | null
-          section: Database["public"]["Enums"]["section_type"]
-          title?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          id?: string
-          image_url?: string | null
-          phone?: string | null
-          price?: string | null
-          section?: Database["public"]["Enums"]["section_type"]
-          title?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -86,7 +18,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      section_type: "hero" | "about" | "service" | "contact"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
