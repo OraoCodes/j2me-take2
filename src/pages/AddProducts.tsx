@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   name: string;
@@ -86,6 +86,7 @@ const serviceTemplates: ServiceTemplate[] = [
 ];
 
 const AddProducts = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -280,11 +281,13 @@ const AddProducts = () => {
           <Button
             variant="outline"
             className="w-32"
+            onClick={() => navigate('/payment-methods')}
           >
             Skip
           </Button>
           <Button 
             className="w-32 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
+            onClick={() => navigate('/payment-methods')}
           >
             Next
           </Button>

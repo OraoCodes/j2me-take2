@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import CreateService from "./pages/CreateService";
 import ServiceCreated from "./pages/ServiceCreated";
 import AddProducts from "./pages/AddProducts";
+import PaymentMethods from "./pages/PaymentMethods";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +30,7 @@ const App = () => (
           <Route path="/create-service" element={<CreateService />} />
           <Route path="/service-created" element={<ServiceCreated />} />
           <Route path="/add-products" element={<AddProducts />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/payment-methods" element={<PaymentMethods />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
