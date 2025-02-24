@@ -3,12 +3,19 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Info } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Info, GripVertical, Pencil, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CategoryItem } from "@/components/categories/CategoryItem";
-import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
 
 interface Category {
   id: string;
@@ -145,6 +152,48 @@ const ServiceCategories = () => {
     activeTab === "visible" ? category.is_visible : !category.is_visible
   );
 
+  const renderCategoryItem = (category: Category) => (
+    <div key={category.id} className="flex items-center justify-between p-4 border-b last:border-b-0 group">
+      <div className="flex items-center gap-3 flex-1">
+        <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
+        {editingId === category.id ? (
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              className="max-w-sm"
+              autoFocus
+            />
+            <Button size="sm" variant="ghost" onClick={saveEditing}>
+              <Check className="h-4 w-4 text-green-600" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={cancelEditing}>
+              <X className="h-4 w-4 text-red-600" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 flex-1">
+            <span>{category.name}</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => startEditing(category)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Pencil className="h-4 w-4 text-gray-400" />
+            </Button>
+          </div>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        onClick={() => toggleVisibility(category)}
+      >
+        {category.is_visible ? "Hide" : "Show"}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -163,13 +212,30 @@ const ServiceCategories = () => {
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline">Change sequence</Button>
-            <CreateCategoryDialog
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-              categoryName={newCategoryName}
-              onCategoryNameChange={setNewCategoryName}
-              onCreateCategory={createCategory}
-            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>Create category</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create new category</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="categoryName">Category name</Label>
+                    <Input
+                      id="categoryName"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Enter category name"
+                    />
+                  </div>
+                  <Button onClick={createCategory} className="w-full">
+                    Create
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -181,37 +247,13 @@ const ServiceCategories = () => {
 
           <TabsContent value="visible" className="mt-6">
             <div className="bg-white rounded-lg shadow">
-              {filteredCategories.map((category) => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  editingId={editingId}
-                  editingName={editingName}
-                  onStartEditing={startEditing}
-                  onSaveEditing={saveEditing}
-                  onCancelEditing={cancelEditing}
-                  onEditingNameChange={setEditingName}
-                  onToggleVisibility={toggleVisibility}
-                />
-              ))}
+              {filteredCategories.map(renderCategoryItem)}
             </div>
           </TabsContent>
 
           <TabsContent value="hidden" className="mt-6">
             <div className="bg-white rounded-lg shadow">
-              {filteredCategories.map((category) => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  editingId={editingId}
-                  editingName={editingName}
-                  onStartEditing={startEditing}
-                  onSaveEditing={saveEditing}
-                  onCancelEditing={cancelEditing}
-                  onEditingNameChange={setEditingName}
-                  onToggleVisibility={toggleVisibility}
-                />
-              ))}
+              {filteredCategories.map(renderCategoryItem)}
             </div>
           </TabsContent>
         </Tabs>
