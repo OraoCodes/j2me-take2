@@ -10,10 +10,20 @@ interface Service {
   price: number;
   description: string;
   image_url?: string;
+  user_id: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+interface Profile {
+  id: string;
+  company_name: string | null;
+  profile_image_url: string | null;
+  service_page_link: string | null;
 }
 
 const ServicePage = () => {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,15 +34,16 @@ const ServicePage = () => {
         
         if (user) {
           // Fetch profile information
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, company_name, profile_image_url, service_page_link')
             .eq('id', user.id)
             .single();
           
+          if (profileError) throw profileError;
           setProfile(profileData);
 
-          // Fetch services from the services table
+          // Fetch services
           const { data: servicesData, error: servicesError } = await supabase
             .from('services')
             .select('*')
