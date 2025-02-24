@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +11,12 @@ import { Mail, Key, User } from "lucide-react";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Get the default tab from URL parameters
+  const defaultTab = searchParams.get("tab") || "signin";
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,14 +83,26 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-pink-50 to-white p-4">
-      <div className="w-full max-w-md space-y-8 bg-white p-6 rounded-xl shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
-          <p className="text-muted-foreground mt-2">Sign in to your account or create a new one</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white p-4">
+      <img 
+        src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" 
+        alt="Gebeya" 
+        className="h-12 mb-8 animate-fade-up" 
+      />
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg animate-fade-up [animation-delay:200ms]">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
+            {defaultTab === "signup" ? "Start your journey" : "Welcome back"}
+          </h2>
+          <p className="text-muted-foreground">
+            {defaultTab === "signup" 
+              ? "Create your account and start growing your business" 
+              : "Sign in to your account to continue"
+            }
+          </p>
         </div>
 
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -121,7 +137,11 @@ const Auth = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
+                disabled={isLoading}
+              >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
@@ -169,7 +189,11 @@ const Auth = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
+                disabled={isLoading}
+              >
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
             </form>
