@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { Header } from "@/components/Header";
 import { FormSection } from "@/components/service-form/FormSection";
 
-interface CreateServiceProps {
-  onSuccess?: () => void;
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface ImagePreview {
@@ -27,10 +28,15 @@ interface ImagePreview {
   previewUrl: string;
 }
 
+interface CreateServiceProps {
+  onSuccess?: () => void;
+}
+
 const CreateService = ({ onSuccess }: CreateServiceProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<ImagePreview[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -48,6 +54,29 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
     travelFee: "",
     serviceArea: "",
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('service_categories')
+      .select('*')
+      .eq('is_visible', true)
+      .order('sequence', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching categories:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive",
+      });
+    } else {
+      setCategories(data || []);
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -104,10 +133,6 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("No user found");
       }
 
-      // Ensure category_id is either a valid UUID or null
-      const category_id = formData.category || null;
-      
-      // First create the service
       const { data: serviceData, error: serviceError } = await supabase
         .from('services')
         .insert({
@@ -116,7 +141,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
           description: formData.description,
           is_active: formData.visibility === 'public',
           user_id: user.id,
-          category_id: category_id, // Use the validated category_id
+          category_id: formData.category || null,
         })
         .select()
         .single();
@@ -126,7 +151,6 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("Failed to create service");
       }
 
-      // Then upload all images and create image records
       for (let i = 0; i < images.length; i++) {
         const { file } = images[i];
         const fileExt = file.name.split('.').pop();
@@ -148,7 +172,6 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
           .from('profile-images')
           .getPublicUrl(fileName);
 
-        // Create image record
         const { error: imageError } = await supabase
           .from('service_images')
           .insert({
@@ -205,7 +228,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
                   <Label htmlFor="name">Service Name *</Label>
                   <Input
                     id="name"
-                    placeholder="e.g., Logo Design, Home Cleaning, Photography Session"
+                    placeholder="e.g., Basic Manicure"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     className="mt-1"
@@ -230,19 +253,20 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Category *</Label>
+                  <Label htmlFor="category">Category</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                   >
                     <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="fitness">Fitness</SelectItem>
-                      <SelectItem value="home">Home Services</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
