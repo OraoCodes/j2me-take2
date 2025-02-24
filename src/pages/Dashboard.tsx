@@ -34,7 +34,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryItem } from "@/components/categories/CategoryItem";
@@ -481,14 +481,16 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-semibold text-gebeya-pink">Category</h1>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 text-gebeya-pink" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Organize your services into categories</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 text-gebeya-pink" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Organize your services into categories</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="flex items-center gap-4">
                     <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
@@ -574,14 +576,16 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-semibold text-gebeya-pink">Services</h1>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 text-gebeya-pink" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Manage your services</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 text-gebeya-pink" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Manage your services</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="flex items-center gap-4">
                     <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
