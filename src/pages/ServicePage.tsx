@@ -40,6 +40,8 @@ const ServicePage = () => {
           }
         }
 
+        console.log("Fetching data for user:", targetUserId);
+
         // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -47,31 +49,40 @@ const ServicePage = () => {
           .eq('id', targetUserId)
           .maybeSingle();
         
-        if (profileError) throw new Error("Failed to fetch profile information");
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          throw new Error("Failed to fetch profile information");
+        }
 
+        console.log("Profile data:", profileData);
         if (profileData) setProfile(profileData);
 
-        // Fetch categories
+        // Fetch categories with a simpler query first
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('service_categories')
           .select('*')
-          .eq('user_id', targetUserId)
-          .eq('is_visible', true)
-          .order('sequence', { ascending: true });
+          .eq('user_id', targetUserId);
 
-        if (categoriesError) throw new Error("Failed to fetch categories");
+        if (categoriesError) {
+          console.error("Categories fetch error:", categoriesError);
+          throw new Error("Failed to fetch categories");
+        }
 
+        console.log("Categories data:", categoriesData);
         setCategories(categoriesData || []);
 
-        // Fetch services
+        // Fetch all services without filters first
         const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
-          .eq('user_id', targetUserId)
-          .eq('is_active', true);
+          .eq('user_id', targetUserId);
 
-        if (servicesError) throw new Error("Failed to fetch services");
+        if (servicesError) {
+          console.error("Services fetch error:", servicesError);
+          throw new Error("Failed to fetch services");
+        }
 
+        console.log("Services data:", servicesData);
         setServices(servicesData || []);
 
       } catch (error) {
@@ -86,10 +97,14 @@ const ServicePage = () => {
   }, [userId]);
 
   const getServicesByCategory = () => {
+    console.log("Processing services:", services);
+    console.log("Available categories:", categories);
+    
     const servicesByCategory: ServicesByCategory = {};
     const uncategorizedServices: Service[] = [];
 
     services.forEach(service => {
+      console.log("Processing service:", service);
       if (service.category_id) {
         if (!servicesByCategory[service.category_id]) {
           servicesByCategory[service.category_id] = [];
@@ -99,6 +114,9 @@ const ServicePage = () => {
         uncategorizedServices.push(service);
       }
     });
+
+    console.log("Services by category:", servicesByCategory);
+    console.log("Uncategorized services:", uncategorizedServices);
 
     return { servicesByCategory, uncategorizedServices };
   };
@@ -156,36 +174,38 @@ const ServicePage = () => {
           <div className="text-center text-red-500 py-12">{error}</div>
         ) : (
           <>
-            {categories.map(category => {
-              const categoryServices = servicesByCategory[category.id] || [];
-              if (categoryServices.length === 0) return null;
-
-              return (
-                <div key={category.id} className="mb-8">
-                  <h2 className="text-xl font-bold mb-4">{category.name}</h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    {categoryServices.map((service) => (
-                      <Card 
-                        key={service.id} 
-                        className="p-4 flex justify-between items-center border rounded-lg"
-                      >
-                        <div>
-                          <h3 className="font-semibold text-lg">{service.name}</h3>
-                          <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
-                        </div>
-                        {service.image_url && (
-                          <img 
-                            src={service.image_url} 
-                            alt={service.name}
-                            className="w-24 h-24 object-cover rounded-lg"
-                          />
-                        )}
-                      </Card>
-                    ))}
+            {categories.length > 0 ? (
+              categories.map(category => {
+                const categoryServices = servicesByCategory[category.id] || [];
+                return (
+                  <div key={category.id} className="mb-8">
+                    <h2 className="text-xl font-bold mb-4">{category.name}</h2>
+                    {categoryServices.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-4">
+                        {categoryServices.map((service) => (
+                          <Card 
+                            key={service.id} 
+                            className="p-4 flex justify-between items-center border rounded-lg"
+                          >
+                            <div>
+                              <h3 className="font-semibold text-lg">{service.name}</h3>
+                              <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                            </div>
+                            {service.image_url && (
+                              <img 
+                                src={service.image_url} 
+                                alt={service.name}
+                                className="w-24 h-24 object-cover rounded-lg"
+                              />
+                            )}
+                          </Card>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : null}
 
             {uncategorizedServices.length > 0 && (
               <div className="mb-8">
@@ -213,7 +233,7 @@ const ServicePage = () => {
               </div>
             )}
 
-            {services.length === 0 && (
+            {(!categories.length && !uncategorizedServices.length) && (
               <div className="text-center text-gray-600 py-12">
                 No services available at the moment.
               </div>
