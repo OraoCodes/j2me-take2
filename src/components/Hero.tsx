@@ -11,7 +11,7 @@ export const Hero = () => {
         <div className="flex flex-col lg:flex-row items-center gap-12">
           <div className="text-left lg:w-1/2 max-w-2xl">
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight animate-fade-up" style={{ lineHeight: 1.1 }}>
-              Empower Your Service Business with <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">SoloServe</span>
+              Grow Your Service Business with <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">SoloServe</span>
             </h1>
             <p className="mt-6 text-xl text-gray-600 animate-fade-up [animation-delay:200ms]">
               The ultimate platform for freelancers and service providers to showcase, manage, and grow their business online.
@@ -36,7 +36,7 @@ export const Hero = () => {
           </div>
           <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms]">
             <img
-              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
+              src="/lovable-uploads/0df23dea-45aa-4d4b-875f-c075ec41c4b7.png"
               alt="Service Professional using SoloServe platform"
               className="w-full h-auto rounded-2xl shadow-2xl"
               style={{
