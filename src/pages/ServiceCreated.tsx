@@ -16,7 +16,7 @@ const ServiceCreated = () => {
           Start customizing your page to attract more clients.
         </p>
         <Button 
-          onClick={() => navigate('/dashboard')} 
+          onClick={() => navigate('/add-products')} 
           className="w-full max-w-md h-14 text-lg text-white bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
         >
           Start Customizing
