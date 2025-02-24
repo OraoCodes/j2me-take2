@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -125,7 +124,7 @@ const ServicePage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gebeya-pink"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9b87f5]"></div>
       </div>
     );
   }
@@ -133,29 +132,29 @@ const ServicePage = () => {
   const { servicesByCategory, uncategorizedServices } = getServicesByCategory();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#F8F9FE] to-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           {profile?.profile_image_url ? (
             <img 
               src={profile.profile_image_url} 
               alt={profile?.company_name || "Profile"} 
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover mb-3 sm:mb-4"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover mb-3 sm:mb-4 ring-2 ring-[#9b87f5] ring-offset-2"
             />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 mb-3 sm:mb-4 flex items-center justify-center">
-              <span className="text-gray-400 text-xl sm:text-2xl">Logo</span>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#E6E9F0] mb-3 sm:mb-4 flex items-center justify-center ring-2 ring-[#9b87f5] ring-offset-2">
+              <span className="text-[#7E69AB] text-xl sm:text-2xl">Logo</span>
             </div>
           )}
-          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-center">{profile?.company_name || "Service Provider"}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-[#1A1F2C] text-center">{profile?.company_name || "Service Provider"}</h1>
         </div>
 
         <Tabs defaultValue="home" className="w-full mb-6 sm:mb-8">
-          <TabsList className="w-full flex justify-center gap-4 sm:gap-8">
+          <TabsList className="w-full flex justify-center gap-4 sm:gap-8 bg-[#F8F9FE]">
             <TabsTrigger 
               value="home" 
               onClick={() => setActiveTab("home")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "home" ? "border-b-2 border-black" : ""}`}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "home" ? "bg-[#9b87f5] text-white" : "text-[#1A1F2C]"}`}
             >
               <Home className="w-4 h-4 sm:w-5 sm:h-5" />
               Home
@@ -163,7 +162,7 @@ const ServicePage = () => {
             <TabsTrigger 
               value="search"
               onClick={() => setActiveTab("search")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "search" ? "border-b-2 border-black" : ""}`}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "search" ? "bg-[#9b87f5] text-white" : "text-[#1A1F2C]"}`}
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               Search
@@ -180,22 +179,21 @@ const ServicePage = () => {
                 const categoryServices = servicesByCategory[category.id] || [];
                 return (
                   <div key={category.id} className="mb-6 sm:mb-8">
-                    <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">{category.name}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-[#1A1F2C]">{category.name}</h2>
                     {categoryServices.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
                         {categoryServices.map((service) => (
                           <Card 
                             key={service.id} 
-                            className="p-3 sm:p-4"
+                            className="p-3 sm:p-4 border-[#D6BCFA] hover:shadow-lg transition-shadow duration-200"
                           >
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                               <div className="flex-1">
-                                <h3 className="font-semibold text-base sm:text-lg mb-1">{service.name}</h3>
-                                <p className="text-gray-900 mb-2">Ksh {service.price.toLocaleString()}</p>
+                                <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#1A1F2C]">{service.name}</h3>
+                                <p className="text-[#7E69AB] mb-2">Ksh {service.price.toLocaleString()}</p>
                                 <Button
                                   onClick={() => handleRequestService(service.id, service.name)}
-                                  className="w-full sm:w-auto"
-                                  variant="default"
+                                  className="w-full sm:w-auto bg-[#9b87f5] hover:bg-[#7E69AB] text-white transition-colors duration-200"
                                 >
                                   <Send className="w-4 h-4 mr-2" />
                                   Request Service
@@ -205,7 +203,7 @@ const ServicePage = () => {
                                 <img 
                                   src={service.image_url} 
                                   alt={service.name}
-                                  className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-lg"
+                                  className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-lg ring-1 ring-[#D6BCFA]"
                                 />
                               )}
                             </div>
@@ -220,21 +218,20 @@ const ServicePage = () => {
 
             {uncategorizedServices.length > 0 && (
               <div className="mb-6 sm:mb-8">
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Other Services</h2>
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-[#1A1F2C]">Other Services</h2>
                 <div className="grid grid-cols-1 gap-4">
                   {uncategorizedServices.map((service) => (
                     <Card 
                       key={service.id} 
-                      className="p-3 sm:p-4"
+                      className="p-3 sm:p-4 border-[#D6BCFA] hover:shadow-lg transition-shadow duration-200"
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-base sm:text-lg mb-1">{service.name}</h3>
-                          <p className="text-gray-900 mb-2">Ksh {service.price.toLocaleString()}</p>
+                          <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#1A1F2C]">{service.name}</h3>
+                          <p className="text-[#7E69AB] mb-2">Ksh {service.price.toLocaleString()}</p>
                           <Button
                             onClick={() => handleRequestService(service.id, service.name)}
-                            className="w-full sm:w-auto"
-                            variant="default"
+                            className="w-full sm:w-auto bg-[#9b87f5] hover:bg-[#7E69AB] text-white transition-colors duration-200"
                           >
                             <Send className="w-4 h-4 mr-2" />
                             Request Service
@@ -244,7 +241,7 @@ const ServicePage = () => {
                           <img 
                             src={service.image_url} 
                             alt={service.name}
-                            className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-lg"
+                            className="w-full sm:w-24 h-48 sm:h-24 object-cover rounded-lg ring-1 ring-[#D6BCFA]"
                           />
                         )}
                       </div>
@@ -255,7 +252,7 @@ const ServicePage = () => {
             )}
 
             {(!categories.length && !uncategorizedServices.length) && (
-              <div className="text-center text-gray-600 py-8 sm:py-12">
+              <div className="text-center text-[#7E69AB] py-8 sm:py-12">
                 No services available at the moment.
               </div>
             )}
@@ -265,12 +262,12 @@ const ServicePage = () => {
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
           <Button 
             variant="outline"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-black text-sm sm:text-base"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-[#9b87f5] text-[#1A1F2C] hover:bg-[#F8F9FE] transition-colors duration-200"
           >
             <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             Create your own SoloServe
           </Button>
-          <p className="text-sm sm:text-base text-gray-600 text-center">{profile?.service_page_link}</p>
+          <p className="text-sm sm:text-base text-[#7E69AB] text-center">{profile?.service_page_link}</p>
         </div>
       </div>
     </div>
