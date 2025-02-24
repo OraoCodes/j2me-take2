@@ -157,7 +157,7 @@ const ServicePage = () => {
               onClick={() => setActiveTab("home")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                 activeTab === "home" 
-                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white shadow-md" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white [&>svg]:text-white shadow-md" 
                 : "text-[#181326] hover:bg-pink-50"
               }`}
             >
@@ -169,7 +169,7 @@ const ServicePage = () => {
               onClick={() => setActiveTab("search")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                 activeTab === "search" 
-                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white shadow-md" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white [&>svg]:text-white shadow-md" 
                 : "text-[#181326] hover:bg-pink-50"
               }`}
             >
