@@ -1,12 +1,12 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Phone, Globe } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Header } from "@/components/Header";
 
 const CreateService = () => {
   const navigate = useNavigate();
@@ -85,104 +85,107 @@ const CreateService = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-pink-50 to-white">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Create Your Service Page
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Enter your essential details to start offering your services online.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+      <Header />
+      <div className="pt-24 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
+              Create Your Service Page
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Enter your essential details to start offering your services online.
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Profile Image Upload */}
-          <div className="space-y-2">
-            <Label>Upload Your Profile Image</Label>
-            <div className="flex items-center justify-center w-full">
-              <label className="w-full cursor-pointer">
-                <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors">
-                  <Upload className="w-8 h-8 text-gebeya-pink" />
-                  <span className="mt-2 text-sm text-gray-500">Click to upload</span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Image Upload */}
+            <div className="space-y-2">
+              <Label>Upload Your Profile Image</Label>
+              <div className="flex items-center justify-center w-full">
+                <label className="w-full cursor-pointer">
+                  <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors">
+                    <Upload className="w-8 h-8 text-gebeya-pink" />
+                    <span className="mt-2 text-sm text-gray-500">Click to upload</span>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Business Name */}
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Name *</Label>
+              <Input
+                id="businessName"
+                placeholder="Your Name or Business Name"
+                required
+                value={formData.businessName}
+                onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
+              />
+            </div>
+
+            {/* WhatsApp Number */}
+            <div className="space-y-2">
+              <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
+              <p className="text-sm text-muted-foreground">
+                Customers will contact you via WhatsApp for bookings.
+              </p>
+              <div className="flex gap-2">
+                <div className="w-24">
+                  <Input 
+                    value="+254" 
+                    disabled 
+                    className="border-gebeya-pink/20 bg-gray-50"
+                  />
                 </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Business Name */}
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Name *</Label>
-            <Input
-              id="businessName"
-              placeholder="Your Name or Business Name"
-              required
-              value={formData.businessName}
-              onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
-              className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
-            />
-          </div>
-
-          {/* WhatsApp Number */}
-          <div className="space-y-2">
-            <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
-            <p className="text-sm text-muted-foreground">
-              Customers will contact you via WhatsApp for bookings.
-            </p>
-            <div className="flex gap-2">
-              <div className="w-24">
-                <Input 
-                  value="+254" 
-                  disabled 
-                  className="border-gebeya-pink/20 bg-gray-50"
+                <Input
+                  id="whatsappNumber"
+                  placeholder="Phone number"
+                  required
+                  value={formData.whatsappNumber}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
+                  className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
                 />
               </div>
-              <Input
-                id="whatsappNumber"
-                placeholder="Phone number"
-                required
-                value={formData.whatsappNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
-                className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
-              />
             </div>
-          </div>
 
-          {/* Service Page Link */}
-          <div className="space-y-2">
-            <Label htmlFor="pageLink">Service Page Link *</Label>
-            <p className="text-sm text-muted-foreground">
-              This will be your unique service link. You can upgrade to a custom domain later.
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="shrink-0">
-                <span className="text-muted-foreground">gebeya.com/</span>
+            {/* Service Page Link */}
+            <div className="space-y-2">
+              <Label htmlFor="pageLink">Service Page Link *</Label>
+              <p className="text-sm text-muted-foreground">
+                This will be your unique service link. You can upgrade to a custom domain later.
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="shrink-0">
+                  <span className="text-muted-foreground">gebeya.com/</span>
+                </div>
+                <Input
+                  id="pageLink"
+                  placeholder="nameOfBusiness"
+                  required
+                  value={formData.pageLink}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pageLink: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+                  className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
+                />
               </div>
-              <Input
-                id="pageLink"
-                placeholder="nameOfBusiness"
-                required
-                value={formData.pageLink}
-                onChange={(e) => setFormData(prev => ({ ...prev, pageLink: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
-                className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
-              />
             </div>
-          </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Create Service Page"}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Create Service Page"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
