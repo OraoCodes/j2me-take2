@@ -104,6 +104,9 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("No user found");
       }
 
+      // Ensure category_id is either a valid UUID or null
+      const category_id = formData.category || null;
+      
       // First create the service
       const { data: serviceData, error: serviceError } = await supabase
         .from('services')
@@ -113,12 +116,13 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
           description: formData.description,
           is_active: formData.visibility === 'public',
           user_id: user.id,
-          category_id: formData.category || null,
+          category_id: category_id, // Use the validated category_id
         })
         .select()
         .single();
 
       if (serviceError) {
+        console.error('Service creation error:', serviceError);
         throw new Error("Failed to create service");
       }
 
@@ -163,6 +167,11 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
       } else {
         navigate("/service-created");
       }
+
+      toast({
+        title: "Success",
+        description: "Service created successfully!",
+      });
     } catch (error) {
       console.error('Submission error:', error);
       toast({
