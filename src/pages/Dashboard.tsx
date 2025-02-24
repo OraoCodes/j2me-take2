@@ -334,7 +334,7 @@ const Dashboard = () => {
         setShowServices(false);
       }
     },
-    { icon: <Grid />, label: "Orders" },
+    { icon: <Grid />, label: "Service Requests" },
     { 
       icon: <Package />, 
       label: "Services",
