@@ -394,10 +394,10 @@ const Dashboard = () => {
               <>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-semibold">Category</h1>
+                    <h1 className="text-2xl font-semibold text-gebeya-pink">Category</h1>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="h-4 w-4 text-gray-400" />
+                        <Info className="h-4 w-4 text-gebeya-pink" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Organize your services into categories</p>
@@ -405,7 +405,9 @@ const Dashboard = () => {
                     </Tooltip>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Button variant="outline">Change sequence</Button>
+                    <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
+                      Change sequence
+                    </Button>
                     <CreateCategoryDialog
                       isOpen={isDialogOpen}
                       onOpenChange={setIsDialogOpen}
@@ -416,14 +418,24 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList>
-                    <TabsTrigger value="visible">Visible</TabsTrigger>
-                    <TabsTrigger value="hidden">Hidden</TabsTrigger>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="w-full bg-white border-b border-gray-200 p-0 h-auto">
+                    <TabsTrigger 
+                      value="visible" 
+                      className="flex-1 py-3 data-[state=active]:text-gebeya-pink data-[state=active]:border-b-2 data-[state=active]:border-gebeya-pink"
+                    >
+                      Visible
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="hidden"
+                      className="flex-1 py-3 data-[state=active]:text-gebeya-pink data-[state=active]:border-b-2 data-[state=active]:border-gebeya-pink"
+                    >
+                      Hidden
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="visible" className="mt-6">
-                    <div className="bg-white rounded-lg shadow">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
                       {filteredCategories.map((category) => (
                         <CategoryItem
                           key={category.id}
@@ -441,7 +453,7 @@ const Dashboard = () => {
                   </TabsContent>
 
                   <TabsContent value="hidden" className="mt-6">
-                    <div className="bg-white rounded-lg shadow">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
                       {filteredCategories.map((category) => (
                         <CategoryItem
                           key={category.id}
@@ -463,10 +475,10 @@ const Dashboard = () => {
               <>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-semibold">Services</h1>
+                    <h1 className="text-2xl font-semibold text-gebeya-pink">Services</h1>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="h-4 w-4 text-gray-400" />
+                        <Info className="h-4 w-4 text-gebeya-pink" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Manage your services</p>
@@ -474,21 +486,24 @@ const Dashboard = () => {
                     </Tooltip>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Button variant="outline">
+                    <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
                       <Import className="w-4 h-4 mr-2" />
                       Import
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
                       Bulk edit
                     </Button>
-                    <Button onClick={() => navigate('/create-service')}>
+                    <Button 
+                      onClick={() => navigate('/create-service')}
+                      className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add service
                     </Button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100">
                   <div className="p-4 border-b">
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
@@ -497,28 +512,31 @@ const Dashboard = () => {
                           placeholder="Search by service name"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="max-w-md"
+                          className="max-w-md focus:ring-gebeya-pink focus:border-gebeya-pink"
                         />
                       </div>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
                         <Filter className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
                         <ArrowUpDown className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
                         <FileDown className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="divide-y">
+                  <div className="divide-y divide-gray-100">
                     {filteredServices.map((service) => (
                       <div
                         key={service.id}
-                        className="p-4 flex items-center hover:bg-gray-50"
+                        className="p-4 flex items-center hover:bg-gray-50/80"
                       >
-                        <input type="checkbox" className="mr-4" />
+                        <input 
+                          type="checkbox" 
+                          className="mr-4 rounded border-gebeya-pink text-gebeya-pink focus:ring-gebeya-pink" 
+                        />
                         <div className="w-16 h-16 rounded bg-gray-100 mr-4">
                           {service.image_url && (
                             <img
@@ -529,19 +547,22 @@ const Dashboard = () => {
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium">{service.name}</h3>
-                          <p className="text-gray-500">KSh {service.price.toFixed(2)}</p>
+                          <h3 className="font-medium text-gray-900">{service.name}</h3>
+                          <p className="text-gebeya-pink font-medium">KSh {service.price.toFixed(2)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteService(service.id)}
+                            className="hover:text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            service.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            service.is_active 
+                              ? 'bg-gebeya-pink/10 text-gebeya-pink' 
+                              : 'bg-gray-100 text-gray-800'
                           }`}>
                             {service.is_active ? 'VISIBLE' : 'HIDDEN'}
                           </span>
