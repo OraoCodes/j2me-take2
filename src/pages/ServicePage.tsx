@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import type { Database } from "@/integrations/supabase/types";
 
 type Service = Database['public']['Tables']['services']['Row'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
+type FullProfile = Database['public']['Tables']['profiles']['Row'];
+
+// Define a type for just the fields we need from the profile
+type ProfileDisplay = Pick<FullProfile, 'id' | 'company_name' | 'profile_image_url' | 'service_page_link'>;
 
 const ServicePage = () => {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ProfileDisplay | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +30,16 @@ const ServicePage = () => {
             .single();
           
           if (profileError) throw profileError;
-          setProfile(profileData);
+          if (profileData) {
+            // Only set the fields we need
+            const displayProfile: ProfileDisplay = {
+              id: profileData.id,
+              company_name: profileData.company_name,
+              profile_image_url: profileData.profile_image_url,
+              service_page_link: profileData.service_page_link
+            };
+            setProfile(displayProfile);
+          }
 
           // Fetch services
           const { data: servicesData, error: servicesError } = await supabase
