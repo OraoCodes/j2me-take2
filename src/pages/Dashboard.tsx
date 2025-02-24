@@ -2,11 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { 
-  Package, 
-  ShoppingCart, 
-  Settings, 
-  Users, 
-  Palette, 
+  Home,
+  Package,
+  Grid,
+  Users,
+  PenTool,
+  Settings,
   Tag, 
   BarChart, 
   FileText, 
@@ -15,7 +16,8 @@ import {
   Inbox, 
   BadgeDollarSign,
   ChevronRight,
-  Plus
+  MessagesSquare,
+  ScrollText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,18 +25,19 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const sidebarItems = [
-    { icon: <Package />, label: "Open", active: true },
-    { icon: <ShoppingCart />, label: "Change store" },
-    { icon: <Plus />, label: "Create new store" },
+    { icon: <Home />, label: "Dashboard", active: true },
+    { icon: <Grid />, label: "Orders" },
+    { icon: <Package />, label: "Products" },
     { icon: <Users />, label: "Customers" },
-    { icon: <Palette />, label: "Design" },
+    { icon: <PenTool />, label: "Design" },
     { icon: <Settings />, label: "Settings" },
   ];
 
   const premiumFeatures = [
     { icon: <Tag />, label: "Discounts", badge: "PREMIUM" },
+    { icon: <MessagesSquare />, label: "Reviews", badge: "PREMIUM" },
     { icon: <BarChart />, label: "Analytics", badge: "PREMIUM" },
-    { icon: <FileText />, label: "Pages", badge: "PREMIUM" },
+    { icon: <ScrollText />, label: "Pages", badge: "PREMIUM" },
     { icon: <CalendarClock />, label: "Booking", badge: "PREMIUM" },
   ];
 
@@ -58,8 +61,13 @@ const Dashboard = () => {
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6">
         <div className="px-6 mb-8">
-          <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
-          <p className="text-sm text-gray-500 mt-1">yourstore.gebeya.co</p>
+          <div className="flex items-center gap-3 mb-2">
+            <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8 w-8" />
+            <div>
+              <h2 className="font-semibold">KicksandSneakers</h2>
+              <p className="text-sm text-gray-500">take.app/kicksandsneakers</p>
+            </div>
+          </div>
         </div>
 
         {/* Main Menu */}
