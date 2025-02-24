@@ -71,6 +71,10 @@ export const Header = () => {
     }
   };
 
+  const navigateToAuth = (defaultTab: 'signin' | 'signup') => {
+    navigate(`/auth?tab=${defaultTab}`);
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -107,8 +111,17 @@ export const Header = () => {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="outline" className="hidden md:inline-flex">Sign in</Button>
-              <Button className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white">
+              <Button 
+                variant="outline" 
+                className="hidden md:inline-flex"
+                onClick={() => navigateToAuth('signin')}
+              >
+                Sign in
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white"
+                onClick={() => navigateToAuth('signup')}
+              >
                 Get Started
               </Button>
             </>
