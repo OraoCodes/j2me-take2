@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryItem } from "@/components/categories/CategoryItem";
 import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
+import { Input } from "@/components/ui/input";
 
 interface Category {
   id: string;
