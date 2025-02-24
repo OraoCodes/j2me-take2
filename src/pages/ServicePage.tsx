@@ -147,7 +147,7 @@ const ServicePage = () => {
               <span className="text-gebeya-orange text-xl sm:text-2xl">Logo</span>
             </div>
           )}
-          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-gray-900 text-center">{profile?.company_name || "Service Provider"}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-2 text-[#181326] text-center">{profile?.company_name || "Service Provider"}</h1>
         </div>
 
         <Tabs defaultValue="home" className="w-full mb-6 sm:mb-8">
@@ -155,7 +155,7 @@ const ServicePage = () => {
             <TabsTrigger 
               value="home" 
               onClick={() => setActiveTab("home")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "home" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-gray-700"}`}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "home" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-[#181326]"}`}
             >
               <Home className="w-4 h-4 sm:w-5 sm:h-5" />
               Home
@@ -163,7 +163,7 @@ const ServicePage = () => {
             <TabsTrigger 
               value="search"
               onClick={() => setActiveTab("search")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "search" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-gray-700"}`}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "search" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-[#181326]"}`}
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               Search
@@ -180,7 +180,7 @@ const ServicePage = () => {
                 const categoryServices = servicesByCategory[category.id] || [];
                 return (
                   <div key={category.id} className="mb-6 sm:mb-8">
-                    <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900">{category.name}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-[#181326]">{category.name}</h2>
                     {categoryServices.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
                         {categoryServices.map((service) => (
@@ -190,7 +190,7 @@ const ServicePage = () => {
                           >
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                               <div className="flex-1">
-                                <h3 className="font-semibold text-base sm:text-lg mb-1 text-gray-900">{service.name}</h3>
+                                <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#181326]">{service.name}</h3>
                                 <p className="text-gebeya-pink mb-2">Ksh {service.price.toLocaleString()}</p>
                                 <Button
                                   onClick={() => handleRequestService(service.id, service.name)}
@@ -219,7 +219,7 @@ const ServicePage = () => {
 
             {uncategorizedServices.length > 0 && (
               <div className="mb-6 sm:mb-8">
-                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900">Other Services</h2>
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-[#181326]">Other Services</h2>
                 <div className="grid grid-cols-1 gap-4">
                   {uncategorizedServices.map((service) => (
                     <Card 
@@ -228,7 +228,7 @@ const ServicePage = () => {
                     >
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-base sm:text-lg mb-1 text-gray-900">{service.name}</h3>
+                          <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#181326]">{service.name}</h3>
                           <p className="text-gebeya-pink mb-2">Ksh {service.price.toLocaleString()}</p>
                           <Button
                             onClick={() => handleRequestService(service.id, service.name)}
@@ -263,7 +263,7 @@ const ServicePage = () => {
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
           <Button 
             variant="outline"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gebeya-pink text-gray-900 hover:bg-pink-50 transition-colors duration-200"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gebeya-pink text-[#181326] hover:bg-pink-50 transition-colors duration-200"
           >
             <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             Create your own SoloServe
