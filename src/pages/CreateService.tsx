@@ -12,6 +12,7 @@ const CreateService = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     businessName: "",
     whatsappNumber: "",
@@ -22,6 +23,26 @@ const CreateService = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image size should be less than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
       setFormData(prev => ({ ...prev, profileImage: file }));
     }
   };
@@ -42,11 +63,17 @@ const CreateService = () => {
         const fileExt = formData.profileImage.name.split('.').pop();
         const fileName = `${user.id}-${Math.random()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data } = await supabase.storage
           .from('profile-images')
-          .upload(fileName, formData.profileImage);
+          .upload(fileName, formData.profileImage, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error("Failed to upload image");
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('profile-images')
@@ -55,7 +82,7 @@ const CreateService = () => {
         profileImageUrl = publicUrl;
       }
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           company_name: formData.businessName,
@@ -65,7 +92,10 @@ const CreateService = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error("Failed to update profile");
+      }
 
       toast({
         title: "Success!",
@@ -74,9 +104,10 @@ const CreateService = () => {
 
       navigate('/dashboard');
     } catch (error) {
+      console.error('Submission error:', error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -104,9 +135,20 @@ const CreateService = () => {
               <Label>Upload Your Profile Image</Label>
               <div className="flex items-center justify-center w-full">
                 <label className="w-full cursor-pointer">
-                  <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors">
-                    <Upload className="w-8 h-8 text-gebeya-pink" />
-                    <span className="mt-2 text-sm text-gray-500">Click to upload</span>
+                  <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors relative">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Profile preview"
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-gebeya-pink" />
+                        <span className="mt-2 text-sm text-gray-500">Click to upload</span>
+                        <span className="text-xs text-gray-400">Maximum size: 5MB</span>
+                      </>
+                    )}
                   </div>
                   <input
                     type="file"
