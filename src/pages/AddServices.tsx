@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,31 +218,20 @@ const AddServices = () => {
         throw error;
       }
 
-      console.log('Received response:', data);
-
-      if (!data?.imageUrl) {
-        throw new Error('No image URL returned from the API');
+      if (!data?.imageData) {
+        throw new Error('No image data returned from the API');
       }
 
-      console.log('Fetching image from URL:', data.imageUrl);
-
-      // Create a proxy request to the image URL
-      const imageBlob = await fetch(data.imageUrl)
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to fetch image');
-          return response.blob();
-        });
-
-      const file = new File([imageBlob], `${product.name}-ai-generated.png`, { type: 'image/png' });
-      const imageUrl = URL.createObjectURL(file);
-
-      console.log('Image processed successfully');
+      const response = await fetch(data.imageData);
+      const blob = await response.blob();
+      
+      const file = new File([blob], `${product.name}-ai-generated.png`, { type: 'image/png' });
 
       const newProducts = [...products];
       newProducts[index] = {
         ...newProducts[index],
         image: file,
-        imagePreview: imageUrl,
+        imagePreview: data.imageData,
       };
       setProducts(newProducts);
 

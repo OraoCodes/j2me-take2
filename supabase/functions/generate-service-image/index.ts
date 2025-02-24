@@ -43,11 +43,24 @@ serve(async (req) => {
     const data = await response.json();
     console.log('OpenAI response:', data);
     
-    // Get the image URL from the response
     const imageUrl = data.data[0].url;
+    
+    // Fetch the image data
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error('Failed to fetch image from OpenAI');
+    }
+    
+    // Get the image as a base64 string
+    const imageArrayBuffer = await imageResponse.arrayBuffer();
+    const base64Image = btoa(
+      String.fromCharCode(...new Uint8Array(imageArrayBuffer))
+    );
 
     return new Response(
-      JSON.stringify({ imageUrl }),
+      JSON.stringify({ 
+        imageData: `data:image/png;base64,${base64Image}` 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
