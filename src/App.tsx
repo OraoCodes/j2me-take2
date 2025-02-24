@@ -11,7 +11,7 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import CreateService from "./pages/CreateService";
 import ServiceCreated from "./pages/ServiceCreated";
-import AddProducts from "./pages/AddProducts";
+import AddServices from "./pages/AddServices";
 import PaymentMethods from "./pages/PaymentMethods";
 import SocialLinks from "./pages/SocialLinks";
 import StoreOptimization from "./pages/StoreOptimization";
@@ -34,7 +34,7 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/create-service" element={<CreateService />} />
           <Route path="/service-created" element={<ServiceCreated />} />
-          <Route path="/add-products" element={<AddProducts />} />
+          <Route path="/add-services" element={<AddServices />} />
           <Route path="/payment-methods" element={<PaymentMethods />} />
           <Route path="/social-links" element={<SocialLinks />} />
           <Route path="/store-optimization" element={<StoreOptimization />} />
