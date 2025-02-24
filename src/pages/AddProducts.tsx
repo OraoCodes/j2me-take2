@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
-import { Image, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react";
+import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy } from "lucide-react";
 
 interface Product {
   name: string;
@@ -13,8 +13,81 @@ interface Product {
   imagePreview?: string;
 }
 
+interface ServiceTemplate {
+  category: string;
+  services: {
+    name: string;
+    price: number;
+    description: string;
+  }[];
+}
+
+const serviceTemplates: ServiceTemplate[] = [
+  {
+    category: "Freelance Graphic Designer",
+    services: [
+      {
+        name: "Logo Design",
+        price: 7500,
+        description: "Professional logo design with multiple revisions",
+      },
+      {
+        name: "Social Media Post Design",
+        price: 1500,
+        description: "Eye-catching social media post designs",
+      }
+    ]
+  },
+  {
+    category: "Personal Trainer",
+    services: [
+      {
+        name: "1-on-1 Virtual Workout Session",
+        price: 3000,
+        description: "Personalized virtual training session",
+      },
+      {
+        name: "4-Week Custom Workout Plan",
+        price: 12000,
+        description: "Comprehensive month-long workout program",
+      }
+    ]
+  },
+  {
+    category: "Makeup Artist",
+    services: [
+      {
+        name: "Bridal Makeup",
+        price: 15000,
+        description: "Complete bridal makeup service",
+      },
+      {
+        name: "Casual Event Makeup",
+        price: 7500,
+        description: "Professional makeup for any occasion",
+      }
+    ]
+  },
+  {
+    category: "Photographer",
+    services: [
+      {
+        name: "Professional Headshots",
+        price: 11250,
+        description: "High-quality professional headshot session",
+      },
+      {
+        name: "Event Photography (3 Hours)",
+        price: 30000,
+        description: "Event coverage with edited photos",
+      }
+    ]
+  }
+];
+
 const AddProducts = () => {
   const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleImageUpload = (index: number, file: File) => {
     const newProducts = [...products];
@@ -32,6 +105,15 @@ const AddProducts = () => {
 
   const removeProduct = (index: number) => {
     const newProducts = products.filter((_, i) => i !== index);
+    setProducts(newProducts);
+  };
+
+  const useTemplate = (template: ServiceTemplate) => {
+    setSelectedCategory(template.category);
+    const newProducts = template.services.map(service => ({
+      name: service.name,
+      price: service.price
+    }));
     setProducts(newProducts);
   };
 
@@ -63,6 +145,36 @@ const AddProducts = () => {
           <p className="text-gray-600 text-lg">
             List your services, set pricing, and upload images to showcase your work
           </p>
+        </div>
+
+        {/* Example Templates */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold mb-4">Choose from example templates:</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {serviceTemplates.map((template) => (
+              <button
+                key={template.category}
+                onClick={() => useTemplate(template)}
+                className={`p-4 text-left rounded-lg border transition-all ${
+                  selectedCategory === template.category
+                    ? "border-gebeya-pink bg-pink-50"
+                    : "border-gray-200 hover:border-gebeya-pink"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">{template.category}</h3>
+                  <Copy className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="mt-2 text-sm text-gray-500">
+                  {template.services.map(service => (
+                    <div key={service.name} className="mt-1">
+                      • {service.name} - KES {service.price.toLocaleString()}
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Service Forms */}
