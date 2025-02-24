@@ -151,21 +151,29 @@ const ServicePage = () => {
         </div>
 
         <Tabs defaultValue="home" className="w-full mb-6 sm:mb-8">
-          <TabsList className="w-full flex justify-center gap-4 sm:gap-8 bg-white/50">
+          <TabsList className="w-full flex justify-center gap-2 bg-white p-1 shadow-sm rounded-xl border border-pink-100">
             <TabsTrigger 
               value="home" 
               onClick={() => setActiveTab("home")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "home" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-[#181326]"}`}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                activeTab === "home" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white shadow-md" 
+                : "text-[#181326] hover:bg-pink-50"
+              }`}
             >
-              <Home className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Home className="w-4 h-4" />
               Home
             </TabsTrigger>
             <TabsTrigger 
               value="search"
               onClick={() => setActiveTab("search")}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base ${activeTab === "search" ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white" : "text-[#181326]"}`}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                activeTab === "search" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white shadow-md" 
+                : "text-[#181326] hover:bg-pink-50"
+              }`}
             >
-              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Search className="w-4 h-4" />
               Search
             </TabsTrigger>
           </TabsList>
