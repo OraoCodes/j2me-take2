@@ -321,7 +321,7 @@ const Dashboard = () => {
 
       <div className="ml-64">
         <Header />
-        <div className="p-8">
+        <div className="p-8 pt-20">
           <div className="max-w-5xl mx-auto">
             {showCategories ? (
               <>
