@@ -10,6 +10,7 @@ import ServiceCreated from "@/pages/ServiceCreated";
 import Dashboard from "@/pages/Dashboard";
 import ServiceCategories from "@/pages/ServiceCategories";
 import ProfilePage from "@/pages/ProfilePage";
+import EditService from "@/pages/EditService";
 import "./App.css";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/service-created" element={<ServiceCreated />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-categories" element={<ServiceCategories />} />
+        <Route path="/edit-service/:serviceId" element={<EditService />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
