@@ -247,7 +247,14 @@ const Dashboard = () => {
   ];
 
   const sidebarItems = [
-    { icon: <Home />, label: "Dashboard", onClick: () => setShowCategories(false) },
+    { 
+      icon: <Home />, 
+      label: "Dashboard", 
+      onClick: () => {
+        setShowCategories(false);
+        setShowServices(false);
+      }
+    },
     { icon: <Grid />, label: "Orders" },
     { 
       icon: <Package />, 
