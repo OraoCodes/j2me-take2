@@ -28,7 +28,7 @@ const PricingPage = () => {
           {/* Basic/Free Plan */}
           <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
             <div className="flex items-center gap-2 mb-4">
-              <Star className="h-6 w-6 text-yellow-500" />
+              <Star className="h-6 w-6 text-emerald-500" />
               <h3 className="text-2xl font-bold">Basic</h3>
             </div>
             <div className="space-y-2">
@@ -45,7 +45,7 @@ const PricingPage = () => {
               <li>✅ Small transaction fee per booking</li>
             </ul>
             <Button 
-              className="w-full bg-yellow-500 hover:bg-yellow-600 mt-6"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 mt-6"
               onClick={() => navigate("/dashboard")}
             >
               Start for Free
@@ -53,12 +53,12 @@ const PricingPage = () => {
           </div>
 
           {/* Pro Plan */}
-          <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border-2 border-blue-500 relative">
+          <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border-2 border-gebeya-pink relative">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm">Most Popular</span>
+              <span className="bg-gebeya-pink text-white px-4 py-1 rounded-full text-sm">Most Popular</span>
             </div>
             <div className="flex items-center gap-2 mb-4">
-              <Diamond className="h-6 w-6 text-blue-500" />
+              <Diamond className="h-6 w-6 text-gebeya-pink" />
               <h3 className="text-2xl font-bold">Pro</h3>
             </div>
             <div className="space-y-2">
@@ -77,7 +77,7 @@ const PricingPage = () => {
               <li>✅ 0% transaction fee</li>
             </ul>
             <Button 
-              className="w-full bg-blue-500 hover:bg-blue-600 mt-6"
+              className="w-full bg-gebeya-pink hover:bg-pink-600 mt-6"
               onClick={() => navigate("/dashboard")}
             >
               Start Pro Trial
@@ -87,7 +87,7 @@ const PricingPage = () => {
           {/* Business Plan */}
           <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="h-6 w-6 text-purple-500" />
+              <Briefcase className="h-6 w-6 text-gebeya-orange" />
               <h3 className="text-2xl font-bold">Business</h3>
             </div>
             <div className="space-y-2">
@@ -105,22 +105,12 @@ const PricingPage = () => {
               <li>✅ Dedicated account manager</li>
             </ul>
             <Button 
-              className="w-full bg-purple-500 hover:bg-purple-600 mt-6"
+              className="w-full bg-gebeya-orange hover:bg-orange-600 mt-6"
               onClick={() => navigate("/dashboard")}
             >
               Start Business Trial
             </Button>
           </div>
-        </div>
-
-        <div className="text-center pt-8">
-          <Button 
-            variant="link" 
-            onClick={() => navigate("/dashboard")}
-            className="text-muted-foreground hover:text-primary"
-          >
-            Skip for now
-          </Button>
         </div>
       </div>
     </div>
