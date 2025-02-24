@@ -20,6 +20,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/service-page" element={<ServicePage />} />
         <Route path="/services/:userId" element={<ServicePage />} />
         <Route path="/add-services" element={<AddServices />} />
         <Route path="/create-service" element={<CreateService />} />
