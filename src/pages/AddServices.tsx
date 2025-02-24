@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
-import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy } from "lucide-react";
+import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy, Wand2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -93,6 +93,8 @@ const AddServices = () => {
   const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
 
   const handleImageUpload = (index: number, file: File) => {
     const newProducts = [...products];
@@ -136,7 +138,6 @@ const AddServices = () => {
         return;
       }
 
-      // Upload images and get URLs
       const servicesWithUrls = await Promise.all(
         products.map(async (product) => {
           let imageUrl = null;
@@ -165,7 +166,6 @@ const AddServices = () => {
         })
       );
 
-      // Save services to the database
       const { error } = await supabase
         .from('services')
         .insert(servicesWithUrls);
@@ -187,6 +187,66 @@ const AddServices = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const generateImage = async (index: number) => {
+    const product = products[index];
+    if (!product.name) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a service name first",
+      });
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    setSelectedProductIndex(index);
+
+    try {
+      const prompt = `Create a professional, high-quality image for a service named "${product.name}". The image should be suitable for a business website and showcase the service in an appealing way.`;
+
+      const response = await fetch('/api/generate-service-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate image');
+      }
+
+      const data = await response.json();
+      
+      const imageResponse = await fetch(data.imageUrl);
+      const blob = await imageResponse.blob();
+      const file = new File([blob], `${product.name}-ai-generated.png`, { type: 'image/png' });
+
+      const newProducts = [...products];
+      newProducts[index] = {
+        ...newProducts[index],
+        image: file,
+        imagePreview: URL.createObjectURL(file),
+      };
+      setProducts(newProducts);
+
+      toast({
+        title: "Success",
+        description: "AI image generated successfully!",
+      });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate image. Please try again.",
+      });
+    } finally {
+      setIsGeneratingImage(false);
+      setSelectedProductIndex(null);
     }
   };
 
@@ -294,7 +354,7 @@ const AddServices = () => {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <div>
+                  <div className="flex gap-2">
                     <input
                       type="file"
                       id={`product-image-${index}`}
@@ -309,9 +369,21 @@ const AddServices = () => {
                       htmlFor={`product-image-${index}`}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50"
                     >
-                      <span>🖼️</span>
-                      Add image
+                      <Image className="w-4 h-4" />
+                      Upload image
                     </label>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="flex items-center gap-2"
+                      onClick={() => generateImage(index)}
+                      disabled={isGeneratingImage}
+                    >
+                      <Wand2 className="w-4 h-4" />
+                      {isGeneratingImage && selectedProductIndex === index && (
+                        <span className="loading loading-spinner loading-sm"></span>
+                      )}
+                    </Button>
                   </div>
                   <button
                     onClick={() => removeProduct(index)}
