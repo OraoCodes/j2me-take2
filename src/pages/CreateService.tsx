@@ -183,6 +183,8 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
       };
 
       let error;
+      let serviceId = initialData?.id;
+
       if (initialData?.id) {
         const { error: updateError } = await supabase
           .from('services')
@@ -190,52 +192,60 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
           .eq('id', initialData.id);
         error = updateError;
       } else {
-        const { error: insertError } = await supabase
+        const { data: newService, error: insertError } = await supabase
           .from('services')
           .insert({
             ...serviceData,
             user_id: user.id,
-          });
+          })
+          .select()
+          .single();
+        
         error = insertError;
+        if (newService) {
+          serviceId = newService.id;
+        }
       }
 
       if (error) {
         throw new Error(initialData?.id ? "Failed to update service" : "Failed to create service");
       }
 
-      for (let i = 0; i < images.length; i++) {
-        if (i === coverImageIndex) continue; // Skip cover image as it's already uploaded
+      if (serviceId) {
+        for (let i = 0; i < images.length; i++) {
+          if (i === coverImageIndex) continue; // Skip cover image as it's already uploaded
         
-        const { file } = images[i];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError, data } = await supabase.storage
-          .from('profile-images')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+          const { file } = images[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+          
+          const { error: uploadError, data } = await supabase.storage
+            .from('profile-images')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          continue;
-        }
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            continue;
+          }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-images')
-          .getPublicUrl(fileName);
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(fileName);
 
-        const { error: imageError } = await supabase
-          .from('service_images')
-          .insert({
-            service_id: serviceData.id,
-            image_url: publicUrl,
-            sequence: i
-          });
+          const { error: imageError } = await supabase
+            .from('service_images')
+            .insert({
+              service_id: serviceId,
+              image_url: publicUrl,
+              sequence: i
+            });
 
-        if (imageError) {
-          console.error('Error creating image record:', imageError);
+          if (imageError) {
+            console.error('Error creating image record:', imageError);
+          }
         }
       }
 
