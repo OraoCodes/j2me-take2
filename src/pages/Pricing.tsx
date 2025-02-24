@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Diamond, Briefcase, Star } from "lucide-react";
@@ -46,7 +45,7 @@ const PricingPage = () => {
             </ul>
             <Button 
               className="w-full bg-emerald-500 hover:bg-emerald-600 mt-6"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/create-service")}
             >
               Start for Free
             </Button>
