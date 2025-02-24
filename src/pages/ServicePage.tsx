@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -8,19 +9,25 @@ import { Home, Search, PlusCircle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Service = Database['public']['Tables']['services']['Row'];
+type Category = Database['public']['Tables']['service_categories']['Row'];
 type FullProfile = Database['public']['Tables']['profiles']['Row'];
 type ProfileDisplay = Pick<FullProfile, 'id' | 'company_name' | 'profile_image_url' | 'service_page_link'>;
+
+interface ServicesByCategory {
+  [key: string]: Service[];
+}
 
 const ServicePage = () => {
   const { userId } = useParams();
   const [profile, setProfile] = useState<ProfileDisplay | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
-    const fetchProfileAndServices = async () => {
+    const fetchProfileAndData = async () => {
       try {
         let targetUserId = userId;
         
@@ -33,46 +40,68 @@ const ServicePage = () => {
           }
         }
 
+        // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, company_name, profile_image_url, service_page_link')
           .eq('id', targetUserId)
           .maybeSingle();
         
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          throw new Error("Failed to fetch profile information");
-        }
+        if (profileError) throw new Error("Failed to fetch profile information");
 
-        if (profileData) {
-          setProfile(profileData);
-        } else {
-          console.log('No profile found for user:', targetUserId);
-        }
+        if (profileData) setProfile(profileData);
 
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('service_categories')
+          .select('*')
+          .eq('user_id', targetUserId)
+          .eq('is_visible', true)
+          .order('sequence', { ascending: true });
+
+        if (categoriesError) throw new Error("Failed to fetch categories");
+
+        setCategories(categoriesData || []);
+
+        // Fetch services
         const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
           .eq('user_id', targetUserId)
           .eq('is_active', true);
 
-        if (servicesError) {
-          console.error('Services fetch error:', servicesError);
-          throw new Error("Failed to fetch services");
-        }
+        if (servicesError) throw new Error("Failed to fetch services");
 
         setServices(servicesData || []);
 
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError(error instanceof Error ? error.message : "Failed to load services");
+        setError(error instanceof Error ? error.message : "Failed to load data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfileAndServices();
+    fetchProfileAndData();
   }, [userId]);
+
+  const getServicesByCategory = () => {
+    const servicesByCategory: ServicesByCategory = {};
+    const uncategorizedServices: Service[] = [];
+
+    services.forEach(service => {
+      if (service.category_id) {
+        if (!servicesByCategory[service.category_id]) {
+          servicesByCategory[service.category_id] = [];
+        }
+        servicesByCategory[service.category_id].push(service);
+      } else {
+        uncategorizedServices.push(service);
+      }
+    });
+
+    return { servicesByCategory, uncategorizedServices };
+  };
 
   if (loading) {
     return (
@@ -81,6 +110,8 @@ const ServicePage = () => {
       </div>
     );
   }
+
+  const { servicesByCategory, uncategorizedServices } = getServicesByCategory();
 
   return (
     <div className="min-h-screen bg-white">
@@ -125,31 +156,66 @@ const ServicePage = () => {
           <div className="text-center text-red-500 py-12">{error}</div>
         ) : (
           <>
-            <h2 className="text-xl font-bold mb-6">Products</h2>
-            {services.length === 0 ? (
+            {categories.map(category => {
+              const categoryServices = servicesByCategory[category.id] || [];
+              if (categoryServices.length === 0) return null;
+
+              return (
+                <div key={category.id} className="mb-8">
+                  <h2 className="text-xl font-bold mb-4">{category.name}</h2>
+                  <div className="grid grid-cols-1 gap-4">
+                    {categoryServices.map((service) => (
+                      <Card 
+                        key={service.id} 
+                        className="p-4 flex justify-between items-center border rounded-lg"
+                      >
+                        <div>
+                          <h3 className="font-semibold text-lg">{service.name}</h3>
+                          <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                        </div>
+                        {service.image_url && (
+                          <img 
+                            src={service.image_url} 
+                            alt={service.name}
+                            className="w-24 h-24 object-cover rounded-lg"
+                          />
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {uncategorizedServices.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold mb-4">Other Services</h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {uncategorizedServices.map((service) => (
+                    <Card 
+                      key={service.id} 
+                      className="p-4 flex justify-between items-center border rounded-lg"
+                    >
+                      <div>
+                        <h3 className="font-semibold text-lg">{service.name}</h3>
+                        <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                      </div>
+                      {service.image_url && (
+                        <img 
+                          src={service.image_url} 
+                          alt={service.name}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {services.length === 0 && (
               <div className="text-center text-gray-600 py-12">
                 No services available at the moment.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 mb-12">
-                {services.map((service) => (
-                  <Card 
-                    key={service.id} 
-                    className="p-4 flex justify-between items-center border rounded-lg"
-                  >
-                    <div>
-                      <h3 className="font-semibold text-lg">{service.name}</h3>
-                      <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
-                    </div>
-                    {service.image_url && (
-                      <img 
-                        src={service.image_url} 
-                        alt={service.name}
-                        className="w-24 h-24 object-cover rounded-lg"
-                      />
-                    )}
-                  </Card>
-                ))}
               </div>
             )}
           </>
