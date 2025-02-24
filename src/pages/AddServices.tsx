@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,25 +208,42 @@ const AddServices = () => {
     try {
       const prompt = `Create a professional, high-quality image for a service named "${product.name}". The image should be suitable for a business website and showcase the service in an appealing way.`;
 
+      console.log('Sending request to generate image for:', product.name);
+
       const { data, error } = await supabase.functions.invoke('generate-service-image', {
         body: { prompt }
       });
 
-      if (error) throw error;
-
-      if (!data?.imageUrl) {
-        throw new Error('No image URL returned');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
       }
 
-      const imageResponse = await fetch(data.imageUrl);
-      const blob = await imageResponse.blob();
-      const file = new File([blob], `${product.name}-ai-generated.png`, { type: 'image/png' });
+      console.log('Received response:', data);
+
+      if (!data?.imageUrl) {
+        throw new Error('No image URL returned from the API');
+      }
+
+      console.log('Fetching image from URL:', data.imageUrl);
+
+      // Create a proxy request to the image URL
+      const imageBlob = await fetch(data.imageUrl)
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch image');
+          return response.blob();
+        });
+
+      const file = new File([imageBlob], `${product.name}-ai-generated.png`, { type: 'image/png' });
+      const imageUrl = URL.createObjectURL(file);
+
+      console.log('Image processed successfully');
 
       const newProducts = [...products];
       newProducts[index] = {
         ...newProducts[index],
         image: file,
-        imagePreview: URL.createObjectURL(file),
+        imagePreview: imageUrl,
       };
       setProducts(newProducts);
 
