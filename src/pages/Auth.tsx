@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,15 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const defaultTab = searchParams.get("tab") || "signin";
+
+  useEffect(() => {
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/dashboard");
+      }
+    });
+  }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,14 +80,11 @@ const Auth = () => {
         title: "Error",
         description: error.message,
       });
+      setIsLoading(false);
     } else {
-      toast({
-        title: "Success",
-        description: "Successfully signed in!",
-      });
-      navigate("/");
+      // Don't show the success toast since we're redirecting immediately
+      navigate("/dashboard");
     }
-    setIsLoading(false);
   };
 
   return (
