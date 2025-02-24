@@ -18,6 +18,7 @@ import StoreOptimization from "./pages/StoreOptimization";
 import ServiceShare from "./pages/ServiceShare";
 import Dashboard from "./pages/Dashboard";
 import ServicePage from "./pages/ServicePage";
+import ServiceCategories from "./pages/ServiceCategories";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/service-share" element={<ServiceShare />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/service-page" element={<ServicePage />} />
+          <Route path="/service-categories" element={<ServiceCategories />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
