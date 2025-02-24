@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { 
@@ -33,7 +32,7 @@ const Dashboard = () => {
   const [isDesignOpen, setIsDesignOpen] = useState(false);
 
   const designMenuItems = [
-    { icon: <Store className="w-4 h-4" />, label: "Service Page" },
+    { icon: <Store className="w-4 h-4" />, label: "Service Page", onClick: () => navigate('/service-page') },
     { icon: <CreditCard className="w-4 h-4" />, label: "Checkout" },
     { icon: <Palette className="w-4 h-4" />, label: "Appearance" },
     { icon: <MenuIcon className="w-4 h-4" />, label: "Menu" },
@@ -71,7 +70,7 @@ const Dashboard = () => {
 
   const setupSteps = [
     { number: 1, title: "Add your first product", action: "Add product", completed: true },
-    { number: 2, title: "Create your first order", action: "Create order", completed: false },
+    { number: 2, title: "Create your first order", action: "Create order", completed: false, onClick: () => navigate('/service-page') },
     { number: 3, title: "Add delivery options", action: "Add delivery", completed: true },
     { number: 4, title: "Set up payment methods", action: "Add payment", completed: false },
     { number: 5, title: "Set up custom domain", action: "Upgrade", completed: false },
@@ -122,6 +121,10 @@ const Dashboard = () => {
                     <a
                       key={subItem.label}
                       href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (subItem.onClick) subItem.onClick();
+                      }}
                       className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
                     >
                       {subItem.icon}
@@ -200,6 +203,7 @@ const Dashboard = () => {
                       <Button 
                         variant={step.action === "Upgrade" ? "default" : "outline"}
                         className={step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""}
+                        onClick={step.onClick}
                       >
                         {step.action}
                       </Button>
