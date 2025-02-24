@@ -6,7 +6,6 @@ import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
 import ServicePage from "@/pages/ServicePage";
 import AddServices from "@/pages/AddServices";
-import CreateService from "@/pages/CreateService";
 import ServiceCreated from "@/pages/ServiceCreated";
 import Dashboard from "@/pages/Dashboard";
 import ServiceCategories from "@/pages/ServiceCategories";
@@ -23,7 +22,6 @@ function App() {
         <Route path="/service-page" element={<ServicePage />} />
         <Route path="/services/:userId" element={<ServicePage />} />
         <Route path="/add-services" element={<AddServices />} />
-        <Route path="/create-service" element={<CreateService />} />
         <Route path="/service-created" element={<ServiceCreated />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-categories" element={<ServiceCategories />} />

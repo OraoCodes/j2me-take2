@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { Header } from "@/components/Header";
 import { FormSection } from "@/components/service-form/FormSection";
 
-const CreateService = () => {
+interface CreateServiceProps {
+  onSuccess?: () => void;
+}
+
+const CreateService = ({ onSuccess }: CreateServiceProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -69,8 +72,8 @@ const CreateService = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
 
     try {
@@ -118,7 +121,11 @@ const CreateService = () => {
         throw new Error("Failed to create service");
       }
 
-      navigate('/service-created');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate("/service-created");
+      }
     } catch (error) {
       console.error('Submission error:', error);
       toast({
