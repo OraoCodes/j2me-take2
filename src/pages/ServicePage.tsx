@@ -32,17 +32,15 @@ const ServicePage = () => {
           
           setProfile(profileData);
 
-          // TODO: Fetch services once we have the services table set up
-          // For now using mock data
-          setServices([
-            {
-              id: '1',
-              name: 'Nike Zoom',
-              price: 1200,
-              description: 'High performance running shoes',
-              image_url: '/lovable-uploads/7572461e-37bd-498e-ad65-ea5f1d48ae12.png'
-            }
-          ]);
+          // Fetch services from the services table
+          const { data: servicesData, error: servicesError } = await supabase
+            .from('services')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true);
+
+          if (servicesError) throw servicesError;
+          if (servicesData) setServices(servicesData);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -97,37 +95,39 @@ const ServicePage = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800">Products</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service) => (
-            <Card 
-              key={service.id} 
-              className="overflow-hidden border-gebeya-pink/10 hover:border-gebeya-pink/20 transition-all duration-300 hover:shadow-lg group"
-            >
-              {service.image_url && (
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={service.image_url} 
-                    alt={service.name}
-                    className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <h2 className="text-xl font-semibold mb-6 text-gray-800 text-center">Services</h2>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {services.map((service) => (
+              <Card 
+                key={service.id} 
+                className="overflow-hidden border-gebeya-pink/10 hover:border-gebeya-pink/20 transition-all duration-300 hover:shadow-lg group"
+              >
+                {service.image_url && (
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src={service.image_url} 
+                      alt={service.name}
+                      className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                )}
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-800">{service.name}</h3>
+                  <p className="text-gebeya-pink font-medium mt-1">
+                    Ksh {service.price.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-2">{service.description}</p>
+                  <Button 
+                    className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
+                  >
+                    Order Now
+                  </Button>
                 </div>
-              )}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-800">{service.name}</h3>
-                <p className="text-gebeya-pink font-medium mt-1">
-                  Ksh {service.price.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600 mt-2">{service.description}</p>
-                <Button 
-                  className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
-                >
-                  Order Now
-                </Button>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </div>
       </main>
     </div>
