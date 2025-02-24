@@ -37,7 +37,10 @@ const Dashboard = () => {
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(true);
+  const [showServices, setShowServices] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("visible");
@@ -48,6 +51,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchServices();
   }, []);
 
   const fetchCategories = async () => {
@@ -67,6 +71,23 @@ const Dashboard = () => {
     } else {
       console.log("Categories fetched:", data);
       setCategories(data || []);
+    }
+  };
+
+  const fetchServices = async () => {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch services. Please try again."
+      });
+    } else {
+      setServices(data || []);
     }
   };
 
@@ -161,9 +182,11 @@ const Dashboard = () => {
   };
 
   const handleDeleteService = async (id: string) => {
-    const {
-      error
-    } = await supabase.from('services').delete().eq('id', id);
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+
     if (error) {
       toast({
         variant: "destructive",
@@ -185,12 +208,14 @@ const Dashboard = () => {
     description?: string;
   }) => {
     if (!selectedCategory) return;
-    const {
-      error
-    } = await supabase.from('service_categories').update({
-      name: categoryData.name,
-      is_visible: categoryData.is_visible
-    }).eq('id', selectedCategory.id);
+    const { error } = await supabase
+      .from('service_categories')
+      .update({
+        name: categoryData.name,
+        is_visible: categoryData.is_visible
+      })
+      .eq('id', selectedCategory.id);
+
     if (error) {
       toast({
         variant: "destructive",
@@ -207,9 +232,11 @@ const Dashboard = () => {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    const {
-      error
-    } = await supabase.from('service_categories').delete().eq('id', id);
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', id);
+
     if (error) {
       toast({
         variant: "destructive",
@@ -226,11 +253,13 @@ const Dashboard = () => {
   };
 
   const handleUpdateServiceCategory = async (serviceId: string, categoryId: string) => {
-    const {
-      error
-    } = await supabase.from('services').update({
-      category_id: categoryId
-    }).eq('id', serviceId);
+    const { error } = await supabase
+      .from('services')
+      .update({
+        category_id: categoryId
+      })
+      .eq('id', serviceId);
+
     if (error) {
       toast({
         variant: "destructive",
