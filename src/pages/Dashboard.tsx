@@ -81,19 +81,20 @@ const Dashboard = () => {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>("");
   const [showCreateService, setShowCreateService] = useState(false);
+  const [userCategories, setUserCategories] = useState<Category[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (showCategories) {
-      fetchCategories();
-    }
-  }, [showCategories]);
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
-    if (!showCategories) {
-      fetchServices();
-    }
-  }, [showCategories]);
+    fetchServices();
+  }, []);
+
+  useEffect(() => {
+    fetchUserCategories();
+  }, []);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -126,6 +127,27 @@ const Dashboard = () => {
       });
     } else {
       setServices(data || []);
+    }
+  };
+
+  const fetchUserCategories = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('service_categories')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('sequence', { ascending: true });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch categories. Please try again.",
+      });
+    } else {
+      setUserCategories(data || []);
     }
   };
 
@@ -675,7 +697,7 @@ const Dashboard = () => {
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
-                              {categories.map((category) => (
+                              {userCategories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
                                 </SelectItem>
