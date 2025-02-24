@@ -1,7 +1,10 @@
 
 import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-pink-50 to-white pt-32 pb-20">
       <div className="container mx-auto px-4">
@@ -14,7 +17,11 @@ export const Hero = () => {
               The all-in-one platform for independent service providers. Schedule appointments, manage clients, and grow your business.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 items-start animate-fade-up [animation-delay:400ms]">
-              <Button size="lg" className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white min-w-[200px]">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white min-w-[200px]"
+                onClick={() => navigate("/auth?tab=signup")}
+              >
                 Start Free Trial
               </Button>
               <Button size="lg" variant="outline" className="min-w-[200px]">
