@@ -72,6 +72,7 @@ const Dashboard = () => {
   const [editingName, setEditingName] = useState("");
   const [services, setServices] = useState<Service[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showServices, setShowServices] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -291,15 +292,13 @@ const Dashboard = () => {
     { number: 6, title: "Invite staff", action: "Upgrade", completed: false },
   ];
 
-  const filteredCategories = categories.filter(category => 
-    activeTab === "visible" ? category.is_visible : !category.is_visible
-  );
-
   const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const [showServices, setShowServices] = useState(false);
+  const filteredCategories = categories.filter(category => 
+    activeTab === "visible" ? category.is_visible : !category.is_visible
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -494,6 +493,7 @@ const Dashboard = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
                         <Input
+                          type="text"
                           placeholder="Search by service name"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
