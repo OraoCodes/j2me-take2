@@ -30,9 +30,18 @@ interface ImagePreview {
 
 interface CreateServiceProps {
   onSuccess?: () => void;
+  initialData?: {
+    id: string;
+    name: string;
+    price: number;
+    description: string | null;
+    is_active: boolean;
+    category_id: string | null;
+    image_url: string | null;
+  };
 }
 
-const CreateService = ({ onSuccess }: CreateServiceProps) => {
+const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -40,15 +49,15 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
   const [images, setImages] = useState<ImagePreview[]>([]);
   const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
   const [formData, setFormData] = useState({
-    name: "",
-    visibility: "public",
-    category: "",
+    name: initialData?.name || "",
+    visibility: initialData?.is_active ? "public" : "private",
+    category: initialData?.category_id || "",
     serviceType: "one-time",
-    price: "",
+    price: initialData?.price?.toString() || "",
     discountedPrice: "",
     duration: "1-hour",
     customQuote: false,
-    description: "",
+    description: initialData?.description || "",
     instantBooking: true,
     whatsappEnabled: true,
     serviceMode: "online",
@@ -143,7 +152,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("No user found");
       }
 
-      let coverImageUrl = null;
+      let coverImageUrl = initialData?.image_url || null;
       if (images.length > 0) {
         const coverImage = images[coverImageIndex];
         const fileExt = coverImage.file.name.split('.').pop();
@@ -164,23 +173,34 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         }
       }
 
-      const { data: serviceData, error: serviceError } = await supabase
-        .from('services')
-        .insert({
-          name: formData.name,
-          price: parseFloat(formData.price) || 0,
-          description: formData.description,
-          is_active: formData.visibility === 'public',
-          user_id: user.id,
-          category_id: formData.category || null,
-          image_url: coverImageUrl,
-        })
-        .select()
-        .single();
+      const serviceData = {
+        name: formData.name,
+        price: parseFloat(formData.price) || 0,
+        description: formData.description,
+        is_active: formData.visibility === 'public',
+        category_id: formData.category || null,
+        image_url: coverImageUrl,
+      };
 
-      if (serviceError) {
-        console.error('Service creation error:', serviceError);
-        throw new Error("Failed to create service");
+      let error;
+      if (initialData?.id) {
+        const { error: updateError } = await supabase
+          .from('services')
+          .update(serviceData)
+          .eq('id', initialData.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('services')
+          .insert({
+            ...serviceData,
+            user_id: user.id,
+          });
+        error = insertError;
+      }
+
+      if (error) {
+        throw new Error(initialData?.id ? "Failed to update service" : "Failed to create service");
       }
 
       for (let i = 0; i < images.length; i++) {
@@ -227,7 +247,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
 
       toast({
         title: "Success",
-        description: "Service created successfully!",
+        description: initialData?.id ? "Service updated successfully!" : "Service created successfully!",
       });
     } catch (error) {
       console.error('Submission error:', error);
@@ -248,10 +268,13 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         <div className="max-w-3xl mx-auto px-4">
           <div className="text-center mb-12">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-              Create New Service
+              {initialData ? 'Edit Service' : 'Create New Service'}
             </h1>
             <p className="mt-2 text-gray-600">
-              Let's get started with setting up your service details
+              {initialData 
+                ? "Update your service details below"
+                : "Let's get started with setting up your service details"
+              }
             </p>
           </div>
 

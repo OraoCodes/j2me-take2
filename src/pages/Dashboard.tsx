@@ -29,7 +29,8 @@ import {
   ArrowUpDown,
   FileDown,
   Plus,
-  Trash2
+  Trash2,
+  Edit,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -262,6 +263,10 @@ const Dashboard = () => {
       });
       fetchServices();
     }
+  };
+
+  const handleEditService = (serviceId: string) => {
+    navigate(`/edit-service/${serviceId}`);
   };
 
   const handleEditCategory = async (categoryData: {
@@ -704,6 +709,14 @@ const Dashboard = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditService(service.id)}
+                            className="hover:text-gebeya-pink hover:bg-pink-50"
+                          >
+                            <Edit className="w-4 h-4 text-gebeya-pink" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
