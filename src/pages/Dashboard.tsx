@@ -33,7 +33,7 @@ const Dashboard = () => {
   const [isDesignOpen, setIsDesignOpen] = useState(false);
 
   const designMenuItems = [
-    { icon: <Store className="w-4 h-4" />, label: "Storefront" },
+    { icon: <Store className="w-4 h-4" />, label: "Service Page" },
     { icon: <CreditCard className="w-4 h-4" />, label: "Checkout" },
     { icon: <Palette className="w-4 h-4" />, label: "Appearance" },
     { icon: <MenuIcon className="w-4 h-4" />, label: "Menu" },
