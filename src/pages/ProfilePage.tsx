@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,13 +27,26 @@ export const ProfilePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: profileData, error } = await supabase
+      let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create one
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([{ id: user.id }])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        profileData = newProfile;
+      } else if (error) {
+        throw error;
+      }
+
       setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -68,13 +80,13 @@ export const ProfilePage = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: publicUrl } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ profile_image_url: publicUrl.publicUrl })
+        .update({ profile_image_url: publicUrl })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
@@ -84,7 +96,7 @@ export const ProfilePage = () => {
         description: "Profile picture updated successfully",
       });
 
-      fetchProfile();
+      await fetchProfile();
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
