@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CategoryItem } from "@/components/categories/CategoryItem";
 import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
 import { Input } from "@/components/ui/input";
+import { EditCategoryDialog } from "@/components/categories/EditCategoryDialog";
 
 interface Category {
   id: string;
@@ -73,6 +74,7 @@ const Dashboard = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showServices, setShowServices] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -231,6 +233,57 @@ const Dashboard = () => {
         description: "Service deleted successfully.",
       });
       fetchServices();
+    }
+  };
+
+  const handleEditCategory = async (categoryData: {
+    name: string;
+    is_visible: boolean;
+    description?: string;
+  }) => {
+    if (!selectedCategory) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .update({
+        name: categoryData.name,
+        is_visible: categoryData.is_visible,
+      })
+      .eq('id', selectedCategory.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category updated successfully.",
+      });
+      fetchCategories();
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category deleted successfully.",
+      });
+      fetchCategories();
     }
   };
 
@@ -397,7 +450,7 @@ const Dashboard = () => {
         <Header />
         <div className="p-8 pt-20">
           <div className="max-w-5xl mx-auto">
-            {showCategories ? (
+            {showCategories && (
               <>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
@@ -454,6 +507,7 @@ const Dashboard = () => {
                           onCancelEditing={cancelEditing}
                           onEditingNameChange={setEditingName}
                           onToggleVisibility={toggleVisibility}
+                          onEditCategory={setSelectedCategory}
                         />
                       ))}
                     </div>
@@ -472,11 +526,20 @@ const Dashboard = () => {
                           onCancelEditing={cancelEditing}
                           onEditingNameChange={setEditingName}
                           onToggleVisibility={toggleVisibility}
+                          onEditCategory={setSelectedCategory}
                         />
                       ))}
                     </div>
                   </TabsContent>
                 </Tabs>
+
+                <EditCategoryDialog
+                  isOpen={!!selectedCategory}
+                  onClose={() => setSelectedCategory(null)}
+                  category={selectedCategory}
+                  onSave={handleEditCategory}
+                  onDelete={handleDeleteCategory}
+                />
               </>
             ) : showServices ? (
               <>

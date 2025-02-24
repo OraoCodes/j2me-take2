@@ -21,6 +21,7 @@ interface CategoryItemProps {
   onCancelEditing: () => void;
   onEditingNameChange: (name: string) => void;
   onToggleVisibility: (category: Category) => void;
+  onEditCategory: (category: Category) => void;
 }
 
 export const CategoryItem = ({
@@ -32,13 +33,17 @@ export const CategoryItem = ({
   onCancelEditing,
   onEditingNameChange,
   onToggleVisibility,
+  onEditCategory,
 }: CategoryItemProps) => {
   return (
-    <div className="flex items-center justify-between p-4 border-b last:border-b-0 group">
+    <div 
+      className="flex items-center justify-between p-4 border-b last:border-b-0 group hover:bg-gray-50 cursor-pointer"
+      onClick={() => onEditCategory(category)}
+    >
       <div className="flex items-center gap-3 flex-1">
         <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
         {editingId === category.id ? (
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
             <Input
               value={editingName}
               onChange={(e) => onEditingNameChange(e.target.value)}
@@ -58,7 +63,10 @@ export const CategoryItem = ({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onStartEditing(category)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartEditing(category);
+              }}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Pencil className="h-4 w-4 text-gray-400" />
@@ -68,7 +76,10 @@ export const CategoryItem = ({
       </div>
       <Button
         variant="ghost"
-        onClick={() => onToggleVisibility(category)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleVisibility(category);
+        }}
       >
         {category.is_visible ? "Hide" : "Show"}
       </Button>
