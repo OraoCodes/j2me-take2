@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,7 +18,6 @@ import StoreOptimization from "./pages/StoreOptimization";
 import ServiceShare from "./pages/ServiceShare";
 import Dashboard from "./pages/Dashboard";
 import ServicePage from "./pages/ServicePage";
-import Services from "./pages/Services";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +41,6 @@ const App = () => (
           <Route path="/service-share" element={<ServiceShare />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/service-page" element={<ServicePage />} />
-          <Route path="/services" element={<Services />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

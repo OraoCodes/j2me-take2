@@ -23,7 +23,13 @@ import {
   CreditCard,
   Palette,
   Menu as MenuIcon,
-  Info
+  Info,
+  Import,
+  Filter,
+  ArrowUpDown,
+  FileDown,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -43,6 +49,15 @@ interface Category {
   created_at: string;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  is_active: boolean;
+  description: string | null;
+  image_url: string | null;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
@@ -54,11 +69,19 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("visible");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
     if (showCategories) {
       fetchCategories();
+    }
+  }, [showCategories]);
+
+  useEffect(() => {
+    if (!showCategories) {
+      fetchServices();
     }
   }, [showCategories]);
 
@@ -76,6 +99,23 @@ const Dashboard = () => {
       });
     } else {
       setCategories(data as Category[]);
+    }
+  };
+
+  const fetchServices = async () => {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch services. Please try again.",
+      });
+    } else {
+      setServices(data || []);
     }
   };
 
@@ -171,8 +211,29 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteService = async (id: string) => {
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete service. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Service deleted successfully.",
+      });
+      fetchServices();
+    }
+  };
+
   const serviceMenuItems = [
-    { label: "All", onClick: () => navigate('/services') },
+    { label: "All", onClick: () => setShowServices(true) },
     { label: "Category", onClick: () => setShowCategories(true) },
   ];
 
@@ -232,6 +293,12 @@ const Dashboard = () => {
   const filteredCategories = categories.filter(category => 
     activeTab === "visible" ? category.is_visible : !category.is_visible
   );
+
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const [showServices, setShowServices] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -391,6 +458,102 @@ const Dashboard = () => {
                     </div>
                   </TabsContent>
                 </Tabs>
+              </>
+            ) : showServices ? (
+              <>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-semibold">Services</h1>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Manage your services</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline">
+                      <Import className="w-4 h-4 mr-2" />
+                      Import
+                    </Button>
+                    <Button variant="outline">
+                      Bulk edit
+                    </Button>
+                    <Button onClick={() => navigate('/create-service')}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add service
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-4 border-b">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Search by service name"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="max-w-md"
+                        />
+                      </div>
+                      <Button variant="outline" size="icon">
+                        <Filter className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <FileDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="divide-y">
+                    {filteredServices.map((service) => (
+                      <div
+                        key={service.id}
+                        className="p-4 flex items-center hover:bg-gray-50"
+                      >
+                        <input type="checkbox" className="mr-4" />
+                        <div className="w-16 h-16 rounded bg-gray-100 mr-4">
+                          {service.image_url && (
+                            <img
+                              src={service.image_url}
+                              alt={service.name}
+                              className="w-full h-full object-cover rounded"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium">{service.name}</h3>
+                          <p className="text-gray-500">KSh {service.price.toFixed(2)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteService(service.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            service.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {service.is_active ? 'VISIBLE' : 'HIDDEN'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredServices.length === 0 && (
+                      <div className="p-8 text-center text-gray-500">
+                        No services found
+                      </div>
+                    )}
+                  </div>
+                </div>
               </>
             ) : (
               <>
