@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Phone, DollarSign, Globe } from "lucide-react";
+import { Upload, Phone, Globe } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const CreateService = () => {
@@ -16,7 +15,6 @@ const CreateService = () => {
   const [formData, setFormData] = useState({
     businessName: "",
     whatsappNumber: "",
-    currency: "",
     pageLink: "",
     profileImage: null as File | null
   });
@@ -62,7 +60,6 @@ const CreateService = () => {
         .update({
           company_name: formData.businessName,
           whatsapp_number: formData.whatsappNumber,
-          currency: formData.currency,
           service_page_link: formData.pageLink,
           profile_image_url: profileImageUrl
         })
@@ -147,27 +144,6 @@ const CreateService = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
               />
             </div>
-          </div>
-
-          {/* Currency */}
-          <div className="space-y-2">
-            <Label>Currency *</Label>
-            <p className="text-sm text-muted-foreground">
-              Select your preferred currency for payments
-            </p>
-            <Select
-              required
-              value={formData.currency}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
-                <SelectItem value="USD">USD - US Dollar</SelectItem>
-                <SelectItem value="EUR">EUR - Euro</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Service Page Link */}
