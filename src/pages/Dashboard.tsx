@@ -276,6 +276,24 @@ const Dashboard = () => {
     }
   };
 
+  const handleMenuClick = (menuName: string) => {
+    setShowCategories(false);
+    setShowServices(false);
+    
+    switch (menuName) {
+      case 'dashboard':
+        break;
+      case 'categories':
+        setShowCategories(true);
+        break;
+      case 'services':
+        setShowServices(true);
+        break;
+      default:
+        break;
+    }
+  };
+
   const serviceMenuItems = [{
     label: "All",
     onClick: () => setShowServices(true)
@@ -302,13 +320,11 @@ const Dashboard = () => {
   const sidebarItems = [{
     icon: <Home />,
     label: "Dashboard",
-    onClick: () => {
-      setShowCategories(false);
-      setShowServices(false);
-    }
+    onClick: () => handleMenuClick('dashboard')
   }, {
     icon: <Grid />,
-    label: "Service Requests"
+    label: "Service Requests",
+    onClick: () => navigate('/service-requests')
   }, {
     icon: <Package />,
     label: "Services",
@@ -318,7 +334,8 @@ const Dashboard = () => {
     onClick: () => setIsServicesOpen(!isServicesOpen)
   }, {
     icon: <Users />,
-    label: "Customers"
+    label: "Customers",
+    onClick: () => navigate('/customers')
   }, {
     icon: <PenTool />,
     label: "Design",
@@ -413,27 +430,38 @@ const Dashboard = () => {
         </div>
 
         <nav className="space-y-1 px-3">
-          {sidebarItems.map(item => <div key={item.label}>
-              <a href="#" onClick={e => {
-            e.preventDefault();
-            if (item.onClick) item.onClick();
-          }} className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${item.hasSubmenu && item.isOpen ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"}`}>
+          {sidebarItems.map((item, index) => (
+            <div key={`${item.label}-${index}`}>
+              <button
+                onClick={item.onClick}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm ${
+                  item.hasSubmenu && item.isOpen ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   {item.icon}
                   {item.label}
                 </div>
-                {item.hasSubmenu && (item.isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
-              </a>
-              {item.hasSubmenu && item.isOpen && <div className="ml-9 mt-1 space-y-1">
-                  {item.submenuItems?.map(subItem => <a key={subItem.label} href="#" onClick={e => {
-              e.preventDefault();
-              if (subItem.onClick) subItem.onClick();
-            }} className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">
+                {item.hasSubmenu && (
+                  item.isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              {item.hasSubmenu && item.isOpen && (
+                <div className="ml-9 mt-1 space-y-1">
+                  {item.submenuItems?.map((subItem, subIndex) => (
+                    <button
+                      key={`${subItem.label}-${subIndex}`}
+                      onClick={subItem.onClick}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
+                    >
                       {subItem.icon}
                       {subItem.label}
-                    </a>)}
-                </div>}
-            </div>)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
 
         <div className="mt-8">
@@ -456,69 +484,93 @@ const Dashboard = () => {
         <Header />
         <div className="p-8 pt-20">
           <div className="max-w-5xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold text-gebeya-pink">Categories</h1>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-gebeya-pink" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Organize your services into categories</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button 
-                  onClick={() => setIsDialogOpen(true)}
-                  className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add category
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-              {categories.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No categories found. Create your first category to get started.
+            {showCategories && (
+              <>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-semibold text-gebeya-pink">Categories</h1>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 text-gebeya-pink" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Organize your services into categories</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button 
+                      onClick={() => setIsDialogOpen(true)}
+                      className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add category
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                categories.map((category) => (
-                  <CategoryItem
-                    key={category.id}
-                    category={category}
-                    editingId={editingId}
-                    editingName={editingName}
-                    onStartEditing={startEditing}
-                    onSaveEditing={saveEditing}
-                    onCancelEditing={cancelEditing}
-                    onEditingNameChange={setEditingName}
-                    onToggleVisibility={toggleVisibility}
-                    onEditCategory={setSelectedCategory}
-                  />
-                ))
-              )}
-            </div>
 
-            <CreateCategoryDialog
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-              categoryName={newCategoryName}
-              onCategoryNameChange={setNewCategoryName}
-              onCreateCategory={createCategory}
-            />
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+                  {categories.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      No categories found. Create your first category to get started.
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <CategoryItem
+                        key={category.id}
+                        category={category}
+                        editingId={editingId}
+                        editingName={editingName}
+                        onStartEditing={startEditing}
+                        onSaveEditing={saveEditing}
+                        onCancelEditing={cancelEditing}
+                        onEditingNameChange={setEditingName}
+                        onToggleVisibility={toggleVisibility}
+                        onEditCategory={setSelectedCategory}
+                      />
+                    ))
+                  )}
+                </div>
 
-            <EditCategoryDialog
-              isOpen={!!selectedCategory}
-              onClose={() => setSelectedCategory(null)}
-              category={selectedCategory}
-              onSave={handleEditCategory}
-              onDelete={handleDeleteCategory}
-            />
+                <CreateCategoryDialog
+                  isOpen={isDialogOpen}
+                  onOpenChange={setIsDialogOpen}
+                  categoryName={newCategoryName}
+                  onCategoryNameChange={setNewCategoryName}
+                  onCreateCategory={createCategory}
+                />
+
+                <EditCategoryDialog
+                  isOpen={!!selectedCategory}
+                  onClose={() => setSelectedCategory(null)}
+                  category={selectedCategory}
+                  onSave={handleEditCategory}
+                  onDelete={handleDeleteCategory}
+                />
+              </>
+            )}
+
+            {showServices && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                {services.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    No services found. Add your first service to get started.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {services.map(service => (
+                      <div key={service.id} className="p-4 border rounded-lg">
+                        <h3 className="font-medium">{service.name}</h3>
+                        <p className="text-gray-600">${service.price}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
