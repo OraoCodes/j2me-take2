@@ -88,7 +88,9 @@ const CreateService = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-pink-50 to-white">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Create Your Service Page</h1>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
+            Create Your Service Page
+          </h1>
           <p className="text-muted-foreground mt-2">
             Enter your essential details to start offering your services online.
           </p>
@@ -100,8 +102,8 @@ const CreateService = () => {
             <Label>Upload Your Profile Image</Label>
             <div className="flex items-center justify-center w-full">
               <label className="w-full cursor-pointer">
-                <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg hover:bg-gray-50">
-                  <Upload className="w-8 h-8 text-gray-400" />
+                <div className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-gebeya-pink/20 hover:border-gebeya-pink/40 hover:bg-pink-50/30 transition-colors">
+                  <Upload className="w-8 h-8 text-gebeya-pink" />
                   <span className="mt-2 text-sm text-gray-500">Click to upload</span>
                 </div>
                 <input
@@ -123,6 +125,7 @@ const CreateService = () => {
               required
               value={formData.businessName}
               onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+              className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
             />
           </div>
 
@@ -134,7 +137,11 @@ const CreateService = () => {
             </p>
             <div className="flex gap-2">
               <div className="w-24">
-                <Input value="+254" disabled />
+                <Input 
+                  value="+254" 
+                  disabled 
+                  className="border-gebeya-pink/20 bg-gray-50"
+                />
               </div>
               <Input
                 id="whatsappNumber"
@@ -142,6 +149,7 @@ const CreateService = () => {
                 required
                 value={formData.whatsappNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, whatsappNumber: e.target.value }))}
+                className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
               />
             </div>
           </div>
@@ -162,13 +170,14 @@ const CreateService = () => {
                 required
                 value={formData.pageLink}
                 onChange={(e) => setFormData(prev => ({ ...prev, pageLink: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+                className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink/30"
               />
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full bg-black hover:bg-gray-800"
+            className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
             disabled={loading}
           >
             {loading ? "Creating..." : "Create Service Page"}
