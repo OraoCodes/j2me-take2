@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { 
@@ -30,6 +31,12 @@ import { useState } from "react";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+
+  const serviceMenuItems = [
+    { label: "All", onClick: () => navigate('/services') },
+    { label: "Category", onClick: () => navigate('/service-categories') },
+  ];
 
   const designMenuItems = [
     { icon: <Store className="w-4 h-4" />, label: "Service Page", onClick: () => navigate('/service-page') },
@@ -41,7 +48,14 @@ const Dashboard = () => {
   const sidebarItems = [
     { icon: <Home />, label: "Dashboard" },
     { icon: <Grid />, label: "Orders" },
-    { icon: <Package />, label: "Products" },
+    { 
+      icon: <Package />, 
+      label: "Services",
+      hasSubmenu: true,
+      isOpen: isServicesOpen,
+      submenuItems: serviceMenuItems,
+      onClick: () => setIsServicesOpen(!isServicesOpen)
+    },
     { icon: <Users />, label: "Customers" },
     { 
       icon: <PenTool />, 
