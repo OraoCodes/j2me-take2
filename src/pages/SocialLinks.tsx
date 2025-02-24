@@ -1,15 +1,29 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { Instagram, Facebook, MapPin, Link2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface SocialLinkDetails {
+  username?: string;
+  url?: string;
+  location?: string;
+  title?: string;
+}
 
 interface SocialLink {
   id: string;
   name: string;
   icon: JSX.Element;
   enabled: boolean;
+  details: SocialLinkDetails;
+  inputType: "username" | "url" | "location" | "both";
+  placeholder?: string;
+  prefix?: string;
 }
 
 const SocialLinks = () => {
@@ -20,12 +34,19 @@ const SocialLinks = () => {
       name: "Instagram",
       icon: <Instagram className="w-6 h-6 text-[#E4405F]" />,
       enabled: false,
+      details: { username: "" },
+      inputType: "username",
+      placeholder: "username",
+      prefix: "@",
     },
     {
       id: "facebook",
       name: "Facebook",
       icon: <Facebook className="w-6 h-6 text-[#1877F2]" />,
       enabled: false,
+      details: { url: "" },
+      inputType: "url",
+      placeholder: "https://",
     },
     {
       id: "whatsapp",
@@ -36,6 +57,9 @@ const SocialLinks = () => {
         </svg>
       ),
       enabled: false,
+      details: { url: "" },
+      inputType: "url",
+      placeholder: "https://",
     },
     {
       id: "telegram",
@@ -46,12 +70,18 @@ const SocialLinks = () => {
         </svg>
       ),
       enabled: false,
+      details: { url: "" },
+      inputType: "url",
+      placeholder: "https://",
     },
     {
       id: "googlemap",
       name: "Google map",
       icon: <MapPin className="w-6 h-6 text-[#EA4335]" />,
       enabled: false,
+      details: { location: "" },
+      inputType: "location",
+      placeholder: "Enter a location",
     },
     {
       id: "tiktok",
@@ -62,6 +92,10 @@ const SocialLinks = () => {
         </svg>
       ),
       enabled: false,
+      details: { username: "" },
+      inputType: "username",
+      placeholder: "username",
+      prefix: "@",
     },
     {
       id: "youtube",
@@ -73,12 +107,19 @@ const SocialLinks = () => {
         </svg>
       ),
       enabled: false,
+      details: { username: "" },
+      inputType: "username",
+      placeholder: "username",
+      prefix: "@",
     },
     {
       id: "link",
       name: "Link",
       icon: <Link2 className="w-6 h-6 text-gray-700" />,
       enabled: false,
+      details: { title: "", url: "" },
+      inputType: "both",
+      placeholder: "https://",
     },
   ]);
 
@@ -86,6 +127,14 @@ const SocialLinks = () => {
     setSocialLinks(links =>
       links.map(link =>
         link.id === id ? { ...link, enabled: !link.enabled } : link
+      )
+    );
+  };
+
+  const updateSocialLinkDetails = (id: string, details: Partial<SocialLinkDetails>) => {
+    setSocialLinks(links =>
+      links.map(link =>
+        link.id === id ? { ...link, details: { ...link.details, ...details } } : link
       )
     );
   };
@@ -127,16 +176,70 @@ const SocialLinks = () => {
           {socialLinks.map((link) => (
             <div
               key={link.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100"
+              className="bg-white rounded-xl border border-gray-100 overflow-hidden"
             >
-              <div className="flex items-center gap-3">
-                {link.icon}
-                <span className="font-medium">{link.name}</span>
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  {link.icon}
+                  <span className="font-medium">{link.name}</span>
+                </div>
+                <Switch
+                  checked={link.enabled}
+                  onCheckedChange={() => toggleSocialLink(link.id)}
+                />
               </div>
-              <Switch
-                checked={link.enabled}
-                onCheckedChange={() => toggleSocialLink(link.id)}
-              />
+              
+              {link.enabled && (
+                <div className="border-t border-gray-100 p-4 space-y-4 animate-fade-in">
+                  {(link.inputType === "both" || link.id === "link") && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`${link.id}-title`}>Title</Label>
+                      <Input
+                        id={`${link.id}-title`}
+                        value={link.details.title || ""}
+                        onChange={(e) => updateSocialLinkDetails(link.id, { title: e.target.value })}
+                        placeholder="Link"
+                      />
+                    </div>
+                  )}
+                  {(link.inputType === "username" || link.inputType === "url" || link.inputType === "both") && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`${link.id}-input`}>
+                        {link.inputType === "username" ? "Username" : "URL"}
+                      </Label>
+                      <div className="relative">
+                        {link.prefix && (
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                            {link.prefix}
+                          </span>
+                        )}
+                        <Input
+                          id={`${link.id}-input`}
+                          value={link.inputType === "username" ? link.details.username || "" : link.details.url || ""}
+                          onChange={(e) => 
+                            updateSocialLinkDetails(link.id, {
+                              [link.inputType === "username" ? "username" : "url"]: e.target.value,
+                            })
+                          }
+                          placeholder={link.placeholder}
+                          className={link.prefix ? "pl-8" : ""}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {link.inputType === "location" && (
+                    <div className="space-y-2">
+                      <Label htmlFor={`${link.id}-location`}>Location</Label>
+                      <Input
+                        id={`${link.id}-location`}
+                        value={link.details.location || ""}
+                        onChange={(e) => updateSocialLinkDetails(link.id, { location: e.target.value })}
+                        placeholder={link.placeholder}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
