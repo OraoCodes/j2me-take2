@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Product {
   name: string;
@@ -85,10 +87,12 @@ const serviceTemplates: ServiceTemplate[] = [
   }
 ];
 
-const AddProducts = () => {
+const AddServices = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageUpload = (index: number, file: File) => {
     const newProducts = [...products];
@@ -118,11 +122,78 @@ const AddProducts = () => {
     setProducts(newProducts);
   };
 
+  const saveServices = async () => {
+    try {
+      setIsSubmitting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to save services",
+        });
+        return;
+      }
+
+      // Upload images and get URLs
+      const servicesWithUrls = await Promise.all(
+        products.map(async (product) => {
+          let imageUrl = null;
+          if (product.image) {
+            const fileName = `${crypto.randomUUID()}-${product.image.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('services')
+              .upload(fileName, product.image);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('services')
+              .getPublicUrl(fileName);
+
+            imageUrl = publicUrl;
+          }
+
+          return {
+            name: product.name,
+            price: product.price,
+            user_id: user.id,
+            image_url: imageUrl,
+            is_active: true
+          };
+        })
+      );
+
+      // Save services to the database
+      const { error } = await supabase
+        .from('services')
+        .insert(servicesWithUrls);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your services have been saved successfully!",
+      });
+
+      navigate('/payment-methods');
+    } catch (error) {
+      console.error('Error saving services:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save services. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
       <div className="container mx-auto px-4 py-24 max-w-3xl">
-        {/* Progress Steps */}
         <div className="flex justify-center mb-12">
           <div className="flex items-center gap-3">
             {[1, 2, 3, 4, 5].map((step) => (
@@ -140,7 +211,6 @@ const AddProducts = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Add Your Services</h1>
           <p className="text-gray-600 text-lg">
@@ -148,7 +218,6 @@ const AddProducts = () => {
           </p>
         </div>
 
-        {/* Example Templates */}
         <div className="mb-12">
           <h2 className="text-xl font-semibold mb-4">Choose from example templates:</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,7 +247,6 @@ const AddProducts = () => {
           </div>
         </div>
 
-        {/* Service Forms */}
         <div className="space-y-8">
           {products.map((product, index) => (
             <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -267,7 +335,6 @@ const AddProducts = () => {
           ))}
         </div>
 
-        {/* Add Service Button */}
         <button
           onClick={addProduct}
           className="w-full mt-6 py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-gebeya-pink hover:text-gebeya-pink flex items-center justify-center gap-2"
@@ -276,20 +343,21 @@ const AddProducts = () => {
           Add Another Service
         </button>
 
-        {/* Navigation Buttons */}
         <div className="mt-12 flex justify-center gap-4">
           <Button
             variant="outline"
             className="w-32"
             onClick={() => navigate('/payment-methods')}
+            disabled={isSubmitting}
           >
             Skip
           </Button>
           <Button 
             className="w-32 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
-            onClick={() => navigate('/payment-methods')}
+            onClick={saveServices}
+            disabled={isSubmitting}
           >
-            Next
+            {isSubmitting ? "Saving..." : "Next"}
           </Button>
         </div>
       </div>
@@ -297,4 +365,4 @@ const AddProducts = () => {
   );
 };
 
-export default AddProducts;
+export default AddServices;
