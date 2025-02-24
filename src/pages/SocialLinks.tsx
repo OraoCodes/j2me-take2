@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -247,9 +246,7 @@ const SocialLinks = () => {
         {/* Navigation */}
         <div className="mt-12">
           <Button
-            onClick={() => {
-              // Navigate to next page
-            }}
+            onClick={() => navigate("/store-optimization")}
             className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
             Continue

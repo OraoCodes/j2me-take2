@@ -14,6 +14,7 @@ import ServiceCreated from "./pages/ServiceCreated";
 import AddProducts from "./pages/AddProducts";
 import PaymentMethods from "./pages/PaymentMethods";
 import SocialLinks from "./pages/SocialLinks";
+import StoreOptimization from "./pages/StoreOptimization";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/add-products" element={<AddProducts />} />
           <Route path="/payment-methods" element={<PaymentMethods />} />
           <Route path="/social-links" element={<SocialLinks />} />
+          <Route path="/store-optimization" element={<StoreOptimization />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
