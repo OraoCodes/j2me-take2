@@ -33,67 +33,56 @@ export const CategoryItem = ({
   onCancelEditing,
   onEditingNameChange,
   onToggleVisibility,
-  onEditCategory
+  onEditCategory,
 }: CategoryItemProps) => {
-  const isEditing = editingId === category.id;
-
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-gray-100 last:border-b-0">
-      <button className="cursor-grab active:cursor-grabbing">
-        <GripVertical className="w-5 h-5 text-gray-400" />
-      </button>
-      
-      <div className="flex-1">
-        {isEditing ? (
-          <div className="flex items-center gap-2">
+    <div 
+      className="flex items-center justify-between p-4 border-b last:border-b-0 group hover:bg-gray-50 cursor-pointer"
+      onClick={() => onEditCategory(category)}
+    >
+      <div className="flex items-center gap-3 flex-1">
+        <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
+        {editingId === category.id ? (
+          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
             <Input
               value={editingName}
               onChange={(e) => onEditingNameChange(e.target.value)}
-              className="flex-1"
-              placeholder="Category name"
+              className="max-w-sm"
+              autoFocus
             />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onSaveEditing}
-              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-            >
-              <Check className="w-4 h-4" />
+            <Button size="sm" variant="ghost" onClick={onSaveEditing}>
+              <Check className="h-4 w-4 text-green-600" />
             </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onCancelEditing}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <X className="w-4 h-4" />
+            <Button size="sm" variant="ghost" onClick={onCancelEditing}>
+              <X className="h-4 w-4 text-red-600" />
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{category.name}</span>
+          <div className="flex items-center gap-2 flex-1">
+            <span>{category.name}</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartEditing(category);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Pencil className="h-4 w-4 text-gray-400" />
+            </Button>
           </div>
         )}
       </div>
-
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onToggleVisibility(category)}
-          className={category.is_visible ? "text-green-600" : "text-gray-400"}
-        >
-          {category.is_visible ? "Visible" : "Hidden"}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onStartEditing(category)}
-          className="text-gray-600 hover:text-gray-700"
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-      </div>
+      <Button
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleVisibility(category);
+        }}
+      >
+        {category.is_visible ? "Hide" : "Show"}
+      </Button>
     </div>
   );
 };
