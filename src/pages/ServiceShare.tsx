@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -34,7 +33,6 @@ const ServiceShare = () => {
     let url = "";
     switch (platform) {
       case "instagram":
-        // Since Instagram doesn't have a direct share URL, we'll copy the link
         copyToClipboard();
         toast({
           title: "Ready to share on Instagram",
