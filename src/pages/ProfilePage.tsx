@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserCircle, Upload } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Header } from "@/components/Header";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -133,82 +134,88 @@ export const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9b87f5]"></div>
-      </div>
+      <>
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gebeya-pink"></div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
-      <Card className="border-[#9b87f5]/20">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <UserCircle className="w-8 h-8 text-[#9b87f5]" />
-            <h1 className="text-2xl font-bold text-[#1A1F2C]">Profile Settings</h1>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center mb-8">
-            <div className="relative">
-              <Avatar className="h-24 w-24 border-4 border-[#9b87f5]/20">
-                <AvatarImage src={profile?.profile_image_url || undefined} alt="Profile" />
-                <AvatarFallback className="bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] text-white text-xl">
-                  {profile?.company_name?.charAt(0).toUpperCase() || 'C'}
-                </AvatarFallback>
-              </Avatar>
-              <label 
-                htmlFor="profilePicture" 
-                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[#9b87f5] text-white cursor-pointer hover:bg-[#7E69AB] transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                <input
-                  type="file"
-                  id="profilePicture"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="container max-w-2xl mx-auto px-4 pt-24 pb-12">
+        <Card className="border-gebeya-pink/20 shadow-lg">
+          <CardHeader className="border-b border-gebeya-pink/10">
+            <div className="flex items-center gap-3">
+              <UserCircle className="w-8 h-8 text-gebeya-pink" />
+              <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-8">
+            <div className="flex flex-col items-center mb-8">
+              <div className="relative">
+                <Avatar className="h-28 w-28 border-4 border-gebeya-pink/20">
+                  <AvatarImage src={profile?.profile_image_url || undefined} alt="Profile" />
+                  <AvatarFallback className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white text-2xl">
+                    {profile?.company_name?.charAt(0).toUpperCase() || 'C'}
+                  </AvatarFallback>
+                </Avatar>
+                <label 
+                  htmlFor="profilePicture" 
+                  className="absolute bottom-0 right-0 p-2 rounded-full bg-gebeya-pink text-white cursor-pointer hover:bg-gebeya-orange transition-colors duration-200 shadow-md"
+                >
+                  <Upload className="h-5 w-5" />
+                  <input
+                    type="file"
+                    id="profilePicture"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
+                </label>
+              </div>
+              {uploading && (
+                <p className="text-sm text-gebeya-pink mt-3 animate-pulse">Uploading...</p>
+              )}
+            </div>
+
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="company_name" className="text-gray-700 font-medium">Business Name</Label>
+                <Input
+                  id="company_name"
+                  name="company_name"
+                  defaultValue={profile?.company_name || ''}
+                  placeholder="Enter your business name"
+                  className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink transition-colors duration-200"
                 />
-              </label>
-            </div>
-            {uploading && (
-              <p className="text-sm text-[#6E59A5] mt-2">Uploading...</p>
-            )}
-          </div>
+              </div>
 
-          <form onSubmit={handleUpdateProfile} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="company_name" className="text-[#1A1F2C]">Business Name</Label>
-              <Input
-                id="company_name"
-                name="company_name"
-                defaultValue={profile?.company_name || ''}
-                placeholder="Enter your business name"
-                className="border-[#9b87f5]/20 focus-visible:ring-[#9b87f5]"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp_number" className="text-gray-700 font-medium">WhatsApp Number</Label>
+                <Input
+                  id="whatsapp_number"
+                  name="whatsapp_number"
+                  defaultValue={profile?.whatsapp_number || ''}
+                  placeholder="Enter your WhatsApp number"
+                  className="border-gebeya-pink/20 focus-visible:ring-gebeya-pink transition-colors duration-200"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp_number" className="text-[#1A1F2C]">WhatsApp Number</Label>
-              <Input
-                id="whatsapp_number"
-                name="whatsapp_number"
-                defaultValue={profile?.whatsapp_number || ''}
-                placeholder="Enter your WhatsApp number"
-                className="border-[#9b87f5]/20 focus-visible:ring-[#9b87f5]"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] hover:opacity-90 transition-opacity"
-            >
-              Save Changes
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-all duration-200 shadow-md"
+              >
+                Save Changes
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
