@@ -572,7 +572,10 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                 className="w-full md:w-auto bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
                 disabled={loading}
               >
-                {loading ? "Creating..." : "Create Service"}
+                {loading 
+                  ? (initialData ? "Saving..." : "Creating...")
+                  : (initialData ? "Save Changes" : "Create Service")
+                }
               </Button>
             </div>
           </form>
