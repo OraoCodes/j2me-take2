@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Search, PlusCircle } from "lucide-react";
+import { Home, Search, PlusCircle, Send } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Service = Database['public']['Tables']['services']['Row'];
@@ -42,7 +41,6 @@ const ServicePage = () => {
 
         console.log("Fetching data for user:", targetUserId);
 
-        // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, company_name, profile_image_url, service_page_link')
@@ -57,7 +55,6 @@ const ServicePage = () => {
         console.log("Profile data:", profileData);
         if (profileData) setProfile(profileData);
 
-        // Fetch categories with a simpler query first
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('service_categories')
           .select('*')
@@ -71,7 +68,6 @@ const ServicePage = () => {
         console.log("Categories data:", categoriesData);
         setCategories(categoriesData || []);
 
-        // Fetch all services without filters first
         const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
@@ -119,6 +115,10 @@ const ServicePage = () => {
     console.log("Uncategorized services:", uncategorizedServices);
 
     return { servicesByCategory, uncategorizedServices };
+  };
+
+  const handleRequestService = (serviceId: string, serviceName: string) => {
+    console.log(`Requesting service: ${serviceName} (ID: ${serviceId})`);
   };
 
   if (loading) {
@@ -185,19 +185,29 @@ const ServicePage = () => {
                         {categoryServices.map((service) => (
                           <Card 
                             key={service.id} 
-                            className="p-4 flex justify-between items-center border rounded-lg"
+                            className="p-4"
                           >
-                            <div>
-                              <h3 className="font-semibold text-lg">{service.name}</h3>
-                              <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="font-semibold text-lg">{service.name}</h3>
+                                <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                                <Button
+                                  onClick={() => handleRequestService(service.id, service.name)}
+                                  className="mt-2"
+                                  variant="default"
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Request Service
+                                </Button>
+                              </div>
+                              {service.image_url && (
+                                <img 
+                                  src={service.image_url} 
+                                  alt={service.name}
+                                  className="w-24 h-24 object-cover rounded-lg"
+                                />
+                              )}
                             </div>
-                            {service.image_url && (
-                              <img 
-                                src={service.image_url} 
-                                alt={service.name}
-                                className="w-24 h-24 object-cover rounded-lg"
-                              />
-                            )}
                           </Card>
                         ))}
                       </div>
@@ -214,19 +224,29 @@ const ServicePage = () => {
                   {uncategorizedServices.map((service) => (
                     <Card 
                       key={service.id} 
-                      className="p-4 flex justify-between items-center border rounded-lg"
+                      className="p-4"
                     >
-                      <div>
-                        <h3 className="font-semibold text-lg">{service.name}</h3>
-                        <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold text-lg">{service.name}</h3>
+                          <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                          <Button
+                            onClick={() => handleRequestService(service.id, service.name)}
+                            className="mt-2"
+                            variant="default"
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            Request Service
+                          </Button>
+                        </div>
+                        {service.image_url && (
+                          <img 
+                            src={service.image_url} 
+                            alt={service.name}
+                            className="w-24 h-24 object-cover rounded-lg"
+                          />
+                        )}
                       </div>
-                      {service.image_url && (
-                        <img 
-                          src={service.image_url} 
-                          alt={service.name}
-                          className="w-24 h-24 object-cover rounded-lg"
-                        />
-                      )}
                     </Card>
                   ))}
                 </div>
