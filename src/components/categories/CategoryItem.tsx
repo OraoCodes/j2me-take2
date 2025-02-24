@@ -34,7 +34,7 @@ export const CategoryItem = ({
   onToggleVisibility,
 }: CategoryItemProps) => {
   return (
-    <div className="flex items-center justify-between p-4 border-b last:border-b-0">
+    <div className="flex items-center justify-between p-4 border-b last:border-b-0 group">
       <div className="flex items-center gap-3 flex-1">
         <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
         {editingId === category.id ? (
