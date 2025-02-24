@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -179,9 +178,7 @@ const PaymentMethods = () => {
             Skip
           </Button>
           <Button
-            onClick={() => {
-              // Navigate to next page
-            }}
+            onClick={() => navigate("/social-links")}
             className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
             Next
