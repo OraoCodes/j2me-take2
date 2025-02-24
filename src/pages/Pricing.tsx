@@ -64,7 +64,7 @@ const PricingPage = () => {
               </ul>
               <Button 
                 className="w-full bg-emerald-500 hover:bg-emerald-600 mt-6"
-                onClick={() => navigate("/create-service")}
+                onClick={() => navigate("/service-share")}
               >
                 Select Free Plan
               </Button>
@@ -103,7 +103,7 @@ const PricingPage = () => {
               </ul>
               <Button 
                 className="w-full bg-gebeya-pink hover:bg-pink-600 mt-6"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/service-share")}
               >
                 Upgrade to Pro
               </Button>
@@ -138,7 +138,7 @@ const PricingPage = () => {
               </ul>
               <Button 
                 className="w-full bg-gebeya-orange hover:bg-orange-600 mt-6"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/service-share")}
               >
                 Go Business
               </Button>

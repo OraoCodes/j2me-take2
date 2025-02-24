@@ -15,6 +15,7 @@ import AddProducts from "./pages/AddProducts";
 import PaymentMethods from "./pages/PaymentMethods";
 import SocialLinks from "./pages/SocialLinks";
 import StoreOptimization from "./pages/StoreOptimization";
+import ServiceShare from "./pages/ServiceShare";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/payment-methods" element={<PaymentMethods />} />
           <Route path="/social-links" element={<SocialLinks />} />
           <Route path="/store-optimization" element={<StoreOptimization />} />
+          <Route path="/service-share" element={<ServiceShare />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
