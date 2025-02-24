@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
-import { Truck, Package, MessageSquareMore, Gift, Globe, CreditCard } from "lucide-react";
+import { Calendar, MessageSquareMore, Gift, Globe, CreditCard, Mail } from "lucide-react";
 
 interface OptimizationOption {
   id: string;
   name: string;
+  description: string;
   icon: JSX.Element;
   enabled: boolean;
   plan?: "BUSINESS" | "PREMIUM";
@@ -18,44 +19,50 @@ const StoreOptimization = () => {
   const navigate = useNavigate();
   const [options, setOptions] = useState<OptimizationOption[]>([
     {
-      id: "delivery",
-      name: "Add Delivery option",
-      icon: <Truck className="w-6 h-6" />,
-      enabled: false,
-    },
-    {
-      id: "selfPickup",
-      name: "Add Self Pick-up option",
-      icon: <Package className="w-6 h-6" />,
+      id: "instantBooking",
+      name: "Enable Instant Booking",
+      description: "Clients can book your services automatically without manual confirmation.",
+      icon: <Calendar className="w-6 h-6" />,
       enabled: false,
     },
     {
       id: "whatsappBot",
-      name: "WhatsApp Bot notifications",
+      name: "WhatsApp Auto-Responses",
+      description: "Automate replies & confirmations for client inquiries.",
       icon: <MessageSquareMore className="w-6 h-6" />,
       enabled: false,
       plan: "BUSINESS",
     },
     {
       id: "loyalty",
-      name: "Loyalty",
+      name: "Client Loyalty & Rewards",
+      description: "Offer discounts & exclusive deals for repeat clients.",
       icon: <Gift className="w-6 h-6" />,
       enabled: false,
       plan: "BUSINESS",
     },
     {
-      id: "domains",
-      name: "Buy or connect existing domains",
+      id: "customDomain",
+      name: "Custom Domain & Branding",
+      description: "Use your own domain & remove platform branding.",
       icon: <Globe className="w-6 h-6" />,
       enabled: false,
       plan: "PREMIUM",
     },
     {
-      id: "creditCards",
-      name: "Accept credit cards",
+      id: "onlinePayments",
+      name: "Accept Online Payments",
+      description: "Enable MPesa, Card, PayPal, and other payment options.",
       icon: <CreditCard className="w-6 h-6" />,
       enabled: false,
       plan: "PREMIUM",
+    },
+    {
+      id: "reminders",
+      name: "Send SMS & Email Reminders",
+      description: "Automatically remind clients of upcoming appointments.",
+      icon: <Mail className="w-6 h-6" />,
+      enabled: false,
     },
   ]);
 
@@ -100,10 +107,10 @@ const StoreOptimization = () => {
         {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">
-            Optimize your store's operations and enhance your branding
+            Optimize Your Service Page & Enhance Your Branding
           </h1>
           <p className="text-gray-600 text-lg">
-            Optimize your store's operations and enhance your branding
+            Customize your service page with advanced features
           </p>
         </div>
 
@@ -115,20 +122,23 @@ const StoreOptimization = () => {
               className="bg-white rounded-xl border border-gray-100 p-4"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {option.icon}
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{option.name}</span>
-                    {option.plan && (
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        option.plan === "BUSINESS" 
-                          ? "bg-[#E6F0FF] text-[#3B82F6]" 
-                          : "bg-[#F0E6FF] text-[#9333EA]"
-                      }`}>
-                        {option.plan}
-                      </span>
-                    )}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    {option.icon}
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{option.name}</span>
+                      {option.plan && (
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          option.plan === "BUSINESS" 
+                            ? "bg-[#E6F0FF] text-[#3B82F6]" 
+                            : "bg-[#F0E6FF] text-[#9333EA]"
+                        }`}>
+                          {option.plan}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-sm text-gray-500 ml-9">{option.description}</p>
                 </div>
                 <Switch
                   checked={option.enabled}
@@ -144,6 +154,7 @@ const StoreOptimization = () => {
           <Button
             onClick={() => {
               // Navigate to next page
+              navigate("/next-page");
             }}
             className="w-full h-12 bg-[#2A2A2A] hover:opacity-90 text-white"
           >
