@@ -541,7 +541,9 @@ const Dashboard = () => {
                   onDelete={handleDeleteCategory}
                 />
               </>
-            ) : showServices ? (
+            )}
+
+            {showServices && (
               <>
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-2">
@@ -647,7 +649,9 @@ const Dashboard = () => {
                   </div>
                 </div>
               </>
-            ) : (
+            )}
+
+            {!showCategories && !showServices && (
               <>
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
                   <div className="p-6">
