@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Home, Search, PlusCircle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Service = Database['public']['Tables']['services']['Row'];
 type FullProfile = Database['public']['Tables']['profiles']['Row'];
-
-// Define a type for just the fields we need from the profile
 type ProfileDisplay = Pick<FullProfile, 'id' | 'company_name' | 'profile_image_url' | 'service_page_link'>;
 
 const ServicePage = () => {
@@ -18,11 +17,11 @@ const ServicePage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     const fetchProfileAndServices = async () => {
       try {
-        // If userId is not provided in the URL, try to get the current user
         let targetUserId = userId;
         
         if (!targetUserId) {
@@ -34,7 +33,6 @@ const ServicePage = () => {
           }
         }
 
-        // Fetch profile information
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, company_name, profile_image_url, service_page_link')
@@ -52,7 +50,6 @@ const ServicePage = () => {
           console.log('No profile found for user:', targetUserId);
         }
 
-        // Fetch services
         const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
@@ -86,89 +83,89 @@ const ServicePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-pink-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gebeya-pink/10 py-6 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {profile?.profile_image_url && (
-                <img 
-                  src={profile.profile_image_url} 
-                  alt="Profile" 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-gebeya-pink"
-                />
-              )}
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-                  {profile?.company_name || "Service Provider"}
-                </h1>
-                <p className="text-gray-600">{profile?.service_page_link}</p>
-              </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex flex-col items-center mb-8">
+          {profile?.profile_image_url ? (
+            <img 
+              src={profile.profile_image_url} 
+              alt={profile?.company_name || "Profile"} 
+              className="w-24 h-24 rounded-full object-cover mb-4"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-gray-200 mb-4 flex items-center justify-center">
+              <span className="text-gray-400 text-2xl">Logo</span>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" className="text-gray-600 hover:text-gebeya-pink hover:bg-pink-50">
-                Home
-              </Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-gebeya-pink hover:bg-pink-50">
-                Search
-              </Button>
-            </div>
-          </div>
+          )}
+          <h1 className="text-2xl font-bold mb-2">{profile?.company_name || "Service Provider"}</h1>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+        <Tabs defaultValue="home" className="w-full mb-8">
+          <TabsList className="w-full flex justify-center gap-8">
+            <TabsTrigger 
+              value="home" 
+              onClick={() => setActiveTab("home")}
+              className={`flex items-center gap-2 px-4 py-2 ${activeTab === "home" ? "border-b-2 border-black" : ""}`}
+            >
+              <Home className="w-5 h-5" />
+              Home
+            </TabsTrigger>
+            <TabsTrigger 
+              value="search"
+              onClick={() => setActiveTab("search")}
+              className={`flex items-center gap-2 px-4 py-2 ${activeTab === "search" ? "border-b-2 border-black" : ""}`}
+            >
+              <Search className="w-5 h-5" />
+              Search
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {error ? (
-          <div className="text-center text-red-500 py-12">
-            {error}
-          </div>
+          <div className="text-center text-red-500 py-12">{error}</div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold mb-6 text-gray-800 text-center">Services</h2>
+            <h2 className="text-xl font-bold mb-6">Products</h2>
             {services.length === 0 ? (
               <div className="text-center text-gray-600 py-12">
                 No services available at the moment.
               </div>
             ) : (
-              <div className="max-w-4xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {services.map((service) => (
-                    <Card 
-                      key={service.id} 
-                      className="overflow-hidden border-gebeya-pink/10 hover:border-gebeya-pink/20 transition-all duration-300 hover:shadow-lg group"
-                    >
-                      {service.image_url && (
-                        <div className="relative overflow-hidden">
-                          <img 
-                            src={service.image_url} 
-                            alt={service.name}
-                            className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-800">{service.name}</h3>
-                        <p className="text-gebeya-pink font-medium mt-1">
-                          Ksh {service.price.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-2">{service.description}</p>
-                        <Button 
-                          className="w-full mt-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-all duration-300 transform hover:scale-[1.02]"
-                        >
-                          Request Service
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 gap-6 mb-12">
+                {services.map((service) => (
+                  <Card 
+                    key={service.id} 
+                    className="p-4 flex justify-between items-center border rounded-lg"
+                  >
+                    <div>
+                      <h3 className="font-semibold text-lg">{service.name}</h3>
+                      <p className="text-gray-900">Ksh {service.price.toLocaleString()}</p>
+                    </div>
+                    {service.image_url && (
+                      <img 
+                        src={service.image_url} 
+                        alt={service.name}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                    )}
+                  </Card>
+                ))}
               </div>
             )}
           </>
         )}
-      </main>
+
+        <div className="flex flex-col items-center gap-4 mt-8">
+          <Button 
+            variant="outline"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-black"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Create your own SoloServe
+          </Button>
+          <p className="text-gray-600">{profile?.service_page_link}</p>
+        </div>
+      </div>
     </div>
   );
 };
