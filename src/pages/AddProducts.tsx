@@ -59,19 +59,21 @@ const AddProducts = () => {
 
         {/* Main Content */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Add products</h1>
+          <h1 className="text-4xl font-bold mb-4">Add Your Services</h1>
           <p className="text-gray-600 text-lg">
-            Add product names, prices, and images to your store
+            List your services, set pricing, and upload images to showcase your work
           </p>
         </div>
 
-        {/* Product Forms */}
+        {/* Service Forms */}
         <div className="space-y-8">
           {products.map((product, index) => (
             <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor={`product-name-${index}`}>Product name</Label>
+                  <Label htmlFor={`product-name-${index}`} className="flex items-center gap-2">
+                    <span>🔹</span> Service Name
+                  </Label>
                   <Input
                     id={`product-name-${index}`}
                     value={product.name}
@@ -81,12 +83,14 @@ const AddProducts = () => {
                       setProducts(newProducts);
                     }}
                     className="mt-1"
-                    placeholder="Product name"
+                    placeholder="Enter service name"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`product-price-${index}`}>Price</Label>
+                  <Label htmlFor={`product-price-${index}`} className="flex items-center gap-2">
+                    <span>💰</span> Price
+                  </Label>
                   <div className="relative mt-1">
                     <Input
                       id={`product-price-${index}`}
@@ -98,6 +102,7 @@ const AddProducts = () => {
                         setProducts(newProducts);
                       }}
                       className="pl-8"
+                      placeholder="Enter price"
                     />
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
@@ -123,7 +128,7 @@ const AddProducts = () => {
                       htmlFor={`product-image-${index}`}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50"
                     >
-                      <Image className="w-5 h-5" />
+                      <span>🖼️</span>
                       Add image
                     </label>
                   </div>
@@ -139,7 +144,7 @@ const AddProducts = () => {
                   <div className="mt-4">
                     <img
                       src={product.imagePreview}
-                      alt="Product preview"
+                      alt="Service preview"
                       className="w-24 h-24 object-cover rounded-lg"
                     />
                   </div>
@@ -149,13 +154,13 @@ const AddProducts = () => {
           ))}
         </div>
 
-        {/* Add Product Button */}
+        {/* Add Service Button */}
         <button
           onClick={addProduct}
           className="w-full mt-6 py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-gebeya-pink hover:text-gebeya-pink flex items-center justify-center gap-2"
         >
           <Plus className="w-5 h-5" />
-          Add product
+          Add Another Service
         </button>
 
         {/* Navigation Buttons */}
