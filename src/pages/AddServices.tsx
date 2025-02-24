@@ -207,20 +207,16 @@ const AddServices = () => {
     try {
       const prompt = `Create a professional, high-quality image for a service named "${product.name}". The image should be suitable for a business website and showcase the service in an appealing way.`;
 
-      const response = await fetch('/api/generate-service-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
+      const { data, error } = await supabase.functions.invoke('generate-service-image', {
+        body: { prompt }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate image');
+      if (error) throw error;
+
+      if (!data?.imageUrl) {
+        throw new Error('No image URL returned');
       }
 
-      const data = await response.json();
-      
       const imageResponse = await fetch(data.imageUrl);
       const blob = await imageResponse.blob();
       const file = new File([blob], `${product.name}-ai-generated.png`, { type: 'image/png' });
