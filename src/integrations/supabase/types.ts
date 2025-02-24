@@ -13,23 +13,35 @@ export type Database = {
         Row: {
           company_name: string | null
           created_at: string | null
+          currency: string | null
           id: string
+          profile_image_url: string | null
+          service_page_link: string | null
           service_requests_per_month: string | null
           service_type: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           company_name?: string | null
           created_at?: string | null
+          currency?: string | null
           id: string
+          profile_image_url?: string | null
+          service_page_link?: string | null
           service_requests_per_month?: string | null
           service_type?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           company_name?: string | null
           created_at?: string | null
+          currency?: string | null
           id?: string
+          profile_image_url?: string | null
+          service_page_link?: string | null
           service_requests_per_month?: string | null
           service_type?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
