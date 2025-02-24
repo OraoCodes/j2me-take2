@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Header } from "@/components/Header";
 import { FormSection } from "@/components/service-form/FormSection";
@@ -38,6 +38,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<ImagePreview[]>([]);
+  const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
   const [formData, setFormData] = useState({
     name: "",
     visibility: "public",
@@ -120,6 +121,15 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
       newImages.splice(index, 1);
       return newImages;
     });
+    if (coverImageIndex === index) {
+      setCoverImageIndex(0);
+    } else if (coverImageIndex > index) {
+      setCoverImageIndex(coverImageIndex - 1);
+    }
+  };
+
+  const setCoverImage = (index: number) => {
+    setCoverImageIndex(index);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -133,6 +143,27 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
         throw new Error("No user found");
       }
 
+      let coverImageUrl = null;
+      if (images.length > 0) {
+        const coverImage = images[coverImageIndex];
+        const fileExt = coverImage.file.name.split('.').pop();
+        const fileName = `${user.id}-cover-${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('profile-images')
+          .upload(fileName, coverImage.file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(fileName);
+          coverImageUrl = publicUrl;
+        }
+      }
+
       const { data: serviceData, error: serviceError } = await supabase
         .from('services')
         .insert({
@@ -142,6 +173,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
           is_active: formData.visibility === 'public',
           user_id: user.id,
           category_id: formData.category || null,
+          image_url: coverImageUrl,
         })
         .select()
         .single();
@@ -152,6 +184,8 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
       }
 
       for (let i = 0; i < images.length; i++) {
+        if (i === coverImageIndex) continue; // Skip cover image as it's already uploaded
+        
         const { file } = images[i];
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Math.random()}.${fileExt}`;
@@ -364,6 +398,7 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
 
                 <div>
                   <Label>Images / Portfolio</Label>
+                  <p className="text-sm text-gray-500 mb-2">First image will be used as cover</p>
                   <div className="mt-1">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
                       {images.map((image, index) => (
@@ -371,15 +406,30 @@ const CreateService = ({ onSuccess }: CreateServiceProps) => {
                           <img
                             src={image.previewUrl}
                             alt={`Preview ${index + 1}`}
-                            className="w-full aspect-square object-cover rounded-lg"
+                            className={`w-full aspect-square object-cover rounded-lg ${
+                              index === coverImageIndex ? 'ring-2 ring-gebeya-pink' : ''
+                            }`}
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-4 h-4 text-gray-600" />
-                          </button>
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setCoverImage(index)}
+                              className={`p-1.5 rounded-full shadow-md transition-opacity ${
+                                index === coverImageIndex
+                                  ? 'bg-gebeya-pink text-white opacity-100'
+                                  : 'bg-white text-gray-600 opacity-0 group-hover:opacity-100'
+                              }`}
+                            >
+                              <ImageIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="p-1.5 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4 text-gray-600" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                       <label className="cursor-pointer">
