@@ -1,15 +1,7 @@
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 interface CreateCategoryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,18 +9,16 @@ interface CreateCategoryDialogProps {
   onCategoryNameChange: (name: string) => void;
   onCreateCategory: () => void;
 }
-
 export const CreateCategoryDialog = ({
   isOpen,
   onOpenChange,
   categoryName,
   onCategoryNameChange,
-  onCreateCategory,
+  onCreateCategory
 }: CreateCategoryDialogProps) => {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+  return <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>Create category</Button>
+        
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -37,18 +27,12 @@ export const CreateCategoryDialog = ({
         <div className="space-y-4">
           <div>
             <Label htmlFor="categoryName">Category name</Label>
-            <Input
-              id="categoryName"
-              value={categoryName}
-              onChange={(e) => onCategoryNameChange(e.target.value)}
-              placeholder="Enter category name"
-            />
+            <Input id="categoryName" value={categoryName} onChange={e => onCategoryNameChange(e.target.value)} placeholder="Enter category name" />
           </div>
           <Button onClick={onCreateCategory} className="w-full">
             Create
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
