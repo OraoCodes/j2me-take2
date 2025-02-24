@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { 
@@ -23,19 +22,158 @@ import {
   Store,
   CreditCard,
   Palette,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Info
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { CategoryItem } from "@/components/categories/CategoryItem";
+import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
+
+interface Category {
+  id: string;
+  name: string;
+  is_visible: boolean;
+  sequence: number;
+  user_id: string;
+  created_at: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("visible");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (showCategories) {
+      fetchCategories();
+    }
+  }, [showCategories]);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('service_categories')
+      .select('*')
+      .order('sequence', { ascending: true });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch categories. Please try again.",
+      });
+    } else {
+      setCategories(data as Category[]);
+    }
+  };
+
+  const createCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Category name cannot be empty.",
+      });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .insert([
+        {
+          name: newCategoryName.trim(),
+          sequence: categories.length,
+          user_id: user.id
+        }
+      ]);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category created successfully.",
+      });
+      setNewCategoryName("");
+      setIsDialogOpen(false);
+      fetchCategories();
+    }
+  };
+
+  const startEditing = (category: Category) => {
+    setEditingId(category.id);
+    setEditingName(category.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  const saveEditing = async () => {
+    if (!editingId || !editingName.trim()) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .update({ name: editingName.trim() })
+      .eq('id', editingId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category name. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category updated successfully.",
+      });
+      setEditingId(null);
+      setEditingName("");
+      fetchCategories();
+    }
+  };
+
+  const toggleVisibility = async (category: Category) => {
+    const { error } = await supabase
+      .from('service_categories')
+      .update({ is_visible: !category.is_visible })
+      .eq('id', category.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category visibility. Please try again.",
+      });
+    } else {
+      fetchCategories();
+    }
+  };
 
   const serviceMenuItems = [
     { label: "All", onClick: () => navigate('/services') },
-    { label: "Category", onClick: () => navigate('/service-categories') },
+    { label: "Category", onClick: () => setShowCategories(true) },
   ];
 
   const designMenuItems = [
@@ -46,7 +184,7 @@ const Dashboard = () => {
   ];
 
   const sidebarItems = [
-    { icon: <Home />, label: "Dashboard" },
+    { icon: <Home />, label: "Dashboard", onClick: () => setShowCategories(false) },
     { icon: <Grid />, label: "Orders" },
     { 
       icon: <Package />, 
@@ -91,9 +229,12 @@ const Dashboard = () => {
     { number: 6, title: "Invite staff", action: "Upgrade", completed: false },
   ];
 
+  const filteredCategories = categories.filter(category => 
+    activeTab === "visible" ? category.is_visible : !category.is_visible
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6">
         <div className="px-6 mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -105,7 +246,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main Menu */}
         <nav className="space-y-1 px-3">
           {sidebarItems.map((item) => (
             <div key={item.label}>
@@ -179,111 +319,177 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="ml-64">
         <Header />
         <div className="p-8">
           <div className="max-w-5xl mx-auto">
-            {/* Setup Guide */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">Setup guide</h2>
-                  <a href="#" className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1">
-                    Tutorials
-                    <ChevronRight className="w-4 h-4" />
-                  </a>
+            {showCategories ? (
+              <>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-semibold">Category</h1>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Organize your services into categories</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline">Change sequence</Button>
+                    <CreateCategoryDialog
+                      isOpen={isDialogOpen}
+                      onOpenChange={setIsDialogOpen}
+                      categoryName={newCategoryName}
+                      onCategoryNameChange={setNewCategoryName}
+                      onCreateCategory={createCategory}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-4">
-                  {setupSteps.map((step) => (
-                    <div key={step.number} className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        step.completed
-                          ? "bg-green-100 text-green-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}>
-                        {step.completed ? (
-                          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          step.number
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{step.title}</p>
-                      </div>
-                      <Button 
-                        variant={step.action === "Upgrade" ? "default" : "outline"}
-                        className={step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""}
-                        onClick={step.onClick}
-                      >
-                        {step.action}
-                      </Button>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList>
+                    <TabsTrigger value="visible">Visible</TabsTrigger>
+                    <TabsTrigger value="hidden">Hidden</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="visible" className="mt-6">
+                    <div className="bg-white rounded-lg shadow">
+                      {filteredCategories.map((category) => (
+                        <CategoryItem
+                          key={category.id}
+                          category={category}
+                          editingId={editingId}
+                          editingName={editingName}
+                          onStartEditing={startEditing}
+                          onSaveEditing={saveEditing}
+                          onCancelEditing={cancelEditing}
+                          onEditingNameChange={setEditingName}
+                          onToggleVisibility={toggleVisibility}
+                        />
+                      ))}
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="hidden" className="mt-6">
+                    <div className="bg-white rounded-lg shadow">
+                      {filteredCategories.map((category) => (
+                        <CategoryItem
+                          key={category.id}
+                          category={category}
+                          editingId={editingId}
+                          editingName={editingName}
+                          onStartEditing={startEditing}
+                          onSaveEditing={saveEditing}
+                          onCancelEditing={cancelEditing}
+                          onEditingNameChange={setEditingName}
+                          onToggleVisibility={toggleVisibility}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Setup guide</h2>
+                    <a href="#" className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                      Tutorials
+                      <ChevronRight className="w-4 h-4" />
+                    </a>
+                  </div>
+
+                  <div className="space-y-4">
+                    {setupSteps.map((step) => (
+                      <div key={step.number} className="flex items-center gap-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          step.completed
+                            ? "bg-green-100 text-green-600"
+                            : "bg-gray-100 text-gray-600"
+                        }`}>
+                          {step.completed ? (
+                            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            step.number
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{step.title}</p>
+                        </div>
+                        <Button 
+                          variant={step.action === "Upgrade" ? "default" : "outline"}
+                          className={step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""}
+                          onClick={step.onClick}
+                        >
+                          {step.action}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 p-6">
+                  <div className="flex justify-between items-center text-sm">
+                    <div>
+                      <p className="text-gray-600 mb-1">Views</p>
+                      <p className="text-2xl font-semibold">0</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-1">Orders</p>
+                      <p className="text-2xl font-semibold">0</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-1">Sales</p>
+                      <p className="text-2xl font-semibold">KSh 0.00</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-6 rounded-xl text-white mb-8">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Subscribe now at $1</h3>
+                    <p className="text-white/90 mb-4">
+                      Kickstart a strong 2025 with our Premium Plan - Now just $1 (originally $19)
+                    </p>
+                    <Button variant="secondary" className="bg-white text-gebeya-pink hover:bg-white/90">
+                      Upgrade
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold mb-4">Basic plan</h3>
+                <div className="space-y-4">
+                  {[
+                    { icon: <Settings className="w-5 h-5" />, label: "Setup wizard" },
+                    { icon: <FileText className="w-5 h-5" />, label: "Getting started" },
+                    { icon: <Users className="w-5 h-5" />, label: "Subscriber guide" },
+                    { icon: <MessageCircle className="w-5 h-5" />, label: "Helpdesk" },
+                  ].map((item) => (
+                    <a
+                      key={item.label}
+                      href="#"
+                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </a>
                   ))}
                 </div>
               </div>
-
-              {/* Stats */}
-              <div className="border-t border-gray-100 p-6">
-                <div className="flex justify-between items-center text-sm">
-                  <div>
-                    <p className="text-gray-600 mb-1">Views</p>
-                    <p className="text-2xl font-semibold">0</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 mb-1">Orders</p>
-                    <p className="text-2xl font-semibold">0</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 mb-1">Sales</p>
-                    <p className="text-2xl font-semibold">KSh 0.00</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Premium Plan Card */}
-            <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-6 rounded-xl text-white mb-8">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Subscribe now at $1</h3>
-                  <p className="text-white/90 mb-4">
-                    Kickstart a strong 2025 with our Premium Plan - Now just $1 (originally $19)
-                  </p>
-                  <Button variant="secondary" className="bg-white text-gebeya-pink hover:bg-white/90">
-                    Upgrade
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold mb-4">Basic plan</h3>
-              <div className="space-y-4">
-                {[
-                  { icon: <Settings className="w-5 h-5" />, label: "Setup wizard" },
-                  { icon: <FileText className="w-5 h-5" />, label: "Getting started" },
-                  { icon: <Users className="w-5 h-5" />, label: "Subscriber guide" },
-                  { icon: <MessageCircle className="w-5 h-5" />, label: "Helpdesk" },
-                ].map((item) => (
-                  <a
-                    key={item.label}
-                    href="#"
-                    className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3">
-                      {item.icon}
-                      <span className="font-medium">{item.label}</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </a>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
