@@ -17,6 +17,7 @@ import CreateServicePage from "@/pages/CreateServicePage";
 import PaymentMethods from "@/pages/PaymentMethods";
 import SocialLinks from "@/pages/SocialLinks";
 import StoreOptimization from "@/pages/StoreOptimization";
+import AvailabilitySettings from "@/pages/AvailabilitySettings";
 import "./App.css";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
         <Route path="/payment-methods" element={<PaymentMethods />} />
         <Route path="/social-links" element={<SocialLinks />} />
         <Route path="/store-optimization" element={<StoreOptimization />} />
+        <Route path="/availability" element={<AvailabilitySettings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />

@@ -178,6 +178,13 @@ const Dashboard = () => {
       },
       isSelected: showMarketing
     },
+    { 
+      icon: <Settings />, 
+      label: "Availability",
+      onClick: () => {
+        navigate('/availability');
+      }
+    },
     { icon: <Settings />, label: "Settings" },
   ];
 
