@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Wallet, Banknote, ChevronDown } from "lucide-react";
@@ -7,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentMethod {
   id: string;
@@ -22,6 +25,8 @@ interface MpesaDetails {
 
 const PaymentMethods = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [mpesaDetails, setMpesaDetails] = useState<MpesaDetails>({
     idType: "",
     phoneNumber: "",
@@ -56,6 +61,92 @@ const PaymentMethods = () => {
       enabled: false,
     },
   ]);
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  const loadPaymentMethods = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setPaymentMethods(methods => methods.map(method => ({
+          ...method,
+          enabled: data[`${method.id}_enabled`]
+        })));
+
+        if (data.mpesa_id_type || data.mpesa_phone) {
+          setMpesaDetails({
+            idType: data.mpesa_id_type || "",
+            phoneNumber: data.mpesa_phone || "",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load payment methods.",
+      });
+    }
+  };
+
+  const savePaymentMethods = async () => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        navigate('/auth');
+        return;
+      }
+
+      const paymentData = {
+        user_id: session.session.user.id,
+        mpesa_id_type: paymentMethods.find(m => m.id === 'mpesa')?.enabled ? mpesaDetails.idType : null,
+        mpesa_phone: paymentMethods.find(m => m.id === 'mpesa')?.enabled ? mpesaDetails.phoneNumber : null,
+        cash_enabled: paymentMethods.find(m => m.id === 'cash')?.enabled || false,
+        mpesa_enabled: paymentMethods.find(m => m.id === 'mpesa')?.enabled || false,
+        wallet_enabled: paymentMethods.find(m => m.id === 'wallet')?.enabled || false,
+      };
+
+      const { error } = await supabase
+        .from('payment_methods')
+        .upsert(paymentData, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Payment methods saved successfully!",
+      });
+
+      navigate('/social-links');
+    } catch (error) {
+      console.error('Error saving payment methods:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save payment methods.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const togglePaymentMethod = (id: string) => {
     setPaymentMethods(methods =>
@@ -178,10 +269,11 @@ const PaymentMethods = () => {
             Skip
           </Button>
           <Button
-            onClick={() => navigate("/social-links")}
+            onClick={savePaymentMethods}
+            disabled={isLoading}
             className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
-            Next
+            {isLoading ? "Saving..." : "Next"}
           </Button>
         </div>
       </div>
