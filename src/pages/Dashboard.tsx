@@ -52,6 +52,7 @@ import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
 import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
 import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
 import { supabase } from "@/integrations/supabase/client";
+import CustomersView from "@/components/customers/CustomersView";
 
 interface Category {
   id: string;
@@ -101,6 +102,7 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showServiceRequests, setShowServiceRequests] = useState(false);
   const [hasRequests, setHasRequests] = useState(false);
+  const [showCustomers, setShowCustomers] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -253,6 +255,7 @@ const Dashboard = () => {
         setShowCategories(false);
         setShowServices(false);
         setShowServiceRequests(false);
+        setShowCustomers(false);
       }
     },
     { 
@@ -262,6 +265,7 @@ const Dashboard = () => {
         setShowCategories(false);
         setShowServices(false);
         setShowServiceRequests(true);
+        setShowCustomers(false);
       }
     },
     { 
@@ -272,7 +276,16 @@ const Dashboard = () => {
       submenuItems: serviceMenuItems,
       onClick: () => setIsServicesOpen(!isServicesOpen)
     },
-    { icon: <Users />, label: "Customers" },
+    { 
+      icon: <Users />, 
+      label: "Customers",
+      onClick: () => {
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(true);
+      }
+    },
     { 
       icon: <PenTool />, 
       label: "Design",
@@ -573,7 +586,7 @@ const Dashboard = () => {
             <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
           </div>
 
-          {!showCategories && !showServices && !showServiceRequests && !showCreateService && (
+          {!showCategories && !showServices && !showServiceRequests && !showCustomers && !showCreateService && (
             <>
               <SetupGuideSection steps={setupSteps} />
               <SubscriptionCard />
@@ -802,6 +815,8 @@ const Dashboard = () => {
           )}
 
           {showServiceRequests && <ServiceRequestsView />}
+
+          {showCustomers && <CustomersView />}
         </div>
       </div>
     </div>
