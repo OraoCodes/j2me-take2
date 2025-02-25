@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -78,7 +77,6 @@ export const ServiceCheckoutDialog = ({
       const minutes = scheduledDate.getMinutes();
       const period = hours >= 12 ? "PM" : "AM";
       
-      // Convert to 12-hour format
       if (hours > 12) {
         hours -= 12;
       } else if (hours === 0) {
@@ -160,7 +158,6 @@ export const ServiceCheckoutDialog = ({
         period,
       });
 
-      // Increment by 15 minutes
       currentMinute += 15;
       if (currentMinute >= 60) {
         currentMinute = 0;
@@ -186,7 +183,6 @@ export const ServiceCheckoutDialog = ({
     }
 
     try {
-      // Convert selected time to 24-hour format
       let hourIn24 = parseInt(hour);
       if (period === "PM" && hourIn24 !== 12) {
         hourIn24 += 12;
@@ -245,6 +241,11 @@ export const ServiceCheckoutDialog = ({
   };
 
   const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
+  const uniqueHours = Array.from(new Set(availableTimeSlots.map(slot => slot.hour)));
+  const availableMinutes = availableTimeSlots.filter(slot => slot.hour === hour).map(slot => slot.minute);
+  const availablePeriods = Array.from(new Set(availableTimeSlots
+    .filter(slot => slot.hour === hour)
+    .map(slot => slot.period)));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -317,7 +318,12 @@ export const ServiceCheckoutDialog = ({
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={setDate}
+                    onSelect={(newDate) => {
+                      setDate(newDate);
+                      setHour("");
+                      setMinute("");
+                      setPeriod("AM");
+                    }}
                     disabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
@@ -328,7 +334,7 @@ export const ServiceCheckoutDialog = ({
                 </div>
               </div>
 
-              {date && availableTimeSlots.length > 0 && (
+              {date && (
                 <div>
                   <Label>Preferred Time *</Label>
                   <div className="grid grid-cols-3 gap-2 mt-1">
@@ -337,7 +343,7 @@ export const ServiceCheckoutDialog = ({
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from(new Set(availableTimeSlots.map(slot => slot.hour))).map((h) => (
+                        {uniqueHours.map((h) => (
                           <SelectItem key={h} value={h}>
                             {h}
                           </SelectItem>
@@ -345,34 +351,37 @@ export const ServiceCheckoutDialog = ({
                       </SelectContent>
                     </Select>
 
-                    <Select value={minute} onValueChange={setMinute}>
+                    <Select 
+                      value={minute} 
+                      onValueChange={setMinute}
+                      disabled={!hour}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableTimeSlots
-                          .filter(slot => slot.hour === hour)
-                          .map((slot) => (
-                            <SelectItem key={slot.minute} value={slot.minute}>
-                              {slot.minute}
-                            </SelectItem>
-                          ))}
+                        {availableMinutes.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 
-                    <Select value={period} onValueChange={setPeriod}>
+                    <Select 
+                      value={period} 
+                      onValueChange={setPeriod}
+                      disabled={!hour}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="AM/PM" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from(new Set(availableTimeSlots
-                          .filter(slot => slot.hour === hour && slot.minute === minute)
-                          .map(slot => slot.period)))
-                          .map((p) => (
-                            <SelectItem key={p} value={p}>
-                              {p}
-                            </SelectItem>
-                          ))}
+                        {availablePeriods.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
