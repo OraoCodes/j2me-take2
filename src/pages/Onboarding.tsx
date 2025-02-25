@@ -76,7 +76,7 @@ const Onboarding = () => {
         title: "Success",
         description: "Your business details have been saved!",
       });
-      navigate("/service-share"); // Changed from "/pricing" to "/service-share"
+      navigate("/settings"); // Changed from "/service-share" to "/settings"
     } catch (error) {
       toast({
         variant: "destructive",
