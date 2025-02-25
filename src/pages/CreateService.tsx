@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -55,8 +54,7 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
     price: initialData?.price?.toString() || "",
     discountedPrice: "",
     duration: "1-hour",
-    customDuration: "", // Add this field
-    customQuote: false,
+    customDuration: "",
     description: initialData?.description || "",
     instantBooking: true,
     serviceMode: "online",
@@ -384,17 +382,6 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                     />
                   </div>
                 )}
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Custom Quote Option</Label>
-                    <p className="text-sm text-gray-500">Enable flexible pricing inquiry</p>
-                  </div>
-                  <Switch
-                    checked={formData.customQuote}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, customQuote: checked }))}
-                  />
-                </div>
               </div>
             </FormSection>
 
