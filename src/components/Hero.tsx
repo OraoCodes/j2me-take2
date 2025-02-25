@@ -55,7 +55,7 @@ export const Hero = () => {
             >
               <CarouselContent>
                 <CarouselItem>
-                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden relative">
                     <img
                       src="/lovable-uploads/43596b3e-9e4c-4d5a-b25f-6019cc8e2c6c.png"
                       alt="Service Professional managing their business"
@@ -64,10 +64,15 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-white text-lg font-medium">
+                        Kevin uses SoloServe to send automated reminders and follow-ups to his clients.
+                      </p>
+                    </div>
                   </div>
                 </CarouselItem>
                 <CarouselItem>
-                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden relative">
                     <img
                       src="/lovable-uploads/03acda6a-09af-4789-985c-0642df7b4b14.png"
                       alt="Professional using SoloServe app"
@@ -76,10 +81,15 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-white text-lg font-medium">
+                        Brian uses SoloServe to schedule shoots and receive secure online payments from clients.
+                      </p>
+                    </div>
                   </div>
                 </CarouselItem>
                 <CarouselItem>
-                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden relative">
                     <img
                       src="/lovable-uploads/8834b56d-b4d5-42a0-9364-175e2674f577.png"
                       alt="Service provider interacting with customer"
@@ -88,6 +98,11 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-white text-lg font-medium">
+                        Wairimu uses SoloServe to organize appointments and keep her clients coming back.
+                      </p>
+                    </div>
                   </div>
                 </CarouselItem>
               </CarouselContent>
