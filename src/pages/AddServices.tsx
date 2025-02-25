@@ -269,8 +269,10 @@ const AddServices = () => {
       const newProducts = [...products];
       newProducts[index] = {
         ...newProducts[index],
-        image: file,
-        imagePreview: data.imageData,
+        images: [...newProducts[index].images, {
+          file: file,
+          preview: data.imageData
+        }]
       };
       setProducts(newProducts);
 
