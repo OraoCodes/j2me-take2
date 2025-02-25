@@ -64,10 +64,12 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                      <p className="text-white text-lg font-medium">
-                        Kevin uses SoloServe to send automated reminders and follow-ups to his clients.
-                      </p>
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
+                        <p className="text-white text-lg font-medium">
+                          Kevin uses SoloServe to send automated reminders and follow-ups to his clients.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>
@@ -81,10 +83,12 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                      <p className="text-white text-lg font-medium">
-                        Brian uses SoloServe to schedule shoots and receive secure online payments from clients.
-                      </p>
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
+                        <p className="text-white text-lg font-medium">
+                          Brian uses SoloServe to schedule shoots and receive secure online payments from clients.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>
@@ -98,10 +102,12 @@ export const Hero = () => {
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                      <p className="text-white text-lg font-medium">
-                        Wairimu uses SoloServe to organize appointments and keep her clients coming back.
-                      </p>
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
+                        <p className="text-white text-lg font-medium">
+                          Wairimu uses SoloServe to organize appointments and keep her clients coming back.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>
