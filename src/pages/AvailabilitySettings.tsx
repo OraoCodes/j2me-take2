@@ -251,10 +251,10 @@ export default function AvailabilitySettings() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="w-full max-w-[1400px] mx-auto py-8 px-4 space-y-6">
       <h1 className="text-2xl font-bold text-gebeya-pink mb-8">Availability Settings</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <Card className="border-gebeya-pink/20">
           <CardHeader>
             <CardTitle className="text-gebeya-purple">Weekly Schedule</CardTitle>
@@ -275,19 +275,19 @@ export default function AvailabilitySettings() {
                 </div>
                 
                 {setting.is_available && (
-                  <div className="flex items-center gap-1 ml-12 sm:ml-0">
+                  <div className="flex items-center gap-2 ml-12 sm:ml-0">
                     <Input
                       type="time"
                       value={setting.start_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'start_time', e.target.value)}
-                      className="w-20 sm:w-24 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-24 sm:w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
-                    <span className="text-gebeya-purple whitespace-nowrap px-1">to</span>
+                    <span className="text-gebeya-purple whitespace-nowrap px-2">to</span>
                     <Input
                       type="time"
                       value={setting.end_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'end_time', e.target.value)}
-                      className="w-20 sm:w-24 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-24 sm:w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
                   </div>
                 )}
