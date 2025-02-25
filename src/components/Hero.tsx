@@ -12,7 +12,7 @@ import { useRef } from "react";
 export const Hero = () => {
   const navigate = useNavigate();
   const plugin = useRef(
-    Autoplay({ delay: 6000, stopOnInteraction: true })
+    Autoplay({ delay: 9000, stopOnInteraction: true })
   );
 
   return (
