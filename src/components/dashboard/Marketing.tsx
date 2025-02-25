@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
@@ -19,7 +18,6 @@ export const Marketing = () => {
       if (user) {
         setStoreUrl(`/services/${user.id}`);
         
-        // Fetch business name and profile image from profiles table
         const { data: profile } = await supabase
           .from('profiles')
           .select('company_name, profile_image_url')
@@ -86,15 +84,12 @@ export const Marketing = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      // Set canvas size
       canvas.width = 600;
       canvas.height = 800;
 
-      // Draw black background
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw "SCAN ME" text
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 60px Arial';
       ctx.textAlign = 'center';
@@ -103,7 +98,6 @@ export const Marketing = () => {
       ctx.font = '24px Arial';
       ctx.fillText('TO VISIT OUR WEBSITE', canvas.width / 2, 140);
 
-      // Load and draw QR code
       const fullUrl = `${window.location.origin}${storeUrl}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
       const qrImage = new Image();
@@ -116,28 +110,22 @@ export const Marketing = () => {
         qrImage.onerror = reject;
       });
 
-      // Draw QR code with white background
       const qrSize = 300;
       const qrX = (canvas.width - qrSize) / 2;
       const qrY = 200;
       
-      // Draw white background for QR code
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
       
-      // Draw QR code
       ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
 
-      // Draw business name
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 36px Arial';
       ctx.fillText(businessName, canvas.width / 2, qrY + qrSize + 60);
 
-      // Draw URL at bottom
       ctx.font = '20px Arial';
       ctx.fillText(`${window.location.origin}${storeUrl}`, canvas.width / 2, canvas.height - 40);
 
-      // Convert to blob and download
       canvas.toBlob((blob) => {
         if (!blob) return;
         const url = window.URL.createObjectURL(blob);
@@ -154,25 +142,35 @@ export const Marketing = () => {
     }
   };
 
+  const metaTags = (
+    <Helmet>
+      <title>{`${businessName} - Services`}</title>
+      <meta name="description" content={`Check out our services at ${businessName}`} />
+      <meta property="og:title" content={`${businessName} - Services`} />
+      <meta property="og:description" content={`Check out our services at ${businessName}`} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={`${window.location.origin}${storeUrl}`} />
+      {profileImage && (
+        <meta 
+          property="og:image" 
+          content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} 
+        />
+      )}
+      {profileImage && (
+        <meta 
+          name="twitter:image" 
+          content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} 
+        />
+      )}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={`${businessName} - Services`} />
+      <meta name="twitter:description" content={`Check out our services at ${businessName}`} />
+    </Helmet>
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Update meta tags to include absolute URL for image */}
-      <Helmet>
-        <title>{`${businessName} - Services`}</title>
-        <meta property="og:title" content={`${businessName} - Services`} />
-        <meta property="og:description" content={`Check out our services at ${businessName}`} />
-        {profileImage && (
-          <>
-            <meta property="og:image" content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} />
-            <meta name="twitter:image" content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} />
-          </>
-        )}
-        <meta property="og:url" content={`${window.location.origin}${storeUrl}`} />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${businessName} - Services`} />
-        <meta name="twitter:description" content={`Check out our services at ${businessName}`} />
-      </Helmet>
+      {metaTags}
 
       <div className="flex items-center gap-2 mb-6">
         <h1 className="text-2xl font-semibold">Marketing</h1>
@@ -247,7 +245,6 @@ export const Marketing = () => {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Simple QR Code */}
             <div className="space-y-4">
               <div className="bg-gray-50 p-8 rounded-lg flex justify-center">
                 <img 
@@ -264,7 +261,6 @@ export const Marketing = () => {
               </div>
             </div>
 
-            {/* Styled QR Code */}
             <div className="space-y-4">
               <div className="bg-black p-8 rounded-lg flex flex-col items-center space-y-4">
                 <h3 className="text-white text-2xl font-bold">SCAN ME</h3>
