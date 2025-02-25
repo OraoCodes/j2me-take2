@@ -275,14 +275,14 @@ export default function AvailabilitySettings() {
                 </div>
                 
                 {setting.is_available && (
-                  <div className="flex items-center gap-2 ml-12 sm:ml-0">
+                  <div className="flex items-center gap-1 ml-12 sm:ml-0">
                     <Input
                       type="time"
                       value={setting.start_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'start_time', e.target.value)}
                       className="w-24 sm:w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
-                    <span className="text-gebeya-purple whitespace-nowrap px-2">to</span>
+                    <span className="text-gebeya-purple whitespace-nowrap px-1">to</span>
                     <Input
                       type="time"
                       value={setting.end_time}
