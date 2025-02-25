@@ -54,46 +54,48 @@ export const DashboardHeader = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-white z-[100] border-b border-gray-200">
+    <div className="fixed top-0 left-0 right-0 bg-white z-[100] border-b border-gebeya-purple/10">
       <div className="flex items-center justify-between px-4 h-16">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="mr-3 md:hidden"
+            className="mr-2 md:hidden hover:bg-gebeya-purple/5"
             onClick={toggleMobileMenu}
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-6 w-6 text-gebeya-purple" />
             ) : (
-              <MenuIcon className="h-6 w-6" />
+              <MenuIcon className="h-6 w-6 text-gebeya-purple" />
             )}
           </Button>
-          <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
-          <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
+          <div className="flex items-center gap-2">
+            <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
+            <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-9 w-9 border-2 border-gebeya-pink cursor-pointer hover:opacity-90 transition-opacity">
+              <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-gebeya-pink cursor-pointer hover:opacity-90 transition-all duration-200">
                 <AvatarImage src={profile?.profile_image_url || undefined} alt="Profile" />
                 <AvatarFallback className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white">
                   {profile?.company_name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuContent className="w-56 border-gebeya-purple/10" align="end">
               <DropdownMenuLabel className="flex items-center gap-2">
-                <UserCircle className="h-4 w-4" />
-                <span className="truncate">{profile?.company_name || "My Business"}</span>
+                <UserCircle className="h-4 w-4 text-gebeya-pink" />
+                <span className="truncate text-gebeya-purple">{profile?.company_name || "My Business"}</span>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={navigateToProfile} className="cursor-pointer">
-                <UserCircle className="h-4 w-4 mr-2" />
+              <DropdownMenuSeparator className="bg-gebeya-purple/10" />
+              <DropdownMenuItem onClick={navigateToProfile} className="cursor-pointer hover:bg-gebeya-purple/5">
+                <UserCircle className="h-4 w-4 mr-2 text-gebeya-pink" />
                 <span>Profile Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700">
                 <LogOut className="h-4 w-4 mr-2" />
                 <span>Log out</span>
               </DropdownMenuItem>
