@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
@@ -14,7 +13,7 @@ export const Marketing = () => {
     const fetchStoreUrl = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setStoreUrl(`/services/${user.id}`); // Updated to match the service page route
+        setStoreUrl(`/services/${user.id}`);
       }
       setLoading(false);
     };
@@ -23,7 +22,6 @@ export const Marketing = () => {
   }, []);
 
   const copyToClipboard = (text: string) => {
-    // Get the full URL by combining the current origin with the path
     const fullUrl = `${window.location.origin}${text}`;
     navigator.clipboard.writeText(fullUrl);
   };
@@ -41,9 +39,24 @@ export const Marketing = () => {
     window.open('https://www.instagram.com/accounts/edit', '_blank', 'noopener,noreferrer');
   };
 
-  const handleDownloadQR = () => {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`;
-    window.open(qrUrl, '_blank');
+  const handleDownloadQR = async () => {
+    const fullUrl = `${window.location.origin}${storeUrl}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullUrl)}`;
+    
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'service-qr-code.png';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+    }
   };
 
   return (
