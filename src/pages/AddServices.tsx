@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,10 @@ import { useToast } from "@/components/ui/use-toast";
 interface Product {
   name: string;
   price: number;
-  image?: File;
-  imagePreview?: string;
+  images: Array<{
+    file: File;
+    preview: string;
+  }>;
 }
 
 interface ServiceTemplate {
@@ -90,27 +93,44 @@ const serviceTemplates: ServiceTemplate[] = [
 const AddServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
+  const [products, setProducts] = useState<Product[]>([{ name: "", price: 0, images: [] }]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
 
-  const handleImageUpload = (index: number, file: File) => {
+  const handleImageUpload = (productIndex: number, files: FileList) => {
     const newProducts = [...products];
-    newProducts[index] = {
-      ...newProducts[index],
-      image: file,
-      imagePreview: URL.createObjectURL(file),
+    const newImages = Array.from(files).map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    
+    newProducts[productIndex] = {
+      ...newProducts[productIndex],
+      images: [...newProducts[productIndex].images, ...newImages]
     };
     setProducts(newProducts);
   };
 
+  const removeImage = (productIndex: number, imageIndex: number) => {
+    const newProducts = [...products];
+    const product = newProducts[productIndex];
+    
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(product.images[imageIndex].preview);
+    
+    product.images = product.images.filter((_, index) => index !== imageIndex);
+    setProducts(newProducts);
+  };
+
   const addProduct = () => {
-    setProducts([...products, { name: "", price: 0 }]);
+    setProducts([...products, { name: "", price: 0, images: [] }]);
   };
 
   const removeProduct = (index: number) => {
+    // Cleanup object URLs before removing the product
+    products[index].images.forEach(image => URL.revokeObjectURL(image.preview));
     const newProducts = products.filter((_, i) => i !== index);
     setProducts(newProducts);
   };
@@ -119,7 +139,8 @@ const AddServices = () => {
     setSelectedCategory(template.category);
     const newProducts = template.services.map(service => ({
       name: service.name,
-      price: service.price
+      price: service.price,
+      images: []
     }));
     setProducts(newProducts);
   };
@@ -140,37 +161,55 @@ const AddServices = () => {
 
       const servicesWithUrls = await Promise.all(
         products.map(async (product) => {
-          let imageUrl = null;
-          if (product.image) {
-            const fileName = `${crypto.randomUUID()}-${product.image.name}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('services')
-              .upload(fileName, product.image);
+          const imageUrls = await Promise.all(
+            product.images.map(async (image) => {
+              const fileName = `${crypto.randomUUID()}-${image.file.name}`;
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('services')
+                .upload(fileName, image.file);
 
-            if (uploadError) throw uploadError;
+              if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-              .from('services')
-              .getPublicUrl(fileName);
+              const { data: { publicUrl } } = supabase.storage
+                .from('services')
+                .getPublicUrl(fileName);
 
-            imageUrl = publicUrl;
+              return publicUrl;
+            })
+          );
+
+          const { data: service, error: serviceError } = await supabase
+            .from('services')
+            .insert({
+              name: product.name,
+              price: product.price,
+              user_id: user.id,
+              image_url: imageUrls[0], // Set the first image as the main image
+              is_active: true
+            })
+            .select()
+            .single();
+
+          if (serviceError) throw serviceError;
+
+          // Insert additional images into service_images table
+          if (imageUrls.length > 1) {
+            const additionalImages = imageUrls.slice(1).map((url, index) => ({
+              service_id: service.id,
+              image_url: url,
+              sequence: index + 1
+            }));
+
+            const { error: imagesError } = await supabase
+              .from('service_images')
+              .insert(additionalImages);
+
+            if (imagesError) throw imagesError;
           }
 
-          return {
-            name: product.name,
-            price: product.price,
-            user_id: user.id,
-            image_url: imageUrl,
-            is_active: true
-          };
+          return service;
         })
       );
-
-      const { error } = await supabase
-        .from('services')
-        .insert(servicesWithUrls);
-
-      if (error) throw error;
 
       toast({
         title: "Success",
@@ -362,9 +401,11 @@ const AddServices = () => {
                       id={`product-image-${index}`}
                       className="hidden"
                       accept="image/*"
+                      multiple
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(index, file);
+                        if (e.target.files) {
+                          handleImageUpload(index, e.target.files);
+                        }
                       }}
                     />
                     <label
@@ -372,7 +413,7 @@ const AddServices = () => {
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-50"
                     >
                       <Image className="w-4 h-4" />
-                      Upload image
+                      Upload images
                     </label>
                     <Button
                       variant="outline"
@@ -395,13 +436,23 @@ const AddServices = () => {
                   </button>
                 </div>
 
-                {product.imagePreview && (
-                  <div className="mt-4">
-                    <img
-                      src={product.imagePreview}
-                      alt="Service preview"
-                      className="w-24 h-24 object-cover rounded-lg"
-                    />
+                {product.images.length > 0 && (
+                  <div className="mt-4 flex gap-4 flex-wrap">
+                    {product.images.map((image, imageIndex) => (
+                      <div key={imageIndex} className="relative">
+                        <img
+                          src={image.preview}
+                          alt={`Service preview ${imageIndex + 1}`}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeImage(index, imageIndex)}
+                          className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white hover:bg-red-600"
+                        >
+                          <Trash className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
