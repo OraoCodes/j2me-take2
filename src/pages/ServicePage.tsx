@@ -1,14 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Service, Profile } from '@/types/dashboard';
 import { MetaTags } from '@/components/shared/MetaTags';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ServiceCheckoutDialog } from '@/components/service-checkout/ServiceCheckoutDialog';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Button } from '@/components/ui/button';
 
 interface ServiceImage {
   id: string;
@@ -125,6 +125,12 @@ const ServicePage = () => {
     setSelectedImageIndex(prev => ({ ...prev, [serviceId]: newIndex }));
   };
 
+  const shareOnWhatsApp = () => {
+    const shareText = `Check out the services at ${businessName}: ${window.location.href}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -167,6 +173,14 @@ const ServicePage = () => {
           )}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{businessName}</h1>
           <p className="text-gray-600 mt-2">Available Services</p>
+          
+          <Button
+            onClick={shareOnWhatsApp}
+            className="mt-4 bg-[#25D366] hover:bg-[#128C7E] text-white"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share on WhatsApp
+          </Button>
 
           <div className="relative max-w-md mx-auto mt-6">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -223,7 +237,7 @@ const ServicePage = () => {
                     src={serviceImages[service.id]?.[selectedImageIndex[service.id] || 0]?.image_url || service.image_url}
                     alt={service.name}
                     className="w-full h-full object-cover"
-                    style={{ transition: 'opacity 0.15s ease' }} // Faster image transition
+                    style={{ transition: 'opacity 0.15s ease' }}
                   />
                   {serviceImages[service.id]?.length > 1 && (
                     <div className="absolute bottom-2 right-2 flex gap-1">
