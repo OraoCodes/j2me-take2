@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
     price: initialData?.price?.toString() || "",
     discountedPrice: "",
     duration: "1-hour",
+    customDuration: "", // Add this field
     customQuote: false,
     description: initialData?.description || "",
     instantBooking: true,
@@ -366,6 +368,22 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {formData.duration === 'custom' && (
+                  <div>
+                    <Label htmlFor="customDuration">Custom Duration (minutes) *</Label>
+                    <Input
+                      id="customDuration"
+                      type="number"
+                      min="1"
+                      placeholder="e.g., 45"
+                      value={formData.customDuration}
+                      onChange={(e) => setFormData(prev => ({ ...prev, customDuration: e.target.value }))}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
