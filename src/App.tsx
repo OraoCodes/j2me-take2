@@ -12,6 +12,7 @@ import ServiceCategories from "@/pages/ServiceCategories";
 import ProfilePage from "@/pages/ProfilePage";
 import EditService from "@/pages/EditService";
 import Onboarding from "@/pages/Onboarding";
+import PricingPage from "@/pages/Pricing";
 import "./App.css";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/service-categories" element={<ServiceCategories />} />
         <Route path="/edit-service/:serviceId" element={<EditService />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
