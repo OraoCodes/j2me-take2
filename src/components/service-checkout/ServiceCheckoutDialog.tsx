@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -143,7 +144,6 @@ export const ServiceCheckoutDialog = ({
   };
 
   const handleDateSelect = (newDate: Date | undefined) => {
-    console.log("Date being set:", newDate);
     setDate(newDate);
   };
 
@@ -217,7 +217,8 @@ export const ServiceCheckoutDialog = ({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
+                      type="button"
+                      variant={"outline"}
                       className={cn(
                         "w-full mt-1 justify-start text-left font-normal",
                         !date && "text-muted-foreground"
@@ -227,11 +228,13 @@ export const ServiceCheckoutDialog = ({
                       {date ? format(date, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent side="bottom" align="start" className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={handleDateSelect}
+                      onSelect={(newDate) => {
+                        handleDateSelect(newDate);
+                      }}
                       disabled={(date) => date < new Date()}
                       initialFocus
                     />
