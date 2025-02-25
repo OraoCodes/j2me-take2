@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Info, Loader2, Search, ArrowUpDown, FileDown } from "lucide-react";
+import { Info, Loader2, Search, ArrowUpDown, FileDown, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { AddCustomerDialog } from "./AddCustomerDialog";
 
 interface Customer {
   phone_number: string;
@@ -19,6 +20,7 @@ const CustomersView = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,6 +82,13 @@ const CustomersView = () => {
             </Tooltip>
           </TooltipProvider>
         </div>
+        <Button
+          onClick={() => setIsAddCustomerOpen(true)}
+          className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Customer
+        </Button>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
@@ -131,6 +140,12 @@ const CustomersView = () => {
           )}
         </div>
       </div>
+
+      <AddCustomerDialog
+        isOpen={isAddCustomerOpen}
+        onClose={() => setIsAddCustomerOpen(false)}
+        onSuccess={fetchCustomers}
+      />
     </>
   );
 };
