@@ -15,6 +15,7 @@ import Onboarding from "@/pages/Onboarding";
 import PricingPage from "@/pages/Pricing";
 import ServiceShare from "@/pages/ServiceShare";
 import CreateServicePage from "@/pages/CreateServicePage";
+import PaymentMethods from "@/pages/PaymentMethods";
 import "./App.css";
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/service-share" element={<ServiceShare />} />
         <Route path="/settings" element={<CreateServicePage />} />
+        <Route path="/payment-methods" element={<PaymentMethods />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
