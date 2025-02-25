@@ -7,6 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface ServiceCheckoutDialogProps {
   isOpen: boolean;
@@ -16,7 +25,7 @@ interface ServiceCheckoutDialogProps {
     name: string;
     price: number;
     description: string | null;
-    user_id: string;  // Add user_id to the service interface
+    user_id: string;
   };
 }
 
@@ -27,6 +36,8 @@ export const ServiceCheckoutDialog = ({
 }: ServiceCheckoutDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -38,15 +49,31 @@ export const ServiceCheckoutDialog = ({
     e.preventDefault();
     setLoading(true);
 
+    if (!date || !time) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select both date and time for your service request.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Combine date and time into a single datetime
+    const [hours, minutes] = time.split(':');
+    const scheduledAt = new Date(date);
+    scheduledAt.setHours(parseInt(hours), parseInt(minutes));
+
     try {
       const { error } = await supabase.from("service_requests").insert({
         service_id: service.id,
-        user_id: service.user_id, // Add the user_id from the service
+        user_id: service.user_id,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
         notes: formData.notes,
-        status: 'pending' // Add default status
+        status: 'pending',
+        scheduled_at: scheduledAt.toISOString()
       });
 
       if (error) throw error;
@@ -63,6 +90,8 @@ export const ServiceCheckoutDialog = ({
         phone: "",
         notes: "",
       });
+      setDate(undefined);
+      setTime("");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -136,6 +165,47 @@ export const ServiceCheckoutDialog = ({
                 required
                 className="mt-1"
               />
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label>Preferred Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-1",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label htmlFor="time">Preferred Time *</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                  className="mt-1"
+                />
+              </div>
             </div>
 
             <div>
