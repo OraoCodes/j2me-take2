@@ -13,6 +13,7 @@ interface SidebarNavItemProps {
     onClick?: () => void;
   }>;
   onClick?: () => void;
+  isSelected?: boolean;
 }
 
 export const SidebarNavItem = ({
@@ -22,6 +23,7 @@ export const SidebarNavItem = ({
   isOpen,
   submenuItems,
   onClick,
+  isSelected,
 }: SidebarNavItemProps) => {
   return (
     <div>
@@ -32,7 +34,9 @@ export const SidebarNavItem = ({
           if (onClick) onClick();
         }}
         className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
-          hasSubmenu && isOpen
+          isSelected
+            ? "bg-gray-100 text-gray-900"
+            : hasSubmenu && isOpen
             ? "bg-gray-100 text-gray-900"
             : "text-gray-600 hover:bg-gray-50"
         }`}
