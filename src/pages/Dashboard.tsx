@@ -415,12 +415,44 @@ const Dashboard = () => {
   ];
 
   const setupSteps = [
-    { number: 1, title: "Add your first product", action: "Add product", completed: true },
-    { number: 2, title: "Create your first order", action: "Create order", completed: false, onClick: () => navigate('/service-page') },
-    { number: 3, title: "Add delivery options", action: "Add delivery", completed: true },
-    { number: 4, title: "Set up payment methods", action: "Add payment", completed: false },
-    { number: 5, title: "Set up custom domain", action: "Upgrade", completed: false },
-    { number: 6, title: "Invite staff", action: "Upgrade", completed: false },
+    { 
+      number: 1, 
+      title: "Add your first service", 
+      action: "Add service", 
+      completed: services.length > 0,
+      onClick: () => setShowCreateService(true)
+    },
+    { 
+      number: 2, 
+      title: "Create your first order", 
+      action: "Create order", 
+      completed: false, 
+      onClick: () => navigate('/service-page') 
+    },
+    { 
+      number: 3, 
+      title: "Add delivery options", 
+      action: "Add delivery", 
+      completed: true 
+    },
+    { 
+      number: 4, 
+      title: "Set up payment methods", 
+      action: "Add payment", 
+      completed: false 
+    },
+    { 
+      number: 5, 
+      title: "Set up custom domain", 
+      action: "Upgrade", 
+      completed: false 
+    },
+    { 
+      number: 6, 
+      title: "Invite staff", 
+      action: "Upgrade", 
+      completed: false 
+    },
   ];
 
   const filteredServices = services.filter(service =>
