@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -57,9 +56,8 @@ export default function AvailabilitySettings() {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        // Initialize default settings if none exist
         await initializeDefaultSettings(user.id);
-        await fetchAvailabilitySettings(); // Fetch again after initialization
+        await fetchAvailabilitySettings();
         return;
       }
 
@@ -82,7 +80,7 @@ export default function AvailabilitySettings() {
         day_of_week: i,
         start_time: '09:00',
         end_time: '17:00',
-        is_available: i !== 0 && i !== 6, // Default closed on weekends
+        is_available: i !== 0 && i !== 6,
       }));
 
       const { error } = await supabase
@@ -256,7 +254,7 @@ export default function AvailabilitySettings() {
     <div className="container mx-auto py-8 space-y-6">
       <h1 className="text-2xl font-bold text-gebeya-pink mb-8">Availability Settings</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-gebeya-pink/20">
           <CardHeader>
             <CardTitle className="text-gebeya-purple">Weekly Schedule</CardTitle>
