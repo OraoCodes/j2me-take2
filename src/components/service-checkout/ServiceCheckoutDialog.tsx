@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,10 @@ interface BlockedDate {
   blocked_date: string;
 }
 
+interface BookedSlot {
+  scheduled_at: string;
+}
+
 export const ServiceCheckoutDialog = ({
   isOpen,
   onClose,
@@ -64,6 +67,7 @@ export const ServiceCheckoutDialog = ({
   const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
 
   useEffect(() => {
     if (initialData?.scheduled_at) {
@@ -76,6 +80,12 @@ export const ServiceCheckoutDialog = ({
   useEffect(() => {
     fetchAvailabilitySettings();
   }, [service.user_id]);
+
+  useEffect(() => {
+    if (date) {
+      fetchBookedSlots(date);
+    }
+  }, [date]);
 
   const fetchAvailabilitySettings = async () => {
     setIsLoadingSettings(true);
@@ -114,6 +124,36 @@ export const ServiceCheckoutDialog = ({
     }
   };
 
+  const fetchBookedSlots = async (selectedDate: Date) => {
+    try {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select('scheduled_at')
+        .eq('user_id', service.user_id)
+        .in('status', ['accepted', 'completed'])
+        .gte('scheduled_at', startOfDay.toISOString())
+        .lte('scheduled_at', endOfDay.toISOString());
+
+      if (error) throw error;
+
+      setBookedSlots(data || []);
+      console.log('Booked slots:', data);
+    } catch (error) {
+      console.error('Error fetching booked slots:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load booked slots. Please try again.",
+      });
+    }
+  };
+
   const isDateAvailable = (date: Date) => {
     if (!date || isLoadingSettings) return false;
 
@@ -127,6 +167,22 @@ export const ServiceCheckoutDialog = ({
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
     
     return Boolean(daySetting?.is_available);
+  };
+
+  const isTimeSlotAvailable = (timeSlot: string) => {
+    if (!date) return false;
+
+    const [hours, minutes] = timeSlot.split(':').map(Number);
+    const slotDateTime = new Date(date);
+    slotDateTime.setHours(hours, minutes, 0, 0);
+
+    return !bookedSlots.some(bookedSlot => {
+      const bookedDateTime = new Date(bookedSlot.scheduled_at);
+      return (
+        bookedDateTime.getHours() === hours &&
+        bookedDateTime.getMinutes() === minutes
+      );
+    });
   };
 
   const getAvailableTimeSlots = (date: Date) => {
@@ -151,7 +207,10 @@ export const ServiceCheckoutDialog = ({
 
       let current = baseDate;
       while (current <= endTime) {
-        slots.push(format(current, 'HH:mm'));
+        const timeSlot = format(current, 'HH:mm');
+        if (isTimeSlotAvailable(timeSlot)) {
+          slots.push(timeSlot);
+        }
         current = addMinutes(current, 60);
       }
 
