@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parse, set } from "date-fns";
+import { format, parse, set, addMinutes } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -59,9 +59,7 @@ export const ServiceCheckoutDialog = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date | undefined>(initialData?.scheduled_at || undefined);
-  const [hour, setHour] = useState<string>("");
-  const [minute, setMinute] = useState<string>("");
-  const [period, setPeriod] = useState<string>("AM");
+  const [selectedTime, setSelectedTime] = useState<string>("");
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     email: initialData?.email || "",
@@ -76,19 +74,7 @@ export const ServiceCheckoutDialog = ({
     if (initialData?.scheduled_at) {
       const scheduledDate = new Date(initialData.scheduled_at);
       setDate(scheduledDate);
-      let hours = scheduledDate.getHours();
-      const minutes = scheduledDate.getMinutes();
-      const period = hours >= 12 ? "PM" : "AM";
-      
-      if (hours > 12) {
-        hours -= 12;
-      } else if (hours === 0) {
-        hours = 12;
-      }
-      
-      setHour(hours.toString().padStart(2, '0'));
-      setMinute(minutes.toString().padStart(2, '0'));
-      setPeriod(period);
+      setSelectedTime(format(scheduledDate, 'HH:mm'));
     }
   }, [initialData]);
 
@@ -140,49 +126,30 @@ export const ServiceCheckoutDialog = ({
     return daySetting?.is_available ?? false;
   };
 
-  const generateTimeSlots = (startTime: string, endTime: string) => {
-    const slots: { hour: string; minute: string; period: string }[] = [];
-    const start = parse(startTime, 'HH:mm', new Date());
-    const end = parse(endTime, 'HH:mm', new Date());
-
-    let current = start;
-    while (current <= end) {
-      let hours = current.getHours();
-      const minutes = current.getMinutes();
-      const period = hours >= 12 ? 'PM' : 'AM';
-
-      if (hours > 12) {
-        hours -= 12;
-      } else if (hours === 0) {
-        hours = 12;
-      }
-
-      slots.push({
-        hour: hours.toString().padStart(2, '0'),
-        minute: minutes.toString().padStart(2, '0'),
-        period
-      });
-
-      current = new Date(current.getTime() + 15 * 60000);
-    }
-
-    return slots;
-  };
-
   const getAvailableTimeSlots = (date: Date) => {
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
     
     if (!daySetting?.is_available) return [];
+
+    const slots: string[] = [];
+    const start = parse(daySetting.start_time, 'HH:mm', date);
+    const end = parse(daySetting.end_time, 'HH:mm', date);
     
-    return generateTimeSlots(daySetting.start_time, daySetting.end_time);
+    let current = start;
+    while (current <= end) {
+      slots.push(format(current, 'HH:mm'));
+      current = addMinutes(current, 60);
+    }
+
+    return slots;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!date || !hour || !minute) {
+    if (!date || !selectedTime) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -193,16 +160,10 @@ export const ServiceCheckoutDialog = ({
     }
 
     try {
-      let hourIn24 = parseInt(hour);
-      if (period === "PM" && hourIn24 !== 12) {
-        hourIn24 += 12;
-      } else if (period === "AM" && hourIn24 === 12) {
-        hourIn24 = 0;
-      }
-
+      const [hours, minutes] = selectedTime.split(':').map(Number);
       const scheduledAt = set(date, {
-        hours: hourIn24,
-        minutes: parseInt(minute),
+        hours,
+        minutes,
         seconds: 0,
         milliseconds: 0
       });
@@ -252,13 +213,13 @@ export const ServiceCheckoutDialog = ({
   };
 
   const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
-  const uniqueHours = Array.from(new Set(availableTimeSlots.map(slot => slot.hour)));
-  const availableMinutes = availableTimeSlots
-    .filter(slot => slot.hour === hour && slot.period === period)
-    .map(slot => slot.minute);
-  const availablePeriods = Array.from(new Set(availableTimeSlots
-    .filter(slot => slot.hour === hour)
-    .map(slot => slot.period)));
+
+  const formatTimeSlot = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes);
+    return format(date, 'h:mm a');
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -333,9 +294,7 @@ export const ServiceCheckoutDialog = ({
                     selected={date}
                     onSelect={(newDate) => {
                       setDate(newDate);
-                      setHour("");
-                      setMinute("");
-                      setPeriod("AM");
+                      setSelectedTime("");
                     }}
                     disabled={(date) => {
                       const today = new Date();
@@ -347,63 +306,32 @@ export const ServiceCheckoutDialog = ({
                 </div>
               </div>
 
-              {date && (
+              {date && availableTimeSlots.length > 0 && (
                 <div>
-                  <Label>Preferred Time *</Label>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
-                    <Select value={hour} onValueChange={(value) => {
-                      setHour(value);
-                      setMinute("");
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Hour" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {uniqueHours.map((h) => (
-                          <SelectItem key={h} value={h}>
-                            {h}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select 
-                      value={minute} 
-                      onValueChange={setMinute}
-                      disabled={!hour}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Min" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableMinutes.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select 
-                      value={period} 
-                      onValueChange={(value) => {
-                        setPeriod(value);
-                        setMinute("");
-                      }}
-                      disabled={!hour}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="AM/PM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availablePeriods.map((p) => (
-                          <SelectItem key={p} value={p}>
-                            {p}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <Label>Available Time Slots *</Label>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {availableTimeSlots.map((timeSlot) => (
+                      <Button
+                        key={timeSlot}
+                        type="button"
+                        variant={selectedTime === timeSlot ? "default" : "outline"}
+                        className={`w-full ${
+                          selectedTime === timeSlot 
+                            ? "bg-gebeya-pink hover:bg-gebeya-pink/90" 
+                            : "hover:border-gebeya-pink/50"
+                        }`}
+                        onClick={() => setSelectedTime(timeSlot)}
+                      >
+                        {formatTimeSlot(timeSlot)}
+                      </Button>
+                    ))}
                   </div>
+                </div>
+              )}
+
+              {date && availableTimeSlots.length === 0 && (
+                <div className="text-center text-sm text-gray-500">
+                  No available time slots for the selected date.
                 </div>
               )}
 
