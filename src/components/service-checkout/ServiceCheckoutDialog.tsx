@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,13 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parse, set, addMinutes } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ServiceCheckoutDialogProps {
   isOpen: boolean;
@@ -69,6 +63,7 @@ export const ServiceCheckoutDialog = ({
 
   const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   useEffect(() => {
     if (initialData?.scheduled_at) {
@@ -83,6 +78,7 @@ export const ServiceCheckoutDialog = ({
   }, [service.user_id]);
 
   const fetchAvailabilitySettings = async () => {
+    setIsLoadingSettings(true);
     try {
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('availability_settings')
@@ -90,10 +86,6 @@ export const ServiceCheckoutDialog = ({
         .eq('user_id', service.user_id);
 
       if (availabilityError) throw availabilityError;
-      
-      if (availabilityData) {
-        setAvailabilitySettings(availabilityData);
-      }
 
       const { data: blockedData, error: blockedError } = await supabase
         .from('blocked_dates')
@@ -101,10 +93,15 @@ export const ServiceCheckoutDialog = ({
         .eq('user_id', service.user_id);
 
       if (blockedError) throw blockedError;
+
+      setAvailabilitySettings(availabilityData || []);
+      setBlockedDates(blockedData || []);
       
-      if (blockedData) {
-        setBlockedDates(blockedData);
-      }
+      console.log('Fetched settings:', {
+        availabilityData,
+        blockedData
+      });
+      
     } catch (error) {
       console.error('Error fetching availability settings:', error);
       toast({
@@ -112,61 +109,57 @@ export const ServiceCheckoutDialog = ({
         title: "Error",
         description: "Failed to load availability settings. Please try again.",
       });
+    } finally {
+      setIsLoadingSettings(false);
     }
   };
 
   const isDateAvailable = (date: Date) => {
+    if (!date || isLoadingSettings) return false;
+
     const isBlocked = blockedDates.some(
       blocked => format(new Date(blocked.blocked_date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
+    
     if (isBlocked) return false;
 
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
     
-    console.log('Checking availability for:', {
-      date,
-      dayOfWeek,
-      daySetting,
-      isAvailable: daySetting?.is_available
-    });
-    
-    return daySetting?.is_available ?? false;
+    return Boolean(daySetting?.is_available);
   };
 
   const getAvailableTimeSlots = (date: Date) => {
+    if (!date || isLoadingSettings) return [];
+
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
-    
-    console.log('Getting time slots:', {
-      date,
-      dayOfWeek,
-      daySetting,
-      availabilitySettings
-    });
-    
-    if (!daySetting?.is_available) {
-      console.log('Day is not available');
+
+    if (!daySetting?.is_available || !daySetting.start_time || !daySetting.end_time) {
       return [];
     }
 
-    const slots: string[] = [];
-    const startDate = parse(daySetting.start_time, 'HH:mm', date);
-    const endDate = parse(daySetting.end_time, 'HH:mm', date);
-    
-    console.log('Time range:', {
-      start: format(startDate, 'HH:mm'),
-      end: format(endDate, 'HH:mm')
-    });
-    
-    let current = startDate;
-    while (current <= endDate) {
-      slots.push(format(current, 'HH:mm'));
-      current = addMinutes(current, 60);
-    }
+    try {
+      const slots: string[] = [];
+      const baseDate = new Date(date);
+      const [startHours, startMinutes] = daySetting.start_time.split(':').map(Number);
+      const [endHours, endMinutes] = daySetting.end_time.split(':').map(Number);
 
-    console.log('Generated slots:', slots);
-    return slots;
+      baseDate.setHours(startHours, startMinutes, 0, 0);
+      const endTime = new Date(date);
+      endTime.setHours(endHours, endMinutes, 0, 0);
+
+      let current = baseDate;
+      while (current <= endTime) {
+        slots.push(format(current, 'HH:mm'));
+        current = addMinutes(current, 60);
+      }
+
+      return slots;
+    } catch (error) {
+      console.error('Error generating time slots:', error);
+      return [];
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,14 +229,14 @@ export const ServiceCheckoutDialog = ({
     }
   };
 
-  const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
-
   const formatTimeSlot = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     const date = new Date();
     date.setHours(hours, minutes);
     return format(date, 'h:mm a');
   };
+
+  const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -316,57 +309,52 @@ export const ServiceCheckoutDialog = ({
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={(newDate) => {
-                      if (newDate) {
-                        console.log('Selected date:', newDate);
-                        setDate(newDate);
-                        setSelectedTime("");
-                      }
-                    }}
+                    onSelect={setDate}
                     disabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
-                      const isUnavailable = date < today || !isDateAvailable(date);
-                      console.log('Checking date:', {
-                        date,
-                        isUnavailable,
-                        isPast: date < today,
-                        isAvailable: isDateAvailable(date)
-                      });
-                      return isUnavailable;
+                      return date < today || !isDateAvailable(date);
                     }}
                     className="rounded-md border"
                   />
                 </div>
               </div>
 
-              {date && availableTimeSlots.length > 0 && (
-                <div>
-                  <Label>Available Time Slots *</Label>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {availableTimeSlots.map((timeSlot) => (
-                      <Button
-                        key={timeSlot}
-                        type="button"
-                        variant={selectedTime === timeSlot ? "default" : "outline"}
-                        className={`w-full ${
-                          selectedTime === timeSlot 
-                            ? "bg-gebeya-pink hover:bg-gebeya-pink/90" 
-                            : "hover:border-gebeya-pink/50"
-                        }`}
-                        onClick={() => setSelectedTime(timeSlot)}
-                      >
-                        {formatTimeSlot(timeSlot)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {date && availableTimeSlots.length === 0 && (
+              {isLoadingSettings ? (
                 <div className="text-center text-sm text-gray-500">
-                  No available time slots for the selected date. Please select another date.
+                  Loading available time slots...
                 </div>
+              ) : (
+                <>
+                  {date && availableTimeSlots.length > 0 && (
+                    <div>
+                      <Label>Available Time Slots *</Label>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {availableTimeSlots.map((timeSlot) => (
+                          <Button
+                            key={timeSlot}
+                            type="button"
+                            variant={selectedTime === timeSlot ? "default" : "outline"}
+                            className={`w-full ${
+                              selectedTime === timeSlot 
+                                ? "bg-gebeya-pink hover:bg-gebeya-pink/90" 
+                                : "hover:border-gebeya-pink/50"
+                            }`}
+                            onClick={() => setSelectedTime(timeSlot)}
+                          >
+                            {formatTimeSlot(timeSlot)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {date && availableTimeSlots.length === 0 && (
+                    <div className="text-center text-sm text-gray-500">
+                      No available time slots for the selected date. Please select another date.
+                    </div>
+                  )}
+                </>
               )}
 
               <div>
