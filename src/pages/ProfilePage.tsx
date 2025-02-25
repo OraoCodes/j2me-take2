@@ -29,7 +29,7 @@ export const ProfilePage = () => {
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
     width: 100,
-    height: 56.25, // To maintain 16:9 aspect ratio
+    height: 56.25,
     x: 0,
     y: 0
   });
@@ -37,20 +37,28 @@ export const ProfilePage = () => {
   const { toast } = useToast();
 
   const createProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert([{ id: userId }])
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([{ id: userId }])
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
   };
 
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       let { data: profileData, error } = await supabase
         .from('profiles')
@@ -58,7 +66,8 @@ export const ProfilePage = () => {
         .eq('id', user.id)
         .single();
 
-      if (!profileData) {
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
         profileData = await createProfile(user.id);
       } else if (error) {
         throw error;
@@ -76,6 +85,10 @@ export const ProfilePage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
