@@ -28,7 +28,9 @@ export const CreateCategoryDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>Create category</Button>
+        <Button className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90">
+          Create category
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -44,7 +46,10 @@ export const CreateCategoryDialog = ({
               placeholder="Enter category name"
             />
           </div>
-          <Button onClick={onCreateCategory} className="w-full">
+          <Button 
+            onClick={onCreateCategory} 
+            className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
+          >
             Create
           </Button>
         </div>
