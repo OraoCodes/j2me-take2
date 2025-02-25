@@ -14,7 +14,7 @@ import EditService from "@/pages/EditService";
 import Onboarding from "@/pages/Onboarding";
 import PricingPage from "@/pages/Pricing";
 import ServiceShare from "@/pages/ServiceShare";
-import Settings from "@/pages/Settings";
+import CreateServicePage from "@/pages/CreateServicePage";
 import "./App.css";
 
 function App() {
@@ -34,7 +34,7 @@ function App() {
         <Route path="/edit-service/:serviceId" element={<EditService />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/service-share" element={<ServiceShare />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings" element={<CreateServicePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
