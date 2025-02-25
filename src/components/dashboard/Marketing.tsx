@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, HelpCircle, Download, Instagram } from "lucide-react";
+import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -89,7 +89,7 @@ export const Marketing = () => {
           </div>
 
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <img src="/lovable-uploads/4dcc2955-5c1c-46a7-8326-d2457dc799e7.png" alt="Facebook" className="h-6 w-6" />
+            <Facebook className="h-6 w-6 text-gray-600" />
             <span className="flex-1">Share on Facebook</span>
             <Button 
               variant="outline" 
