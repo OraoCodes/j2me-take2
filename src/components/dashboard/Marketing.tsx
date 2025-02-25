@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
@@ -8,12 +9,15 @@ import { useEffect, useState } from "react";
 export const Marketing = () => {
   const [storeUrl, setStoreUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const [businessName, setBusinessName] = useState("");
 
   useEffect(() => {
     const fetchStoreUrl = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setStoreUrl(`/services/${user.id}`);
+        // Fetch business name from metadata or use a default
+        setBusinessName(user.user_metadata?.business_name || "My Business");
       }
       setLoading(false);
     };
@@ -56,6 +60,80 @@ export const Marketing = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading QR code:', error);
+    }
+  };
+
+  const handleDownloadStyledQR = async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set canvas size
+      canvas.width = 600;
+      canvas.height = 800;
+
+      // Draw black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw "SCAN ME" text
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 60px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCAN ME', canvas.width / 2, 100);
+      
+      ctx.font = '24px Arial';
+      ctx.fillText('TO VISIT OUR WEBSITE', canvas.width / 2, 140);
+
+      // Load and draw QR code
+      const fullUrl = `${window.location.origin}${storeUrl}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
+      const qrImage = new Image();
+      
+      qrImage.crossOrigin = 'anonymous';
+      qrImage.src = qrUrl;
+      
+      await new Promise((resolve, reject) => {
+        qrImage.onload = resolve;
+        qrImage.onerror = reject;
+      });
+
+      // Draw QR code with white background
+      const qrSize = 300;
+      const qrX = (canvas.width - qrSize) / 2;
+      const qrY = 200;
+      
+      // Draw white background for QR code
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+      
+      // Draw QR code
+      ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+      // Draw business name
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText(businessName, canvas.width / 2, qrY + qrSize + 60);
+
+      // Draw URL at bottom
+      ctx.font = '20px Arial';
+      ctx.fillText(`${window.location.origin}${storeUrl}`, canvas.width / 2, canvas.height - 40);
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'styled-qr-code.png';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error creating styled QR code:', error);
     }
   };
 
@@ -139,21 +217,27 @@ export const Marketing = () => {
               className="w-48 h-48"
             />
           </div>
-          <div className="bg-gray-50 p-8 rounded-lg flex justify-center">
-            <img 
-              src="/lovable-uploads/4dcc2955-5c1c-46a7-8326-d2457dc799e7.png"
-              alt="Styled QR Code"
-              className="w-64"
-            />
+          <div className="bg-black p-8 rounded-lg flex flex-col items-center space-y-4">
+            <h3 className="text-white text-2xl font-bold">SCAN ME</h3>
+            <p className="text-white text-sm">TO VISIT OUR WEBSITE</p>
+            <div className="bg-white p-4 rounded-lg">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
+                alt="Styled QR Code"
+                className="w-48 h-48"
+              />
+            </div>
+            <p className="text-white font-semibold text-xl">{businessName}</p>
+            <p className="text-white text-sm">{window.location.origin}{storeUrl}</p>
           </div>
           <div className="flex justify-end gap-4">
             <Button variant="outline" onClick={handleDownloadQR}>
               <Download className="h-4 w-4 mr-2" />
-              Download QR Code
+              Download Simple QR
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleDownloadStyledQR}>
               <Download className="h-4 w-4 mr-2" />
-              Download Styled QR Code
+              Download Styled QR
             </Button>
           </div>
         </CardContent>
