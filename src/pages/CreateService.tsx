@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -50,16 +51,13 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
   const [coverImageIndex, setCoverImageIndex] = useState<number>(0);
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    visibility: initialData?.is_active ? "public" : "private",
     category: initialData?.category_id || "",
-    serviceType: "one-time",
     price: initialData?.price?.toString() || "",
     discountedPrice: "",
     duration: "1-hour",
     customQuote: false,
     description: initialData?.description || "",
     instantBooking: true,
-    whatsappEnabled: true,
     serviceMode: "online",
     travelFee: "",
     serviceArea: "",
@@ -177,9 +175,10 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
         name: formData.name,
         price: parseFloat(formData.price) || 0,
         description: formData.description,
-        is_active: formData.visibility === 'public',
+        is_active: true,
         category_id: formData.category || null,
         image_url: coverImageUrl,
+        instant_booking: formData.instantBooking
       };
 
       let error;
@@ -213,7 +212,7 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
 
       if (serviceId) {
         for (let i = 0; i < images.length; i++) {
-          if (i === coverImageIndex) continue; // Skip cover image as it's already uploaded
+          if (i === coverImageIndex) continue;
         
           const { file } = images[i];
           const fileExt = file.name.split('.').pop();
@@ -304,22 +303,6 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="visibility">Visibility</Label>
-                  <Select
-                    value={formData.visibility}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, visibility: value }))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select visibility" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="private">Private</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={formData.category}
@@ -334,23 +317,6 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                           {category.name}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="serviceType">Service Type</Label>
-                  <Select
-                    value={formData.serviceType}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select service type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="one-time">One-Time</SelectItem>
-                      <SelectItem value="recurring">Recurring</SelectItem>
-                      <SelectItem value="subscription">Subscription</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -497,17 +463,6 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, instantBooking: checked }))}
                   />
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>WhatsApp Inquiry</Label>
-                    <p className="text-sm text-gray-500">Enable direct messaging</p>
-                  </div>
-                  <Switch
-                    checked={formData.whatsappEnabled}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, whatsappEnabled: checked }))}
-                  />
-                </div>
               </div>
             </FormSection>
 
@@ -551,17 +506,6 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                     onChange={(e) => setFormData(prev => ({ ...prev, serviceArea: e.target.value }))}
                     className="mt-1"
                   />
-                </div>
-              </div>
-            </FormSection>
-
-            <FormSection number="6" title="Advanced Settings">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="flex items-center gap-3 text-gray-500">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Available on Business & Premium plans</span>
                 </div>
               </div>
             </FormSection>
