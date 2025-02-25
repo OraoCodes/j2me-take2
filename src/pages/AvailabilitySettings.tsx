@@ -6,13 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -49,152 +42,208 @@ export default function AvailabilitySettings() {
   }, []);
 
   const fetchAvailabilitySettings = async () => {
-    const { data, error } = await supabase
-      .from('availability_settings')
-      .select('*')
-      .order('day_of_week');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('availability_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('day_of_week');
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        // Initialize default settings if none exist
+        await initializeDefaultSettings(user.id);
+        await fetchAvailabilitySettings(); // Fetch again after initialization
+        return;
+      }
+
+      setWeeklySchedule(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching availability settings:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch availability settings",
       });
-      return;
     }
+  };
 
-    setWeeklySchedule(data);
-    setLoading(false);
+  const initializeDefaultSettings = async (userId: string) => {
+    try {
+      const defaultSettings = Array.from({ length: 7 }, (_, i) => ({
+        user_id: userId,
+        day_of_week: i,
+        start_time: '09:00',
+        end_time: '17:00',
+        is_available: i !== 0 && i !== 6, // Default closed on weekends
+      }));
+
+      const { error } = await supabase
+        .from('availability_settings')
+        .insert(defaultSettings);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error initializing availability settings:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to initialize availability settings",
+      });
+    }
   };
 
   const fetchBlockedDates = async () => {
-    const { data, error } = await supabase
-      .from('blocked_dates')
-      .select('*')
-      .order('blocked_date');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('blocked_dates')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('blocked_date');
+
+      if (error) throw error;
+
+      setBlockedDates(data || []);
+    } catch (error) {
+      console.error('Error fetching blocked dates:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch blocked dates",
       });
-      return;
     }
-
-    setBlockedDates(data);
   };
 
   const updateDayAvailability = async (dayOfWeek: number, isAvailable: boolean) => {
-    const setting = weeklySchedule.find(s => s.day_of_week === dayOfWeek);
-    if (!setting) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { error } = await supabase
-      .from('availability_settings')
-      .update({ is_available: isAvailable })
-      .eq('day_of_week', dayOfWeek);
+      const { error } = await supabase
+        .from('availability_settings')
+        .update({ is_available: isAvailable })
+        .eq('user_id', user.id)
+        .eq('day_of_week', dayOfWeek);
 
-    if (error) {
+      if (error) throw error;
+
+      setWeeklySchedule(weeklySchedule.map(s =>
+        s.day_of_week === dayOfWeek ? { ...s, is_available: isAvailable } : s
+      ));
+
+      toast({
+        title: "Success",
+        description: `${dayNames[dayOfWeek]} availability updated`,
+      });
+    } catch (error) {
+      console.error('Error updating availability:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to update availability",
       });
-      return;
     }
-
-    setWeeklySchedule(weeklySchedule.map(s =>
-      s.day_of_week === dayOfWeek ? { ...s, is_available: isAvailable } : s
-    ));
-
-    toast({
-      title: "Success",
-      description: `${dayNames[dayOfWeek]} availability updated`,
-    });
   };
 
   const updateDayTimes = async (dayOfWeek: number, field: 'start_time' | 'end_time', value: string) => {
-    const { error } = await supabase
-      .from('availability_settings')
-      .update({ [field]: value })
-      .eq('day_of_week', dayOfWeek);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (error) {
+      const { error } = await supabase
+        .from('availability_settings')
+        .update({ [field]: value })
+        .eq('user_id', user.id)
+        .eq('day_of_week', dayOfWeek);
+
+      if (error) throw error;
+
+      setWeeklySchedule(weeklySchedule.map(s =>
+        s.day_of_week === dayOfWeek ? { ...s, [field]: value } : s
+      ));
+
+      toast({
+        title: "Success",
+        description: `Updated ${field === 'start_time' ? 'start' : 'end'} time for ${dayNames[dayOfWeek]}`,
+      });
+    } catch (error) {
+      console.error('Error updating time:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to update time",
       });
-      return;
     }
-
-    setWeeklySchedule(weeklySchedule.map(s =>
-      s.day_of_week === dayOfWeek ? { ...s, [field]: value } : s
-    ));
   };
 
   const blockDate = async () => {
     if (!selectedDate) return;
 
-    // Get the current user's session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('blocked_dates')
+        .insert({
+          blocked_date: format(selectedDate, 'yyyy-MM-dd'),
+          reason: blockReason,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      await fetchBlockedDates();
+      setSelectedDate(undefined);
+      setBlockReason('');
+      
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to block dates",
+        title: "Success",
+        description: "Date blocked successfully",
       });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('blocked_dates')
-      .insert({
-        blocked_date: format(selectedDate, 'yyyy-MM-dd'),
-        reason: blockReason,
-        user_id: session.user.id // Add the user_id here
-      });
-
-    if (error) {
+    } catch (error) {
+      console.error('Error blocking date:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to block date",
       });
-      return;
     }
-
-    await fetchBlockedDates();
-    setSelectedDate(undefined);
-    setBlockReason('');
-    
-    toast({
-      title: "Success",
-      description: "Date blocked successfully",
-    });
   };
 
   const unblockDate = async (id: string) => {
-    const { error } = await supabase
-      .from('blocked_dates')
-      .delete()
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('blocked_dates')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
+      if (error) throw error;
+
+      setBlockedDates(blockedDates.filter(d => d.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "Date unblocked successfully",
+      });
+    } catch (error) {
+      console.error('Error unblocking date:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to unblock date",
       });
-      return;
     }
-
-    setBlockedDates(blockedDates.filter(d => d.id !== id));
-    
-    toast({
-      title: "Success",
-      description: "Date unblocked successfully",
-    });
   };
 
   if (loading) {
@@ -203,7 +252,7 @@ export default function AvailabilitySettings() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <h1 className="text-3xl font-bold">Availability Settings</h1>
+      <h1 className="text-3xl font-bold mb-8">Availability Settings</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
