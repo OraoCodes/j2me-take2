@@ -147,25 +147,30 @@ const ServiceCategories = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-white to-pink-50">
       <Header />
       <div className="container mx-auto px-4 pt-20">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">Category</h1>
+            <h1 className="text-2xl font-semibold text-gebeya-pink">Category</h1>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-400" />
+                  <Info className="h-4 w-4 text-gebeya-pink/60 hover:text-gebeya-pink transition-colors" />
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-white border-gebeya-pink/20">
                   <p>Organize your services into categories</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">Change sequence</Button>
+            <Button 
+              variant="outline" 
+              className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10"
+            >
+              Change sequence
+            </Button>
             <CreateCategoryDialog
               isOpen={isDialogOpen}
               onOpenChange={setIsDialogOpen}
@@ -176,14 +181,28 @@ const ServiceCategories = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="visible">Visible</TabsTrigger>
-            <TabsTrigger value="hidden">Hidden</TabsTrigger>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="bg-white border border-gebeya-pink/20">
+            <TabsTrigger 
+              value="visible"
+              className="data-[state=active]:bg-gebeya-pink data-[state=active]:text-white"
+            >
+              Visible
+            </TabsTrigger>
+            <TabsTrigger 
+              value="hidden"
+              className="data-[state=active]:bg-gebeya-pink data-[state=active]:text-white"
+            >
+              Hidden
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="visible" className="mt-6">
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow-lg border border-gebeya-pink/10">
               {filteredCategories.map((category) => (
                 <CategoryItem
                   key={category.id}
@@ -198,11 +217,16 @@ const ServiceCategories = () => {
                   onEditCategory={setSelectedCategory}
                 />
               ))}
+              {filteredCategories.length === 0 && (
+                <div className="p-8 text-center text-gray-500">
+                  No visible categories found
+                </div>
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="hidden" className="mt-6">
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow-lg border border-gebeya-pink/10">
               {filteredCategories.map((category) => (
                 <CategoryItem
                   key={category.id}
@@ -217,6 +241,11 @@ const ServiceCategories = () => {
                   onEditCategory={setSelectedCategory}
                 />
               ))}
+              {filteredCategories.length === 0 && (
+                <div className="p-8 text-center text-gray-500">
+                  No hidden categories found
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
