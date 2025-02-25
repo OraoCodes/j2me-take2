@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Service, Profile } from '@/types/dashboard';
 import { MetaTags } from '@/components/shared/MetaTags';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ServiceCheckoutDialog } from '@/components/service-checkout/ServiceCheckoutDialog';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -127,7 +128,7 @@ const ServicePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading...</div>
+        <Loader2 className="h-8 w-8 animate-spin text-gebeya-pink" />
       </div>
     );
   }
