@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -97,7 +96,7 @@ const Dashboard = () => {
 
   const serviceMenuItems = [
     { label: "All", onClick: () => setShowServices(true) },
-    { label: "Category", onClick: () => setShowCategories(true) },
+    { label: "Category", onClick: () => navigate('/service-categories') },
   ];
 
   const designMenuItems = [
