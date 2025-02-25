@@ -426,19 +426,24 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Menu Button - Updated z-index and position */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-6 left-4 z-[100] md:hidden"
-        onClick={toggleMobileMenu}
-      >
-        {isMobileMenuOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MenuIcon className="h-6 w-6" />
-        )}
-      </Button>
+      {/* Header with Logo and Menu */}
+      <div className="fixed top-0 left-0 right-0 bg-white z-[100] border-b border-gray-200">
+        <div className="flex items-center px-4 h-16">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-3 md:hidden"
+            onClick={toggleMobileMenu}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <MenuIcon className="h-6 w-6" />
+            )}
+          </Button>
+          <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
+        </div>
+      </div>
 
       {/* Backdrop for mobile */}
       {isMobileMenuOpen && (
@@ -448,7 +453,7 @@ const Dashboard = () => {
         />
       )}
 
-      {/* Sidebar - Updated z-index */}
+      {/* Sidebar */}
       <div className={cn(
         "fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6 z-[95]",
         "transform transition-transform duration-300 ease-in-out",
@@ -540,13 +545,102 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className={cn(
-        "transition-all duration-300 ease-in-out",
+        "transition-all duration-300 ease-in-out pt-16",
         "md:ml-64"
       )}>
-        <Header />
-        <div className="p-8 pt-20">
-          <div className="max-w-5xl mx-auto">
-            {showCreateService ? (
+        <div className="p-4 md:p-8">
+          <h1 className="text-2xl font-bold mb-6">KickSandSneakers</h1>
+
+          {!showCategories && !showServices && !showCreateService && (
+            <>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
+                <div className="p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Setup guide</h2>
+                    <a href="#" className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                      Tutorials
+                      <ChevronRight className="w-4 h-4" />
+                    </a>
+                  </div>
+
+                  <div className="space-y-6">
+                    {setupSteps.map((step) => (
+                      <div key={step.number} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+                        <div className="flex gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                            step.completed
+                              ? "bg-green-100 text-green-600"
+                              : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {step.completed ? (
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              step.number
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium mb-2">{step.title}</h3>
+                            <Button 
+                              variant={step.action === "Upgrade" ? "default" : "outline"}
+                              className={cn(
+                                "w-full justify-center",
+                                step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""
+                              )}
+                              onClick={step.onClick}
+                            >
+                              {step.action}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-6 rounded-xl text-white mb-8">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Subscribe now at $1</h3>
+                    <p className="text-white/90 mb-4">
+                      Kickstart a strong 2025 with our Premium Plan - Now just $1 (originally $19)
+                    </p>
+                    <Button variant="secondary" className="bg-white text-gebeya-pink hover:bg-white/90">
+                      Upgrade
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-semibold mb-4">Basic plan</h3>
+                <div className="space-y-4">
+                  {[
+                    { icon: <Settings className="w-5 h-5" />, label: "Setup wizard" },
+                    { icon: <FileText className="w-5 h-5" />, label: "Getting started" },
+                    { icon: <Users className="w-5 h-5" />, label: "Subscriber guide" },
+                    { icon: <MessageCircle className="w-5 h-5" />, label: "Helpdesk" },
+                  ].map((item) => (
+                    <a
+                      key={item.label}
+                      href="#"
+                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {showCreateService ? (
               <>
                 <div className="flex items-center justify-between mb-8">
                   <h1 className="text-2xl font-semibold text-gray-900">Create Service</h1>
@@ -784,107 +878,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </>
-            ) : (
-              <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-semibold">Setup guide</h2>
-                      <a href="#" className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1">
-                        Tutorials
-                        <ChevronRight className="w-4 h-4" />
-                      </a>
-                    </div>
-
-                    <div className="space-y-4">
-                      {setupSteps.map((step) => (
-                        <div key={step.number} className="flex items-center gap-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            step.completed
-                              ? "bg-green-100 text-green-600"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
-                            {step.completed ? (
-                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            ) : (
-                              step.number
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{step.title}</p>
-                          </div>
-                          <Button 
-                            variant={step.action === "Upgrade" ? "default" : "outline"}
-                            className={step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""}
-                            onClick={step.onClick}
-                          >
-                            {step.action}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-100 p-6">
-                    <div className="flex justify-between items-center text-sm">
-                      <div>
-                        <p className="text-gray-600 mb-1">Views</p>
-                        <p className="text-2xl font-semibold">0</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Orders</p>
-                        <p className="text-2xl font-semibold">0</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Sales</p>
-                        <p className="text-2xl font-semibold">KSh 0.00</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-6 rounded-xl text-white mb-8">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Subscribe now at $1</h3>
-                      <p className="text-white/90 mb-4">
-                        Kickstart a strong 2025 with our Premium Plan - Now just $1 (originally $19)
-                      </p>
-                      <Button variant="secondary" className="bg-white text-gebeya-pink hover:bg-white/90">
-                        Upgrade
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold mb-4">Basic plan</h3>
-                  <div className="space-y-4">
-                    {[
-                      { icon: <Settings className="w-5 h-5" />, label: "Setup wizard" },
-                      { icon: <FileText className="w-5 h-5" />, label: "Getting started" },
-                      { icon: <Users className="w-5 h-5" />, label: "Subscriber guide" },
-                      { icon: <MessageCircle className="w-5 h-5" />, label: "Helpdesk" },
-                    ].map((item) => (
-                      <a
-                        key={item.label}
-                        href="#"
-                        className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          {item.icon}
-                          <span className="font-medium">{item.label}</span>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+            ) : null}
         </div>
       </div>
     </div>
