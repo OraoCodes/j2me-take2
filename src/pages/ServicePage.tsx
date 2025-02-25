@@ -217,11 +217,13 @@ const ServicePage = () => {
           </div>
         )}
 
-        <ServiceCheckoutDialog
-          isOpen={!!selectedService}
-          onClose={() => setSelectedService(null)}
-          service={selectedService as Service}
-        />
+        {selectedService && (  // Only render dialog if selectedService exists
+          <ServiceCheckoutDialog
+            isOpen={true}
+            onClose={() => setSelectedService(null)}
+            service={selectedService}  // Remove the type casting
+          />
+        )}
       </div>
     </div>
   );
