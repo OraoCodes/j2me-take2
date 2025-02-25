@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
 import { ServiceCheckoutDialog } from '@/components/service-checkout/ServiceCheckoutDialog';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface ServiceImage {
   id: string;
@@ -27,10 +27,23 @@ const ServicePage = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [serviceImages, setServiceImages] = useState<{ [key: string]: ServiceImage[] }>({});
   const [selectedImageIndex, setSelectedImageIndex] = useState<{ [key: string]: number }>({});
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
       if (userId) {
+        const { data: categoriesData } = await supabase
+          .from('service_categories')
+          .select('id, name')
+          .eq('user_id', userId)
+          .eq('is_visible', true)
+          .order('sequence', { ascending: true });
+
+        if (categoriesData) {
+          setCategories(categoriesData);
+        }
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('company_name, profile_image_url')
@@ -42,7 +55,6 @@ const ServicePage = () => {
           setProfileImage(profile.profile_image_url || "");
         }
 
-        // Fetch services
         const { data: servicesData } = await supabase
           .from('services')
           .select(`
@@ -59,7 +71,6 @@ const ServicePage = () => {
         if (servicesData) {
           setServices(servicesData);
           
-          // Fetch images for all services
           const { data: imagesData } = await supabase
             .from('service_images')
             .select('*')
@@ -85,11 +96,16 @@ const ServicePage = () => {
     fetchBusinessDetails();
   }, [userId]);
 
-  const filteredServices = services.filter(service => 
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.service_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredServices = services.filter(service => {
+    const matchesSearch = 
+      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.service_categories?.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = selectedCategory ? service.category_id === selectedCategory : true;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const handleImageNavigation = (serviceId: string, direction: 'prev' | 'next') => {
     const images = serviceImages[serviceId] || [];
@@ -145,6 +161,37 @@ const ServicePage = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-full"
             />
+          </div>
+
+          <div className="mt-4">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex space-x-2 p-1">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-4 py-2 rounded-full text-sm transition-colors ${
+                    selectedCategory === null
+                      ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2 rounded-full text-sm transition-colors ${
+                      selectedCategory === category.id
+                        ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" className="h-2" />
+            </ScrollArea>
           </div>
         </div>
 
@@ -217,11 +264,11 @@ const ServicePage = () => {
           </div>
         )}
 
-        {selectedService && (  // Only render dialog if selectedService exists
+        {selectedService && (
           <ServiceCheckoutDialog
             isOpen={true}
             onClose={() => setSelectedService(null)}
-            service={selectedService}  // Remove the type casting
+            service={selectedService}
           />
         )}
       </div>
