@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -42,22 +43,23 @@ const ServicePage = () => {
           }
         }
 
+        // First, try to get existing view count
+        const { data: existingView } = await supabase
+          .from('page_views')
+          .select('view_count')
+          .eq('user_id', targetUserId)
+          .maybeSingle();
+
+        // If there's an existing record, update it. Otherwise, insert a new one
         const { error: viewError } = await supabase
           .from('page_views')
-          .upsert(
-            { 
-              user_id: targetUserId,
-              view_count: 1,
-              last_viewed_at: new Date().toISOString()
-            },
-            {
-              onConflict: 'user_id',
-              update: {
-                view_count: supabase.raw('page_views.view_count + 1'),
-                last_viewed_at: new Date().toISOString()
-              }
-            }
-          );
+          .upsert({
+            user_id: targetUserId,
+            view_count: (existingView?.view_count || 0) + 1,
+            last_viewed_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
+          });
 
         if (viewError) {
           console.error("Error updating view count:", viewError);
