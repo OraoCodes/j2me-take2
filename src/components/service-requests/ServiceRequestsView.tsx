@@ -16,10 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface ServiceRequest {
@@ -31,6 +32,7 @@ interface ServiceRequest {
   status: string;
   notes: string | null;
   created_at: string;
+  scheduled_at: string;
   services: {
     name: string;
     price: number;
@@ -40,6 +42,7 @@ interface ServiceRequest {
 const ServiceRequestsView = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,7 +60,7 @@ const ServiceRequestsView = () => {
             price
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
 
@@ -116,6 +119,15 @@ const ServiceRequestsView = () => {
     );
   };
 
+  const getRequestsForDate = (date: Date | undefined) => {
+    if (!date) return [];
+    const dateString = format(date, 'yyyy-MM-dd');
+    return requests.filter(request => {
+      if (!request.scheduled_at) return false;
+      return format(parseISO(request.scheduled_at), 'yyyy-MM-dd') === dateString;
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -142,44 +154,70 @@ const ServiceRequestsView = () => {
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {requests.length > 0 ? (
-          requests.map((request) => (
-            <Card key={request.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{request.services.name}</CardTitle>
-                    <CardDescription>
-                      Requested by {request.customer_name} on{" "}
-                      {format(new Date(request.created_at), "PPP")}
-                    </CardDescription>
-                  </div>
-                  {getStatusBadge(request.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium">Contact Information</p>
-                      <p className="text-sm text-gray-500">
-                        {request.customer_email && (
-                          <span className="block">Email: {request.customer_email}</span>
-                        )}
-                        {request.customer_phone && (
-                          <span className="block">Phone: {request.customer_phone}</span>
-                        )}
-                      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Calendar View</CardTitle>
+              <CardDescription>View requests by date</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="rounded-md border"
+                modifiers={{
+                  booked: (date) => 
+                    requests.some(request => 
+                      request.scheduled_at && 
+                      format(parseISO(request.scheduled_at), 'yyyy-MM-dd') === 
+                      format(date, 'yyyy-MM-dd')
+                    )
+                }}
+                modifiersStyles={{
+                  booked: { 
+                    fontWeight: 'bold',
+                    backgroundColor: '#fce7f3',
+                    color: '#be185d'
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
+              </CardTitle>
+              <CardDescription>
+                {getRequestsForDate(selectedDate).length} requests scheduled
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {getRequestsForDate(selectedDate).map((request) => (
+                  <div 
+                    key={request.id}
+                    className="p-4 border rounded-lg space-y-3"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">{request.services.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {request.customer_name} - {request.customer_phone}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {request.scheduled_at && 
+                            format(parseISO(request.scheduled_at), 'h:mm a')}
+                        </p>
+                      </div>
+                      {getStatusBadge(request.status)}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">Price</p>
-                      <p className="text-sm text-gray-500">
-                        KSh {request.services.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
+
                     <Select
                       defaultValue={request.status}
                       onValueChange={(value) => updateRequestStatus(request.id, value)}
@@ -195,15 +233,66 @@ const ServiceRequestsView = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                ))}
+
+                {getRequestsForDate(selectedDate).length === 0 && (
+                  <p className="text-center text-gray-500 py-4">
+                    No requests scheduled for this date
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>All Requests</CardTitle>
+            <CardDescription>View and manage all service requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {requests.map((request) => (
+                <div
+                  key={request.id}
+                  className="p-4 border rounded-lg space-y-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{request.services.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {request.customer_name} - {request.customer_phone}
+                      </p>
+                      {request.scheduled_at && (
+                        <p className="text-sm text-gray-500">
+                          Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
+                        </p>
+                      )}
+                    </div>
+                    {getStatusBadge(request.status)}
+                  </div>
+
+                  <Select
+                    defaultValue={request.status}
+                    onValueChange={(value) => updateRequestStatus(request.id, value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="accepted">Accept</SelectItem>
+                      <SelectItem value="rejected">Reject</SelectItem>
+                      <SelectItem value="completed">Complete</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No service requests yet</p>
-          </div>
-        )}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
