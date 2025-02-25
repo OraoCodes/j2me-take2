@@ -221,36 +221,47 @@ export const Marketing = () => {
             Get your QR code ready for your physical stores
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-gray-50 p-8 rounded-lg flex justify-center">
-            <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
-              alt="QR Code"
-              className="w-48 h-48"
-            />
-          </div>
-          <div className="bg-black p-8 rounded-lg flex flex-col items-center space-y-4">
-            <h3 className="text-white text-2xl font-bold">SCAN ME</h3>
-            <p className="text-white text-sm">TO VISIT OUR WEBSITE</p>
-            <div className="bg-white p-4 rounded-lg">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
-                alt="Styled QR Code"
-                className="w-48 h-48"
-              />
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Simple QR Code */}
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-8 rounded-lg flex justify-center">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
+                  alt="QR Code"
+                  className="w-48 h-48"
+                />
+              </div>
+              <div className="flex justify-center">
+                <Button variant="outline" onClick={handleDownloadQR}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Simple QR
+                </Button>
+              </div>
             </div>
-            <p className="text-white font-semibold text-xl">{businessName}</p>
-            <p className="text-white text-sm max-w-[250px] truncate">{window.location.origin}{storeUrl}</p>
-          </div>
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={handleDownloadQR}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Simple QR
-            </Button>
-            <Button variant="outline" onClick={handleDownloadStyledQR}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Styled QR
-            </Button>
+
+            {/* Styled QR Code */}
+            <div className="space-y-4">
+              <div className="bg-black p-8 rounded-lg flex flex-col items-center space-y-4">
+                <h3 className="text-white text-2xl font-bold">SCAN ME</h3>
+                <p className="text-white text-sm">TO VISIT OUR WEBSITE</p>
+                <div className="bg-white p-4 rounded-lg">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
+                    alt="Styled QR Code"
+                    className="w-48 h-48"
+                  />
+                </div>
+                <p className="text-white font-semibold text-xl">{businessName}</p>
+                <p className="text-white text-sm max-w-[250px] truncate">{window.location.origin}{storeUrl}</p>
+              </div>
+              <div className="flex justify-center">
+                <Button variant="outline" onClick={handleDownloadStyledQR}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Styled QR
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
