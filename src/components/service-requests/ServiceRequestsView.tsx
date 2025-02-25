@@ -203,7 +203,8 @@ const ServiceRequestsView = () => {
             name: editingRequest.services.name,
             price: editingRequest.services.price,
             description: null,
-            user_id: editingRequest.user_id
+            user_id: editingRequest.user_id,
+            instant_booking: false
           }}
           initialData={{
             name: editingRequest.customer_name,

@@ -303,7 +303,10 @@ const ServicePage = () => {
           <ServiceCheckoutDialog
             isOpen={true}
             onClose={() => setSelectedService(null)}
-            service={selectedService}
+            service={{
+              ...selectedService,
+              instant_booking: selectedService.instant_booking || false
+            }}
           />
         )}
       </div>

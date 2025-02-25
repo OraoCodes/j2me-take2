@@ -17,6 +17,7 @@ export interface Service {
   image_url: string | null;
   category_id: string | null;
   user_id: string;
+  instant_booking: boolean;
   service_categories?: {
     id: string;
     name: string;
