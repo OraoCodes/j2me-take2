@@ -33,24 +33,20 @@ export const SidebarNavItem = ({
           e.preventDefault();
           if (onClick) onClick();
         }}
-        className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all duration-200 ${
+        className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
           isSelected
-            ? "bg-gradient-to-r from-gebeya-pink/10 to-gebeya-orange/10 text-gebeya-pink font-medium"
+            ? "bg-gray-100 text-gray-900"
             : hasSubmenu && isOpen
-            ? "bg-gebeya-purple/5 text-gebeya-purple"
-            : "text-gray-600 hover:bg-gebeya-purple/5 hover:text-gebeya-purple"
+            ? "bg-gray-100 text-gray-900"
+            : "text-gray-600 hover:bg-gray-50"
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`${isSelected ? "text-gebeya-pink" : "text-gray-400"}`}>
-            {icon}
-          </div>
+          {icon}
           {label}
         </div>
         {hasSubmenu && (
-          <div className="text-gray-400">
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
+          isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
         )}
       </a>
       {hasSubmenu && isOpen && submenuItems && (
@@ -63,9 +59,9 @@ export const SidebarNavItem = ({
                 e.preventDefault();
                 if (subItem.onClick) subItem.onClick();
               }}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gebeya-purple/5 hover:text-gebeya-purple rounded-md transition-all duration-200"
+              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
             >
-              {subItem.icon && <div className="text-gray-400">{subItem.icon}</div>}
+              {subItem.icon}
               {subItem.label}
             </a>
           ))}
