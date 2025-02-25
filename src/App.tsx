@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import ServiceCategories from "@/pages/ServiceCategories";
 import ProfilePage from "@/pages/ProfilePage";
 import EditService from "@/pages/EditService";
+import Onboarding from "@/pages/Onboarding";
 import "./App.css";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/service-page" element={<ServicePage />} />
         <Route path="/services/:userId" element={<ServicePage />} />
