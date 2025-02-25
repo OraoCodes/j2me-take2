@@ -48,7 +48,7 @@ const Index = () => {
                 alt="Gebeya" 
                 className="h-8"
               />
-              <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
+              <span className="text-xl font-semibold text-gebeya-pink">Jitume</span>
             </div>
             <div className="flex items-center gap-4">
               <Button 
