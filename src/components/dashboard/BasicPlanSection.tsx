@@ -159,7 +159,6 @@ export const BasicPlanSection = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Service requests</h3>
-          <div className="text-sm text-gray-500">Last 30 days</div>
         </div>
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100">
