@@ -247,27 +247,30 @@ export default function AvailabilitySettings() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center p-8">
+      <div className="text-gebeya-pink">Loading...</div>
+    </div>;
   }
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <h1 className="text-3xl font-bold mb-8">Availability Settings</h1>
+      <h1 className="text-2xl font-bold text-gebeya-pink mb-8">Availability Settings</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="border-gebeya-pink/20">
           <CardHeader>
-            <CardTitle>Weekly Schedule</CardTitle>
+            <CardTitle className="text-gebeya-purple">Weekly Schedule</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {weeklySchedule.map((setting) => (
-              <div key={setting.day_of_week} className="flex items-center justify-between p-2 border rounded">
+              <div key={setting.day_of_week} className="flex items-center justify-between p-2 border border-gebeya-pink/20 rounded hover:border-gebeya-pink/40 transition-colors">
                 <div className="flex items-center gap-4">
                   <Switch
                     checked={setting.is_available}
                     onCheckedChange={(checked) => updateDayAvailability(setting.day_of_week, checked)}
+                    className="data-[state=checked]:bg-gebeya-pink"
                   />
-                  <Label className="w-24">{dayNames[setting.day_of_week]}</Label>
+                  <Label className="w-24 font-medium text-gebeya-purple">{dayNames[setting.day_of_week]}</Label>
                 </div>
                 
                 {setting.is_available && (
@@ -276,14 +279,14 @@ export default function AvailabilitySettings() {
                       type="time"
                       value={setting.start_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'start_time', e.target.value)}
-                      className="w-32"
+                      className="w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
-                    <span>to</span>
+                    <span className="text-gebeya-purple">to</span>
                     <Input
                       type="time"
                       value={setting.end_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'end_time', e.target.value)}
-                      className="w-32"
+                      className="w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
                   </div>
                 )}
@@ -292,17 +295,21 @@ export default function AvailabilitySettings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-gebeya-pink/20">
           <CardHeader>
-            <CardTitle>Block Specific Dates</CardTitle>
+            <CardTitle className="text-gebeya-purple">Block Specific Dates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="rounded-md border"
+              className="rounded-md border border-gebeya-pink/20"
               disabled={(date) => date < new Date()}
+              classNames={{
+                day_selected: "bg-gebeya-pink text-white hover:bg-gebeya-pink/90",
+                day_today: "bg-gebeya-orange/20 text-gebeya-orange",
+              }}
             />
             
             {selectedDate && (
@@ -311,20 +318,27 @@ export default function AvailabilitySettings() {
                   placeholder="Reason for blocking this date (optional)"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
+                  className="focus:border-gebeya-pink focus:ring-gebeya-pink"
                 />
-                <Button onClick={blockDate} className="w-full">
+                <Button 
+                  onClick={blockDate} 
+                  className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
+                >
                   Block {format(selectedDate, 'MMMM d, yyyy')}
                 </Button>
               </div>
             )}
 
             <div className="space-y-2">
-              <h3 className="font-medium">Blocked Dates</h3>
+              <h3 className="font-medium text-gebeya-purple">Blocked Dates</h3>
               <div className="space-y-2">
                 {blockedDates.map((blocked) => (
-                  <div key={blocked.id} className="flex items-center justify-between p-2 border rounded">
+                  <div 
+                    key={blocked.id} 
+                    className="flex items-center justify-between p-2 border border-gebeya-pink/20 rounded hover:border-gebeya-pink/40 transition-colors"
+                  >
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-gebeya-purple">
                         {format(new Date(blocked.blocked_date), 'MMMM d, yyyy')}
                       </p>
                       {blocked.reason && (
@@ -335,6 +349,7 @@ export default function AvailabilitySettings() {
                       variant="ghost"
                       size="sm"
                       onClick={() => unblockDate(blocked.id)}
+                      className="text-gebeya-pink hover:text-gebeya-orange hover:bg-transparent"
                     >
                       <X className="h-4 w-4" />
                     </Button>
