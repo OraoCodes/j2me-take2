@@ -59,6 +59,26 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      // First check if the custom link is already taken by another user
+      if (customLink) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('service_page_link', customLink)
+          .neq('id', user.id)
+          .single();
+
+        if (existingProfile) {
+          toast({
+            title: "Error",
+            description: "This custom link is already taken. Please choose another one.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -68,7 +88,10 @@ const Settings = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
