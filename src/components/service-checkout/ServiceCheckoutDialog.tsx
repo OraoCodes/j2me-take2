@@ -245,6 +245,8 @@ export const ServiceCheckoutDialog = ({
         milliseconds: 0
       });
 
+      console.log('Service object:', service);
+
       const requestData = {
         service_id: service.id,
         user_id: service.user_id,
@@ -253,8 +255,10 @@ export const ServiceCheckoutDialog = ({
         customer_phone: formData.phone,
         notes: formData.notes,
         scheduled_at: scheduledAt.toISOString(),
-        status: service.instant_booking ? 'accepted' : 'pending',
+        status: service.instant_booking === true ? 'accepted' : 'pending',
       };
+
+      console.log('Request data:', requestData);
 
       let error;
       if (isEditing && requestId) {
@@ -274,7 +278,7 @@ export const ServiceCheckoutDialog = ({
 
       toast({
         title: "Success!",
-        description: service.instant_booking 
+        description: service.instant_booking === true
           ? "Your service request has been automatically accepted."
           : "Your service request has been submitted for approval.",
       });
