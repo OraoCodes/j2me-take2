@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCircle, Upload, Image as ImageIcon } from "lucide-react";
+import { UserCircle, Upload, Image as ImageIcon, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
 import { Profile } from "@/types/dashboard";
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const ProfilePage = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -67,7 +69,6 @@ export const ProfilePage = () => {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create it
         profileData = await createProfile(user.id);
       } else if (error) {
         throw error;
@@ -302,6 +303,16 @@ export const ProfilePage = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container max-w-2xl mx-auto px-4 pt-24 pb-12">
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 text-gebeya-pink hover:text-gebeya-orange"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </div>
         <Card className="border-gebeya-pink/20 shadow-lg">
           <CardHeader className="border-b border-gebeya-pink/10">
             <div className="flex items-center gap-3">
