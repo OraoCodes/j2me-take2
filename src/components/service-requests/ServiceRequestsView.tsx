@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceCheckoutDialog";
+import TimeSlotView from './TimeSlotView';
 
 interface ServiceRequest {
   id: string;
@@ -252,84 +253,12 @@ const ServiceRequestsView = () => {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
-              </CardTitle>
-              <CardDescription>
-                {getRequestsForDate(selectedDate).length} requests scheduled
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {getRequestsForDate(selectedDate).map((request) => (
-                  <div 
-                    key={request.id}
-                    className="p-4 border rounded-lg space-y-3"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{request.services.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {request.customer_name} - {request.customer_phone}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {request.scheduled_at && 
-                            format(parseISO(request.scheduled_at), 'h:mm a')}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {getStatusBadge(request.status)}
-                        {request.paid && (
-                          <Badge className="bg-green-100 text-green-800">PAID</Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Select
-                        defaultValue={request.status}
-                        onValueChange={(value) => updateRequestStatus(request.id, value)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="accepted">Accept</SelectItem>
-                          <SelectItem value="rejected">Reject</SelectItem>
-                          <SelectItem value="completed">Complete</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditRequest(request)}
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant={request.paid ? "outline" : "default"}
-                        size="sm"
-                        onClick={() => togglePaidStatus(request.id, request.paid)}
-                      >
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                {getRequestsForDate(selectedDate).length === 0 && (
-                  <p className="text-center text-gray-500 py-4">
-                    No requests scheduled for this date
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {selectedDate && (
+            <TimeSlotView 
+              date={selectedDate} 
+              requests={getRequestsForDate(selectedDate)}
+            />
+          )}
         </div>
       </div>
 
