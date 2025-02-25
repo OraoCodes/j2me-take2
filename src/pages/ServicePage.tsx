@@ -42,7 +42,26 @@ const ServicePage = () => {
           }
         }
 
-        console.log("Fetching data for user:", targetUserId);
+        const { error: viewError } = await supabase
+          .from('page_views')
+          .upsert(
+            { 
+              user_id: targetUserId,
+              view_count: 1,
+              last_viewed_at: new Date().toISOString()
+            },
+            {
+              onConflict: 'user_id',
+              update: {
+                view_count: supabase.raw('page_views.view_count + 1'),
+                last_viewed_at: new Date().toISOString()
+              }
+            }
+          );
+
+        if (viewError) {
+          console.error("Error updating view count:", viewError);
+        }
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')

@@ -1,8 +1,41 @@
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, Eye, ShoppingBag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const BasicPlanSection = () => {
+  const [viewCount, setViewCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchViewCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('page_views')
+          .select('view_count')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching view count:", error);
+          return;
+        }
+
+        setViewCount(data?.view_count || 0);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchViewCount();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -19,7 +52,9 @@ export const BasicPlanSection = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="space-y-1">
             <div className="text-sm text-gray-600">Views</div>
-            <div className="text-2xl font-semibold">31</div>
+            <div className="text-2xl font-semibold">
+              {loading ? "-" : viewCount}
+            </div>
           </div>
         </div>
 
