@@ -27,6 +27,7 @@ import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceChec
 interface ServiceRequest {
   id: string;
   service_id: string;
+  user_id: string;  // Added this property
   customer_name: string;
   customer_email: string | null;
   customer_phone: string | null;
