@@ -29,13 +29,8 @@ export const ServicesSection = ({
           <h1 className="text-2xl font-semibold text-gebeya-pink">Services</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
-            <FileDown className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
-            Bulk edit
-          </Button>
+          
+          
           <Button onClick={() => setShowCreateService(true)} className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90">
             <Plus className="w-4 h-4 mr-2" />
             Add service
