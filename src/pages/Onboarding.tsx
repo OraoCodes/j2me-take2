@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -75,7 +76,7 @@ const Onboarding = () => {
         title: "Success",
         description: "Your business details have been saved!",
       });
-      navigate("/pricing");
+      navigate("/service-share"); // Changed from "/pricing" to "/service-share"
     } catch (error) {
       toast({
         variant: "destructive",
