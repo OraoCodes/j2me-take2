@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,17 @@ interface ServiceCheckoutDialogProps {
   requestId?: string;
 }
 
+interface AvailabilitySetting {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
+interface BlockedDate {
+  blocked_date: string;
+}
+
 export const ServiceCheckoutDialog = ({
   isOpen,
   onClose,
@@ -58,9 +69,81 @@ export const ServiceCheckoutDialog = ({
     notes: initialData?.notes || "",
   });
 
-  const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
-  const minutes = ["00", "15", "30", "45"];
-  const periods = ["AM", "PM"];
+  const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+
+  useEffect(() => {
+    fetchAvailabilitySettings();
+  }, [service.user_id]);
+
+  const fetchAvailabilitySettings = async () => {
+    const { data: availabilityData } = await supabase
+      .from('availability_settings')
+      .select('*')
+      .eq('user_id', service.user_id);
+
+    if (availabilityData) {
+      setAvailabilitySettings(availabilityData);
+    }
+
+    const { data: blockedData } = await supabase
+      .from('blocked_dates')
+      .select('blocked_date')
+      .eq('user_id', service.user_id);
+
+    if (blockedData) {
+      setBlockedDates(blockedData);
+    }
+  };
+
+  const isDateAvailable = (date: Date) => {
+    const isBlocked = blockedDates.some(
+      blocked => format(new Date(blocked.blocked_date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    );
+    if (isBlocked) return false;
+
+    const dayOfWeek = date.getDay();
+    const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
+    return daySetting?.is_available ?? false;
+  };
+
+  const getAvailableTimeSlots = (date: Date) => {
+    const dayOfWeek = date.getDay();
+    const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
+    
+    if (!daySetting?.is_available) return [];
+
+    const startHour = parseInt(daySetting.start_time.split(':')[0]);
+    const startMinute = parseInt(daySetting.start_time.split(':')[1]);
+    const endHour = parseInt(daySetting.end_time.split(':')[0]);
+    const endMinute = parseInt(daySetting.end_time.split(':')[1]);
+
+    const slots: { hour: string; minute: string; period: string }[] = [];
+    let currentHour = startHour;
+    let currentMinute = startMinute;
+
+    while (
+      currentHour < endHour ||
+      (currentHour === endHour && currentMinute <= endMinute)
+    ) {
+      const hour = currentHour > 12 ? currentHour - 12 : currentHour === 0 ? 12 : currentHour;
+      const period = currentHour >= 12 ? 'PM' : 'AM';
+      
+      slots.push({
+        hour: hour.toString().padStart(2, '0'),
+        minute: currentMinute.toString().padStart(2, '0'),
+        period,
+      });
+
+      currentMinute += 15;
+      if (currentMinute >= 60) {
+        currentMinute = 0;
+        currentHour += 1;
+      }
+    }
+
+    return slots;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +160,6 @@ export const ServiceCheckoutDialog = ({
     }
 
     try {
-      // Convert 12-hour format to 24-hour format
       let hourIn24 = parseInt(hour);
       if (period === "PM" && hourIn24 !== 12) hourIn24 += 12;
       if (period === "AM" && hourIn24 === 12) hourIn24 = 0;
@@ -97,14 +179,12 @@ export const ServiceCheckoutDialog = ({
 
       let error;
       if (isEditing && requestId) {
-        // Update existing request
         const { error: updateError } = await supabase
           .from("service_requests")
           .update(requestData)
           .eq('id', requestId);
         error = updateError;
       } else {
-        // Create new request
         const { error: insertError } = await supabase
           .from("service_requests")
           .insert({ ...requestData, status: 'pending' });
@@ -207,73 +287,81 @@ export const ServiceCheckoutDialog = ({
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today || !isDateAvailable(date);
+                    }}
                     className="rounded-md border"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label>Preferred Time *</Label>
-                <div className="grid grid-cols-3 gap-2 mt-1">
-                  <Select
-                    value={hour}
-                    onValueChange={(value) => {
-                      console.log("Hour selected:", value);
-                      setHour(value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Hour" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hours.map((h) => (
-                        <SelectItem key={h} value={h}>
-                          {h}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {date && (
+                <div>
+                  <Label>Preferred Time *</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    <Select
+                      value={hour}
+                      onValueChange={setHour}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Hour" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableTimeSlots(date).map((slot) => (
+                          <SelectItem
+                            key={`${slot.hour}-${slot.minute}-${slot.period}`}
+                            value={slot.hour}
+                          >
+                            {slot.hour}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                  <Select
-                    value={minute}
-                    onValueChange={(value) => {
-                      console.log("Minute selected:", value);
-                      setMinute(value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Min" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {minutes.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={minute}
+                      onValueChange={setMinute}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Min" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableTimeSlots(date)
+                          .filter(slot => slot.hour === hour)
+                          .map((slot) => (
+                            <SelectItem
+                              key={`${slot.hour}-${slot.minute}`}
+                              value={slot.minute}
+                            >
+                              {slot.minute}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
 
-                  <Select
-                    value={period}
-                    onValueChange={(value) => {
-                      console.log("Period selected:", value);
-                      setPeriod(value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {periods.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={period}
+                      onValueChange={setPeriod}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from(new Set(getAvailableTimeSlots(date)
+                          .filter(slot => slot.hour === hour && slot.minute === minute)
+                          .map(slot => slot.period)))
+                          .map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {p}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div>
