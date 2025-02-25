@@ -59,12 +59,15 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Check if the custom link is already taken by another user
-      if (customLink) {
+      // Clean up the custom link value
+      const cleanCustomLink = customLink.trim() || null;
+
+      // Only check for duplicates if a non-empty custom link is provided
+      if (cleanCustomLink) {
         const { data: existingProfile, error: searchError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('service_page_link', customLink)
+          .eq('service_page_link', cleanCustomLink)
           .neq('id', user.id)
           .maybeSingle();
 
@@ -87,9 +90,9 @@ const Settings = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          company_name: companyName,
-          whatsapp_number: whatsappNumber,
-          service_page_link: customLink,
+          company_name: companyName.trim() || null,
+          whatsapp_number: whatsappNumber.trim() || null,
+          service_page_link: cleanCustomLink,
         })
         .eq('id', user.id);
 
