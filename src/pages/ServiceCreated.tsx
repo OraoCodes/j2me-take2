@@ -2,19 +2,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { useEffect } from "react";
 
 const ServiceCreated = () => {
   const navigate = useNavigate();
-
-  // Automatically redirect after 2 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate('/dashboard', { state: { showServices: true } });
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
@@ -24,7 +14,7 @@ const ServiceCreated = () => {
           🎉 Your Service Page is Live!
         </h1>
         <p className="text-xl text-gray-600 mb-8">
-          Redirecting you to your services...
+          Your service page has been created successfully
         </p>
         <Button 
           onClick={() => navigate('/dashboard', { state: { showServices: true } })} 
