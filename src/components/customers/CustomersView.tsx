@@ -28,6 +28,7 @@ const CustomersView = () => {
   }, []);
 
   const fetchCustomers = async () => {
+    setLoading(true); // Set loading to true before fetching
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -50,6 +51,11 @@ const CustomersView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCustomerAdded = async () => {
+    await fetchCustomers(); // Immediately fetch updated customer list
+    setIsAddCustomerOpen(false); // Close the dialog after successful addition
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -144,7 +150,7 @@ const CustomersView = () => {
       <AddCustomerDialog
         isOpen={isAddCustomerOpen}
         onClose={() => setIsAddCustomerOpen(false)}
-        onSuccess={fetchCustomers}
+        onSuccess={handleCustomerAdded}
       />
     </>
   );
