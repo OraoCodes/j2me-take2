@@ -149,15 +149,17 @@ const ServicePage = () => {
       />
 
       {bannerImage && (
-        <div className="w-full relative">
-          <div className="aspect-video">
-            <div 
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: `url(${bannerImage})`
-              }}
-            />
-            <div className="absolute inset-0 bg-black/20" />
+        <div className="w-full flex justify-center bg-gray-900">
+          <div className="w-full max-w-screen-lg relative">
+            <div className="aspect-video">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${bannerImage})`
+                }}
+              />
+              <div className="absolute inset-0 bg-black/20" />
+            </div>
           </div>
         </div>
       )}
