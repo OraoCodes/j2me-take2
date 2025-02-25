@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const BasicPlanSection = () => {
   const [viewCount, setViewCount] = useState(0);
+  const [requestCount, setRequestCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,12 +29,34 @@ export const BasicPlanSection = () => {
         setViewCount(data?.view_count || 0);
       } catch (error) {
         console.error("Error:", error);
+      }
+    };
+
+    const fetchRequestCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { count, error } = await supabase
+          .from('service_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error("Error fetching request count:", error);
+          return;
+        }
+
+        setRequestCount(count || 0);
+      } catch (error) {
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchViewCount();
+    fetchRequestCount();
   }, []);
 
   return (
@@ -61,7 +84,7 @@ export const BasicPlanSection = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="space-y-1">
             <div className="text-sm text-gray-600">Service requests</div>
-            <div className="text-2xl font-semibold">2</div>
+            <div className="text-2xl font-semibold">{loading ? "-" : requestCount}</div>
           </div>
         </div>
 
@@ -81,11 +104,11 @@ export const BasicPlanSection = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100">
             <Calendar className="w-5 h-5 text-gray-400" />
-            <span className="text-gray-900">2 pending requests</span>
+            <span className="text-gray-900">{loading ? "-" : requestCount} pending requests</span>
           </div>
           <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100">
             <ShoppingBag className="w-5 h-5 text-gray-400" />
-            <span className="text-gray-900">2 unpaid requests</span>
+            <span className="text-gray-900">{loading ? "-" : requestCount} unpaid requests</span>
           </div>
         </div>
       </div>
