@@ -1,19 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Calendar, Eye, ShoppingBag } from "lucide-react";
-
 export const BasicPlanSection = () => {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <Calendar className="w-5 h-5 text-gray-500" />
-          <div className="text-sm text-gray-600">February 18, 2025 — February 25, 2025</div>
-        </div>
-        <div className="text-sm text-gray-500">
-          Premium plan or higher plan is required to change date range
-        </div>
-      </div>
+  return <div className="space-y-6">
+      
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -54,6 +43,5 @@ export const BasicPlanSection = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
