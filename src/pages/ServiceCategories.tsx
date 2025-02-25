@@ -152,14 +152,14 @@ const ServiceCategories = () => {
       <div className="container mx-auto px-4 pt-20">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-gebeya-pink">Category</h1>
+            <h1 className="text-2xl font-semibold text-gebeya-purple">Category</h1>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gebeya-pink/60 hover:text-gebeya-pink transition-colors" />
+                  <Info className="h-4 w-4 text-gebeya-purple/60 hover:text-gebeya-purple transition-colors" />
                 </TooltipTrigger>
-                <TooltipContent className="bg-white border-gebeya-pink/20">
-                  <p>Organize your services into categories</p>
+                <TooltipContent className="bg-white border-gebeya-purple/20">
+                  <p className="text-gebeya-purple">Organize your services into categories</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -167,7 +167,7 @@ const ServiceCategories = () => {
           <div className="flex items-center gap-4">
             <Button 
               variant="outline" 
-              className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10"
+              className="border-gebeya-purple text-gebeya-purple hover:bg-gebeya-purple/10"
             >
               Change sequence
             </Button>
@@ -186,23 +186,23 @@ const ServiceCategories = () => {
           onValueChange={setActiveTab}
           className="space-y-4"
         >
-          <TabsList className="bg-white border border-gebeya-pink/20">
+          <TabsList className="bg-white border border-gebeya-purple/20">
             <TabsTrigger 
               value="visible"
-              className="data-[state=active]:bg-gebeya-pink data-[state=active]:text-white"
+              className="data-[state=active]:bg-gebeya-purple data-[state=active]:text-white"
             >
               Visible
             </TabsTrigger>
             <TabsTrigger 
               value="hidden"
-              className="data-[state=active]:bg-gebeya-pink data-[state=active]:text-white"
+              className="data-[state=active]:bg-gebeya-purple data-[state=active]:text-white"
             >
               Hidden
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="visible" className="mt-6">
-            <div className="bg-white rounded-lg shadow-lg border border-gebeya-pink/10">
+            <div className="bg-white rounded-lg shadow-lg border border-gebeya-purple/10">
               {filteredCategories.map((category) => (
                 <CategoryItem
                   key={category.id}
@@ -218,7 +218,7 @@ const ServiceCategories = () => {
                 />
               ))}
               {filteredCategories.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gebeya-purple/60">
                   No visible categories found
                 </div>
               )}
@@ -226,7 +226,7 @@ const ServiceCategories = () => {
           </TabsContent>
 
           <TabsContent value="hidden" className="mt-6">
-            <div className="bg-white rounded-lg shadow-lg border border-gebeya-pink/10">
+            <div className="bg-white rounded-lg shadow-lg border border-gebeya-purple/10">
               {filteredCategories.map((category) => (
                 <CategoryItem
                   key={category.id}
@@ -242,7 +242,7 @@ const ServiceCategories = () => {
                 />
               ))}
               {filteredCategories.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gebeya-purple/60">
                   No hidden categories found
                 </div>
               )}

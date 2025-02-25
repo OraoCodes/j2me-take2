@@ -28,6 +28,7 @@ export default {
         gebeya: {
           pink: "#FF1493",
           orange: "#FFA500",
+          purple: "#181326"
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
