@@ -18,6 +18,7 @@ export const fetchServices = async () => {
           name
         )
       `)
+      .eq('user_id', user.id)  // Filter by the current user's ID
       .order('created_at', { ascending: false });
 
     if (servicesError) {
@@ -38,10 +39,21 @@ export const fetchServices = async () => {
 };
 
 export const deleteService = async (id: string) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "You must be logged in to delete services.",
+    });
+    return false;
+  }
+
   const { error } = await supabase
     .from('services')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);  // Ensure users can only delete their own services
 
   if (error) {
     toast({
@@ -60,10 +72,21 @@ export const deleteService = async (id: string) => {
 };
 
 export const updateServiceCategory = async (serviceId: string, categoryId: string) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "You must be logged in to update services.",
+    });
+    return false;
+  }
+
   const { error } = await supabase
     .from('services')
     .update({ category_id: categoryId })
-    .eq('id', serviceId);
+    .eq('id', serviceId)
+    .eq('user_id', user.id);  // Ensure users can only update their own services
 
   if (error) {
     toast({
