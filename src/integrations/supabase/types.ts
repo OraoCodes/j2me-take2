@@ -225,6 +225,42 @@ export type Database = {
           },
         ]
       }
+      social_links: {
+        Row: {
+          created_at: string
+          enabled: boolean | null
+          id: string
+          location: string | null
+          platform_id: string
+          title: string | null
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          location?: string | null
+          platform_id: string
+          title?: string | null
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          location?: string | null
+          platform_id?: string
+          title?: string | null
+          url?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

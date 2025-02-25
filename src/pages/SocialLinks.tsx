@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -25,6 +26,18 @@ interface SocialLink {
   inputType: "username" | "url" | "location" | "both";
   placeholder?: string;
   prefix?: string;
+}
+
+interface SocialLinkRecord {
+  id: string;
+  user_id: string;
+  platform_id: string;
+  enabled: boolean;
+  username: string | null;
+  url: string | null;
+  location: string | null;
+  title: string | null;
+  created_at: string;
 }
 
 const SocialLinks = () => {
@@ -141,7 +154,8 @@ const SocialLinks = () => {
       const { data, error } = await supabase
         .from('social_links')
         .select('*')
-        .eq('user_id', session.session.user.id);
+        .eq('user_id', session.session.user.id)
+        .returns<SocialLinkRecord[]>();
 
       if (error) throw error;
 
@@ -196,9 +210,8 @@ const SocialLinks = () => {
 
       const { error } = await supabase
         .from('social_links')
-        .upsert(socialLinksData, {
-          onConflict: 'user_id,platform_id'
-        });
+        .upsert(socialLinksData)
+        .select();
 
       if (error) throw error;
 
