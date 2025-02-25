@@ -26,6 +26,14 @@ export const Marketing = () => {
     navigator.clipboard.writeText(text);
   };
 
+  const handleFacebookShare = () => {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -82,10 +90,7 @@ export const Marketing = () => {
             <Button 
               variant="outline" 
               size="sm"
-              component="a"
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={handleFacebookShare}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Share
