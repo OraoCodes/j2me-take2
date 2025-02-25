@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info, Edit2 } from "lucide-react";
+import { Loader2, Info, Edit2, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -27,7 +26,7 @@ import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceChec
 interface ServiceRequest {
   id: string;
   service_id: string;
-  user_id: string;  // Added this property
+  user_id: string;
   customer_name: string;
   customer_email: string | null;
   customer_phone: string | null;
@@ -35,6 +34,7 @@ interface ServiceRequest {
   notes: string | null;
   created_at: string;
   scheduled_at: string;
+  paid: boolean;
   services: {
     name: string;
     price: number;
@@ -103,6 +103,34 @@ const ServiceRequestsView = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to update request status",
+      });
+    }
+  };
+
+  const togglePaidStatus = async (requestId: string, currentPaidStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ paid: !currentPaidStatus })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      setRequests(requests.map(request => 
+        request.id === requestId 
+          ? { ...request, paid: !currentPaidStatus }
+          : request
+      ));
+
+      toast({
+        title: "Success",
+        description: `Service request marked as ${!currentPaidStatus ? 'paid' : 'unpaid'}`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update payment status",
       });
     }
   };
@@ -250,7 +278,12 @@ const ServiceRequestsView = () => {
                             format(parseISO(request.scheduled_at), 'h:mm a')}
                         </p>
                       </div>
-                      {getStatusBadge(request.status)}
+                      <div className="flex gap-2">
+                        {getStatusBadge(request.status)}
+                        {request.paid && (
+                          <Badge className="bg-green-100 text-green-800">PAID</Badge>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -275,6 +308,14 @@ const ServiceRequestsView = () => {
                       >
                         <Edit2 className="h-4 w-4 mr-1" />
                         Edit
+                      </Button>
+                      <Button
+                        variant={request.paid ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => togglePaidStatus(request.id, request.paid)}
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
                       </Button>
                     </div>
                   </div>
@@ -316,7 +357,12 @@ const ServiceRequestsView = () => {
                         </p>
                       )}
                     </div>
-                    {getStatusBadge(request.status)}
+                    <div className="flex gap-2">
+                      {getStatusBadge(request.status)}
+                      {request.paid && (
+                        <Badge className="bg-green-100 text-green-800">PAID</Badge>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -341,6 +387,14 @@ const ServiceRequestsView = () => {
                     >
                       <Edit2 className="h-4 w-4 mr-1" />
                       Edit
+                    </Button>
+                    <Button
+                      variant={request.paid ? "outline" : "default"}
+                      size="sm"
+                      onClick={() => togglePaidStatus(request.id, request.paid)}
+                    >
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
                     </Button>
                   </div>
                 </div>
