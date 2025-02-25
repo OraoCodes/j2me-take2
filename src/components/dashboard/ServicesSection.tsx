@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Filter, ArrowUpDown, FileDown, Plus, Trash2, Edit } from "lucide-react";
 import { Service } from "@/types/dashboard";
-import { useNavigate } from "react-router-dom";
+import CreateService from "@/pages/CreateService";
 
 interface ServicesSectionProps {
   services: Service[];
@@ -25,7 +25,7 @@ export const ServicesSection = ({
   onUpdateServiceCategory,
   setShowCreateService
 }: ServicesSectionProps) => {
-  const navigate = useNavigate();
+  const [editingService, setEditingService] = useState<Service | null>(null);
 
   return (
     <>
@@ -40,6 +40,19 @@ export const ServicesSection = ({
           </Button>
         </div>
       </div>
+
+      {editingService && (
+        <div className="mb-8">
+          <CreateService
+            initialData={editingService}
+            onSuccess={() => {
+              setEditingService(null);
+              // Optionally refresh the services list here
+            }}
+            onCancel={() => setEditingService(null)}
+          />
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100">
         <div className="p-4 border-b">
@@ -88,7 +101,7 @@ export const ServicesSection = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => navigate(`/edit-service/${service.id}`)} 
+                  onClick={() => setEditingService(service)} 
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <Edit className="h-4 w-4" />
