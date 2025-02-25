@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -16,6 +16,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ServiceCheckoutDialogProps {
   isOpen: boolean;
@@ -37,7 +44,8 @@ export const ServiceCheckoutDialog = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
-  const [time, setTime] = useState("");
+  const [hour, setHour] = useState("");
+  const [minute, setMinute] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -45,11 +53,16 @@ export const ServiceCheckoutDialog = ({
     notes: "",
   });
 
+  const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  const minutes = ["00", "15", "30", "45"];
+  const periods = ["AM", "PM"];
+  const [period, setPeriod] = useState("AM");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!date || !time) {
+    if (!date || !hour || !minute) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -59,12 +72,15 @@ export const ServiceCheckoutDialog = ({
       return;
     }
 
-    // Combine date and time into a single datetime
-    const [hours, minutes] = time.split(':');
-    const scheduledAt = new Date(date);
-    scheduledAt.setHours(parseInt(hours), parseInt(minutes));
-
     try {
+      // Convert 12-hour format to 24-hour format
+      let hourIn24 = parseInt(hour);
+      if (period === "PM" && hourIn24 !== 12) hourIn24 += 12;
+      if (period === "AM" && hourIn24 === 12) hourIn24 = 0;
+
+      const scheduledAt = new Date(date);
+      scheduledAt.setHours(hourIn24, parseInt(minute));
+
       const { error } = await supabase.from("service_requests").insert({
         service_id: service.id,
         user_id: service.user_id,
@@ -91,7 +107,9 @@ export const ServiceCheckoutDialog = ({
         notes: "",
       });
       setDate(undefined);
-      setTime("");
+      setHour("");
+      setMinute("");
+      setPeriod("AM");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -101,6 +119,11 @@ export const ServiceCheckoutDialog = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const getTimeDisplay = () => {
+    if (!hour || !minute) return "Select time";
+    return `${hour}:${minute} ${period}`;
   };
 
   return (
@@ -190,21 +213,72 @@ export const ServiceCheckoutDialog = ({
                       onSelect={setDate}
                       initialFocus
                       disabled={(date) => date < new Date()}
+                      fromDate={new Date()}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
 
               <div>
-                <Label htmlFor="time">Preferred Time *</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  required
-                  className="mt-1"
-                />
+                <Label>Preferred Time *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal mt-1",
+                        (!hour || !minute) && "text-muted-foreground"
+                      )}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      {getTimeDisplay()}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64" align="start">
+                    <div className="grid gap-4">
+                      <div className="grid grid-cols-3 gap-2">
+                        <Select value={hour} onValueChange={setHour}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {hours.map((h) => (
+                              <SelectItem key={h} value={h}>
+                                {h}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select value={minute} onValueChange={setMinute}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Min" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {minutes.map((m) => (
+                              <SelectItem key={m} value={m}>
+                                {m}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select value={period} onValueChange={setPeriod}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {periods.map((p) => (
+                              <SelectItem key={p} value={p}>
+                                {p}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
