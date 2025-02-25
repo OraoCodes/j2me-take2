@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ export const ServiceCheckoutDialog = ({
 }: ServiceCheckoutDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [hour, setHour] = useState<string>("");
   const [minute, setMinute] = useState<string>("");
   const [period, setPeriod] = useState<string>("AM");
@@ -126,6 +125,11 @@ export const ServiceCheckoutDialog = ({
     return `${hour}:${minute} ${period}`;
   };
 
+  const handleDateSelect = (newDate: Date | undefined) => {
+    console.log("Date being set:", newDate);
+    setDate(newDate);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -194,33 +198,14 @@ export const ServiceCheckoutDialog = ({
               <div>
                 <Label>Preferred Date *</Label>
                 <div className="mt-1">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={(newDate) => {
-                          console.log("Date selected:", newDate);
-                          setDate(newDate);
-                        }}
-                        disabled={(date) => date < new Date()}
-                        defaultMonth={date || new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < new Date()}
+                    className="rounded-md border shadow w-full"
+                    initialFocus
+                  />
                 </div>
               </div>
 
