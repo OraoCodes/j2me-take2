@@ -147,9 +147,7 @@ const ServicePage = () => {
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{
-                backgroundImage: `url(${bannerImage})`,
-                filter: 'blur(2px)',
-                transform: 'scale(1.1)'
+                backgroundImage: `url(${bannerImage})`
               }}
             />
             <div className="absolute inset-0 bg-black/20" />
