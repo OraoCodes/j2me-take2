@@ -27,6 +27,21 @@ export const ServicesSection = ({
   setShowCreateService
 }: ServicesSectionProps) => {
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showServices, setShowServices] = useState(true);
+
+  const handleCreateServiceSuccess = () => {
+    setShowServices(true);
+    setShowCreateService(false);
+    // You might want to refresh the services list here
+  };
+
+  if (!showServices) {
+    return (
+      <CreateService 
+        onSuccess={handleCreateServiceSuccess}
+      />
+    );
+  }
 
   return (
     <>
@@ -35,7 +50,10 @@ export const ServicesSection = ({
           <h1 className="text-2xl font-semibold text-gebeya-pink">Services</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button onClick={() => setShowCreateService(true)} className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90">
+          <Button 
+            onClick={() => setShowServices(false)} 
+            className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add service
           </Button>
