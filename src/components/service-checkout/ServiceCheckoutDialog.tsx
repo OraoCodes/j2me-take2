@@ -18,6 +18,7 @@ interface ServiceCheckoutDialogProps {
     price: number;
     description: string | null;
     user_id: string;
+    instant_booking: boolean;
   };
   initialData?: {
     name: string;
@@ -252,6 +253,7 @@ export const ServiceCheckoutDialog = ({
         customer_phone: formData.phone,
         notes: formData.notes,
         scheduled_at: scheduledAt.toISOString(),
+        status: service.instant_booking ? 'accepted' : 'pending',
       };
 
       let error;
@@ -264,7 +266,7 @@ export const ServiceCheckoutDialog = ({
       } else {
         const { error: insertError } = await supabase
           .from("service_requests")
-          .insert({ ...requestData, status: 'pending' });
+          .insert(requestData);
         error = insertError;
       }
 
@@ -272,7 +274,9 @@ export const ServiceCheckoutDialog = ({
 
       toast({
         title: "Success!",
-        description: isEditing ? "Service request updated successfully." : "Your service request has been submitted.",
+        description: service.instant_booking 
+          ? "Your service request has been automatically accepted."
+          : "Your service request has been submitted for approval.",
       });
 
       onClose();
