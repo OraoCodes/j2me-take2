@@ -571,7 +571,6 @@ const Dashboard = () => {
           {!showCategories && !showServices && !showServiceRequests && !showCustomers && !showCreateService && (
             <>
               <SetupGuideSection steps={setupSteps} />
-              <SubscriptionCard />
               <BasicPlanSection />
             </>
           )}
