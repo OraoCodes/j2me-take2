@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import {
@@ -137,11 +136,23 @@ export default function AvailabilitySettings() {
   const blockDate = async () => {
     if (!selectedDate) return;
 
+    // Get the current user's session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to block dates",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('blocked_dates')
       .insert({
         blocked_date: format(selectedDate, 'yyyy-MM-dd'),
         reason: blockReason,
+        user_id: session.user.id // Add the user_id here
       });
 
     if (error) {
