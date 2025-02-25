@@ -19,6 +19,7 @@ interface ServiceCheckoutDialogProps {
     description: string | null;
     user_id: string;
     instant_booking: boolean;
+    serviceMode?: string;
   };
   initialData?: {
     name: string;
@@ -26,6 +27,7 @@ interface ServiceCheckoutDialogProps {
     phone: string;
     notes: string;
     scheduled_at: Date;
+    location?: string;
   };
   isEditing?: boolean;
   requestId?: string;
@@ -63,6 +65,7 @@ export const ServiceCheckoutDialog = ({
     email: initialData?.email || "",
     phone: initialData?.phone || "",
     notes: initialData?.notes || "",
+    location: initialData?.location || "",
   });
 
   const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
@@ -245,8 +248,6 @@ export const ServiceCheckoutDialog = ({
         milliseconds: 0
       });
 
-      console.log('Service object:', service);
-
       const requestData = {
         service_id: service.id,
         user_id: service.user_id,
@@ -256,9 +257,8 @@ export const ServiceCheckoutDialog = ({
         notes: formData.notes,
         scheduled_at: scheduledAt.toISOString(),
         status: service.instant_booking === true ? 'accepted' : 'pending',
+        location: service.serviceMode === 'client-location' ? formData.location : null,
       };
-
-      console.log('Request data:', requestData);
 
       let error;
       if (isEditing && requestId) {
@@ -368,6 +368,22 @@ export const ServiceCheckoutDialog = ({
                 className="mt-1"
               />
             </div>
+
+            {service.serviceMode === 'client-location' && (
+              <div>
+                <Label htmlFor="location">Service Location *</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, location: e.target.value }))
+                  }
+                  placeholder="Enter your address"
+                  required
+                  className="mt-1"
+                />
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
