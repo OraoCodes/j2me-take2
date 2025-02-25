@@ -189,13 +189,13 @@ const ServiceCategories = () => {
           <TabsList className="bg-white border border-gebeya-purple/20">
             <TabsTrigger 
               value="visible"
-              className="data-[state=active]:bg-gebeya-purple data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gebeya-pink data-[state=active]:to-gebeya-orange data-[state=active]:text-white"
             >
               Visible
             </TabsTrigger>
             <TabsTrigger 
               value="hidden"
-              className="data-[state=active]:bg-gebeya-purple data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gebeya-pink data-[state=active]:to-gebeya-orange data-[state=active]:text-white"
             >
               Hidden
             </TabsTrigger>
