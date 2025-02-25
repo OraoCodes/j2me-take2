@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Eye, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, startOfWeek, startOfMonth, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type TimePeriod = 'today' | 'week' | 'month';
 
@@ -106,23 +107,35 @@ export const BasicPlanSection = () => {
       <div>
         <div className="flex gap-2 mb-4">
           <Button
-            variant={selectedPeriod === 'today' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => handlePeriodChange('today')}
             size="sm"
+            className={cn(
+              "border-gray-200",
+              selectedPeriod === 'today' && "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white border-transparent hover:text-white hover:from-gebeya-pink/90 hover:to-gebeya-orange/90"
+            )}
           >
             Today
           </Button>
           <Button
-            variant={selectedPeriod === 'week' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => handlePeriodChange('week')}
             size="sm"
+            className={cn(
+              "border-gray-200",
+              selectedPeriod === 'week' && "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white border-transparent hover:text-white hover:from-gebeya-pink/90 hover:to-gebeya-orange/90"
+            )}
           >
             This Week
           </Button>
           <Button
-            variant={selectedPeriod === 'month' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => handlePeriodChange('month')}
             size="sm"
+            className={cn(
+              "border-gray-200",
+              selectedPeriod === 'month' && "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white border-transparent hover:text-white hover:from-gebeya-pink/90 hover:to-gebeya-orange/90"
+            )}
           >
             This Month
           </Button>
