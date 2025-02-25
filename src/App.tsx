@@ -8,7 +8,6 @@ import ServicePage from "@/pages/ServicePage";
 import AddServices from "@/pages/AddServices";
 import ServiceCreated from "@/pages/ServiceCreated";
 import Dashboard from "@/pages/Dashboard";
-import ServiceCategories from "@/pages/ServiceCategories";
 import ProfilePage from "@/pages/ProfilePage";
 import EditService from "@/pages/EditService";
 import Onboarding from "@/pages/Onboarding";
@@ -33,7 +32,6 @@ function App() {
         <Route path="/add-services" element={<AddServices />} />
         <Route path="/service-created" element={<ServiceCreated />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/service-categories" element={<ServiceCategories />} />
         <Route path="/edit-service/:serviceId" element={<EditService />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/service-share" element={<ServiceShare />} />

@@ -21,6 +21,7 @@ import { Category, Profile, Service } from "@/types/dashboard";
 import { fetchCategories } from "@/utils/categoryUtils";
 import { fetchServices, deleteService, updateServiceCategory } from "@/utils/serviceUtils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ServiceCategories from "./ServiceCategories";
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -95,8 +96,20 @@ const Dashboard = () => {
   };
 
   const serviceMenuItems = [
-    { label: "All", onClick: () => setShowServices(true) },
-    { label: "Category", onClick: () => navigate('/service-categories') },
+    { label: "All", onClick: () => {
+      setShowServices(true);
+      setShowCategories(false);
+      setShowServiceRequests(false);
+      setShowCustomers(false);
+      setShowMarketing(false);
+    }},
+    { label: "Category", onClick: () => {
+      setShowCategories(true);
+      setShowServices(false);
+      setShowServiceRequests(false);
+      setShowCustomers(false);
+      setShowMarketing(false);
+    }},
   ];
 
   const designMenuItems = [
@@ -270,6 +283,13 @@ const Dashboard = () => {
             {showCustomers && <CustomersView />}
 
             {showMarketing && <Marketing />}
+
+            {showCategories && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                {/* Move the service categories content here when the Categories menu item is clicked */}
+                <ServiceCategories />
+              </div>
+            )}
           </div>
         </div>
       </div>
