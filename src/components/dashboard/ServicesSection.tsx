@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Filter, ArrowUpDown, FileDown, Plus, Trash2, Edit, Import } from "lucide-react";
+import { Filter, ArrowUpDown, FileDown, Plus, Trash2, Edit } from "lucide-react";
 import { Service } from "@/types/dashboard";
 import { useNavigate } from "react-router-dom";
 
@@ -35,8 +35,8 @@ export const ServicesSection = ({
         </div>
         <div className="flex items-center gap-4">
           <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
-            <Import className="w-4 h-4 mr-2" />
-            Import
+            <FileDown className="w-4 h-4 mr-2" />
+            Export
           </Button>
           <Button variant="outline" className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10">
             Bulk edit
