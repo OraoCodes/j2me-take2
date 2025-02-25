@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
@@ -38,6 +39,11 @@ export const Marketing = () => {
 
   const handleInstagramEdit = () => {
     window.open('https://www.instagram.com/accounts/edit', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadQR = () => {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`;
+    window.open(qrUrl, '_blank');
   };
 
   return (
@@ -115,7 +121,7 @@ export const Marketing = () => {
         <CardContent className="space-y-6">
           <div className="bg-gray-50 p-8 rounded-lg flex justify-center">
             <img 
-              src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://example.com" 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}${storeUrl}`)}`}
               alt="QR Code"
               className="w-48 h-48"
             />
@@ -128,7 +134,7 @@ export const Marketing = () => {
             />
           </div>
           <div className="flex justify-end gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleDownloadQR}>
               <Download className="h-4 w-4 mr-2" />
               Download QR Code
             </Button>
