@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Home, Package, Grid, Users, PenTool, Settings, BadgeDollarSign,
-  Store, CreditCard, Palette, Menu as MenuIcon, ArrowRight,
-  Briefcase, Building2, Settings2, Users2, Mail, MessageSquare
+  Home, Package, Grid, Users, Settings, BadgeDollarSign,
+  Building2, Settings2, Users2, Mail, MessageSquare, Briefcase
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -25,7 +24,6 @@ import ServiceCategories from "./ServiceCategories";
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -112,13 +110,6 @@ const Dashboard = () => {
     }},
   ];
 
-  const designMenuItems = [
-    { icon: <Store className="w-4 h-4" />, label: "Service Page", onClick: () => navigate('/service-page') },
-    { icon: <CreditCard className="w-4 h-4" />, label: "Checkout" },
-    { icon: <Palette className="w-4 h-4" />, label: "Appearance" },
-    { icon: <MenuIcon className="w-4 h-4" />, label: "Menu" },
-  ];
-
   const premiumFeatures = [
     { icon: <Briefcase className="h-4 w-4" />, label: "Team", badge: "PREMIUM" },
     { icon: <Building2 className="h-4 w-4" />, label: "Multi-location", badge: "PREMIUM" },
@@ -172,14 +163,6 @@ const Dashboard = () => {
         setShowCustomers(true);
         setShowMarketing(false);
       }
-    },
-    { 
-      icon: <PenTool />, 
-      label: "Design",
-      hasSubmenu: true,
-      isOpen: isDesignOpen,
-      submenuItems: designMenuItems,
-      onClick: () => setIsDesignOpen(!isDesignOpen)
     },
     { 
       icon: <BadgeDollarSign />, 
@@ -286,7 +269,6 @@ const Dashboard = () => {
 
             {showCategories && (
               <div className="bg-white rounded-lg shadow-lg p-6">
-                {/* Move the service categories content here when the Categories menu item is clicked */}
                 <ServiceCategories />
               </div>
             )}
