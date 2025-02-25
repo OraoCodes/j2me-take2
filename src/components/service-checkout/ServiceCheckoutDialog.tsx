@@ -123,6 +123,14 @@ export const ServiceCheckoutDialog = ({
 
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
+    
+    console.log('Checking availability for:', {
+      date,
+      dayOfWeek,
+      daySetting,
+      isAvailable: daySetting?.is_available
+    });
+    
     return daySetting?.is_available ?? false;
   };
 
@@ -130,18 +138,34 @@ export const ServiceCheckoutDialog = ({
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
     
-    if (!daySetting?.is_available) return [];
+    console.log('Getting time slots:', {
+      date,
+      dayOfWeek,
+      daySetting,
+      availabilitySettings
+    });
+    
+    if (!daySetting?.is_available) {
+      console.log('Day is not available');
+      return [];
+    }
 
     const slots: string[] = [];
-    const start = parse(daySetting.start_time, 'HH:mm', date);
-    const end = parse(daySetting.end_time, 'HH:mm', date);
+    const startDate = parse(daySetting.start_time, 'HH:mm', date);
+    const endDate = parse(daySetting.end_time, 'HH:mm', date);
     
-    let current = start;
-    while (current <= end) {
+    console.log('Time range:', {
+      start: format(startDate, 'HH:mm'),
+      end: format(endDate, 'HH:mm')
+    });
+    
+    let current = startDate;
+    while (current <= endDate) {
       slots.push(format(current, 'HH:mm'));
       current = addMinutes(current, 60);
     }
 
+    console.log('Generated slots:', slots);
     return slots;
   };
 
@@ -293,13 +317,23 @@ export const ServiceCheckoutDialog = ({
                     mode="single"
                     selected={date}
                     onSelect={(newDate) => {
-                      setDate(newDate);
-                      setSelectedTime("");
+                      if (newDate) {
+                        console.log('Selected date:', newDate);
+                        setDate(newDate);
+                        setSelectedTime("");
+                      }
                     }}
                     disabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
-                      return date < today || !isDateAvailable(date);
+                      const isUnavailable = date < today || !isDateAvailable(date);
+                      console.log('Checking date:', {
+                        date,
+                        isUnavailable,
+                        isPast: date < today,
+                        isAvailable: isDateAvailable(date)
+                      });
+                      return isUnavailable;
                     }}
                     className="rounded-md border"
                   />
@@ -331,7 +365,7 @@ export const ServiceCheckoutDialog = ({
 
               {date && availableTimeSlots.length === 0 && (
                 <div className="text-center text-sm text-gray-500">
-                  No available time slots for the selected date.
+                  No available time slots for the selected date. Please select another date.
                 </div>
               )}
 
