@@ -1,7 +1,7 @@
 
+import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { SidebarNavItem } from "./SidebarNavItem";
-import { ReactNode } from "react";
 
 interface SidebarItemProps {
   icon: ReactNode;
@@ -14,6 +14,7 @@ interface SidebarItemProps {
     onClick?: () => void;
   }>;
   onClick?: () => void;
+  isSelected?: boolean;
 }
 
 interface DashboardSidebarProps {
@@ -52,7 +53,7 @@ export const DashboardSidebar = ({
         <div className="flex items-center gap-3 mb-2">
           <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8 w-8" />
           <div>
-            <h2 className="font-semibold text-white">{profile?.company_name || "KicksandSneakers"}</h2>
+            <h2 className="font-semibold text-gray-900">{profile?.company_name || "My Business"}</h2>
           </div>
         </div>
       </div>
@@ -62,9 +63,9 @@ export const DashboardSidebar = ({
       </nav>
 
       <div className="mt-8">
-        <p className="px-6 text-xs font-medium text-gray-400 uppercase mb-2">Apps</p>
+        <p className="px-6 text-xs font-medium text-gray-400 uppercase mb-2">Premium Features</p>
         <nav className="space-y-1 px-3">
-          {[...premiumFeatures, ...businessFeatures].map(item => (
+          {premiumFeatures.map(item => (
             <a 
               key={item.label} 
               href="#" 
@@ -75,7 +76,30 @@ export const DashboardSidebar = ({
                 {item.label}
               </div>
               {item.badge && (
-                <span className={`text-xs px-2 py-1 rounded ${item.badge === "PREMIUM" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
+                <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-700">
+                  {item.badge}
+                </span>
+              )}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      <div className="mt-4">
+        <p className="px-6 text-xs font-medium text-gray-400 uppercase mb-2">Business Features</p>
+        <nav className="space-y-1 px-3">
+          {businessFeatures.map(item => (
+            <a 
+              key={item.label} 
+              href="#" 
+              className="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                {item.icon}
+                {item.label}
+              </div>
+              {item.badge && (
+                <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
                   {item.badge}
                 </span>
               )}
