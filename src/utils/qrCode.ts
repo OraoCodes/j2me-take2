@@ -33,8 +33,11 @@ export const createStyledQRCode = async (
     canvas.width = 600;
     canvas.height = 800;
 
-    // Draw background
-    ctx.fillStyle = '#000000';
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, '#FF1493'); // Gebeya Pink
+    gradient.addColorStop(1, '#FFA500'); // Gebeya Orange
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw header text
@@ -69,7 +72,24 @@ export const createStyledQRCode = async (
     ctx.font = 'bold 36px Arial';
     ctx.fillText(businessName, canvas.width / 2, qrY + qrSize + 60);
     ctx.font = '20px Arial';
-    ctx.fillText(serviceUrl, canvas.width / 2, canvas.height - 40);
+    ctx.fillText(serviceUrl, canvas.width / 2, qrY + qrSize + 100);
+
+    // Load and draw Gebeya logo
+    const logoImage = new Image();
+    logoImage.src = '/lovable-uploads/14afcb65-2dcb-477c-8c08-3ae4cd079ee7.png';
+    
+    await new Promise((resolve, reject) => {
+      logoImage.onload = resolve;
+      logoImage.onerror = reject;
+    });
+
+    // Calculate logo dimensions (height of 40px while maintaining aspect ratio)
+    const logoHeight = 40;
+    const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
+    const logoX = (canvas.width - logoWidth) / 2;
+    const logoY = canvas.height - logoHeight - 40; // 40px from bottom
+
+    ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
 
     // Download the canvas
     canvas.toBlob((blob) => {

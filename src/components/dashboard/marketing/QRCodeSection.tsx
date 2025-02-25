@@ -46,7 +46,7 @@ export const QRCodeSection = ({
           </div>
 
           <div className="space-y-4">
-            <div className="bg-black p-8 rounded-lg flex flex-col items-center space-y-4">
+            <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-8 rounded-lg flex flex-col items-center space-y-4">
               <h3 className="text-white text-2xl font-bold">SCAN ME</h3>
               <p className="text-white text-sm">TO VISIT OUR WEBSITE</p>
               <div className="bg-white p-4 rounded-lg">
@@ -58,6 +58,11 @@ export const QRCodeSection = ({
               </div>
               <p className="text-white font-semibold text-xl">{businessName}</p>
               <p className="text-white text-sm max-w-[250px] truncate">{fullUrl}</p>
+              <img 
+                src="/lovable-uploads/14afcb65-2dcb-477c-8c08-3ae4cd079ee7.png"
+                alt="Gebeya Logo"
+                className="h-8 mt-2"
+              />
             </div>
             <div className="flex justify-center">
               <Button variant="outline" onClick={onDownloadStyled}>
