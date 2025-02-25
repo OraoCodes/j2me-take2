@@ -56,7 +56,7 @@ export const DashboardHeader = ({
   return (
     <div className="fixed top-0 left-0 right-0 bg-white z-[100] border-b border-gray-200">
       <div className="flex items-center justify-between px-4 h-16">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -70,6 +70,7 @@ export const DashboardHeader = ({
             )}
           </Button>
           <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
+          <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
         </div>
         
         <div className="flex items-center gap-4">
