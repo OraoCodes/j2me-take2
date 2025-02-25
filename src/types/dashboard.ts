@@ -29,6 +29,11 @@ export interface Profile {
   profile_image_url: string | null;
   whatsapp_number: string | null;
   banner_image_url: string | null;
+  currency: string | null;
+  service_page_link: string | null;
+  service_requests_per_month: string | null;
+  service_type: string | null;
+  created_at: string | null;
 }
 
 export interface SetupStep {

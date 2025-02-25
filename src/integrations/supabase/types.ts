@@ -95,6 +95,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          banner_image_url: string | null
           company_name: string | null
           created_at: string | null
           currency: string | null
@@ -106,6 +107,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          banner_image_url?: string | null
           company_name?: string | null
           created_at?: string | null
           currency?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          banner_image_url?: string | null
           company_name?: string | null
           created_at?: string | null
           currency?: string | null

@@ -8,9 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserCircle, Upload, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
-import type { Database } from "@/integrations/supabase/types";
-
-type Profile = Database['public']['Tables']['profiles']['Row'];
+import { Profile } from "@/types/dashboard";
 
 export const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -43,7 +41,7 @@ export const ProfilePage = () => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       if (!profileData) {
         profileData = await createProfile(user.id);
@@ -61,55 +59,6 @@ export const ProfilePage = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      setUploading(true);
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_image_url: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Success",
-        description: "Profile picture updated successfully",
-      });
-
-      await fetchProfile();
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to upload profile picture",
-      });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -159,6 +108,55 @@ export const ProfilePage = () => {
       });
     } finally {
       setUploadingBanner(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      setUploading(true);
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_image_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+
+      await fetchProfile();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload profile picture",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 

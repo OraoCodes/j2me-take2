@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Service } from '@/types/dashboard';
+import { Service, Profile } from '@/types/dashboard';
 import { MetaTags } from '@/components/shared/MetaTags';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog } from '@/components/ui/dialog';
 import { ServiceCheckoutDialog } from '@/components/service-checkout/ServiceCheckoutDialog';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
