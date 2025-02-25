@@ -331,25 +331,7 @@ const Dashboard = () => {
       title: "Add delivery options", 
       action: "Add delivery", 
       completed: true 
-    },
-    { 
-      number: 4, 
-      title: "Set up payment methods", 
-      action: "Add payment", 
-      completed: false 
-    },
-    { 
-      number: 5, 
-      title: "Set up custom domain", 
-      action: "Upgrade", 
-      completed: false 
-    },
-    { 
-      number: 6, 
-      title: "Invite staff", 
-      action: "Upgrade", 
-      completed: false 
-    },
+    }
   ];
 
   const filteredServices = services.filter(service =>
