@@ -325,12 +325,6 @@ const Dashboard = () => {
       action: "Create service request", 
       completed: hasRequests, 
       onClick: () => navigate('/service-page') 
-    },
-    { 
-      number: 3, 
-      title: "Add delivery options", 
-      action: "Add delivery", 
-      completed: true 
     }
   ];
 
