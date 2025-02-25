@@ -44,8 +44,9 @@ export const ServiceCheckoutDialog = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
-  const [hour, setHour] = useState("");
-  const [minute, setMinute] = useState("");
+  const [hour, setHour] = useState<string>("");
+  const [minute, setMinute] = useState<string>("");
+  const [period, setPeriod] = useState<string>("AM");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -56,7 +57,6 @@ export const ServiceCheckoutDialog = ({
   const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
   const minutes = ["00", "15", "30", "45"];
   const periods = ["AM", "PM"];
-  const [period, setPeriod] = useState("AM");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,92 +193,97 @@ export const ServiceCheckoutDialog = ({
             <div className="space-y-4">
               <div>
                 <Label>Preferred Date *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal mt-1",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
-                      disabled={(date) => date < new Date()}
-                      fromDate={new Date()}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="mt-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={(newDate) => {
+                          console.log("Date selected:", newDate);
+                          setDate(newDate);
+                        }}
+                        disabled={(date) => date < new Date()}
+                        defaultMonth={date || new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
               <div>
                 <Label>Preferred Time *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal mt-1",
-                        (!hour || !minute) && "text-muted-foreground"
-                      )}
-                    >
-                      <Clock className="mr-2 h-4 w-4" />
-                      {getTimeDisplay()}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64" align="start">
-                    <div className="grid gap-4">
-                      <div className="grid grid-cols-3 gap-2">
-                        <Select value={hour} onValueChange={setHour}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Hour" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {hours.map((h) => (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  <Select
+                    value={hour}
+                    onValueChange={(value) => {
+                      console.log("Hour selected:", value);
+                      setHour(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Hour" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                        <Select value={minute} onValueChange={setMinute}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Min" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {minutes.map((m) => (
-                              <SelectItem key={m} value={m}>
-                                {m}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                  <Select
+                    value={minute}
+                    onValueChange={(value) => {
+                      console.log("Minute selected:", value);
+                      setMinute(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Min" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {minutes.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                        <Select value={period} onValueChange={setPeriod}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {periods.map((p) => (
-                              <SelectItem key={p} value={p}>
-                                {p}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  <Select
+                    value={period}
+                    onValueChange={(value) => {
+                      console.log("Period selected:", value);
+                      setPeriod(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {periods.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
