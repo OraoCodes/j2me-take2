@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,17 +9,32 @@ import { UserCircle, Upload, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
 import { Profile } from "@/types/dashboard";
+import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [tempBannerImage, setTempBannerImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 100,
+    height: 56.25, // To maintain 16:9 aspect ratio
+    x: 0,
+    y: 0
+  });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   const createProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -68,9 +83,30 @@ export const ProfilePage = () => {
         return;
       }
 
-      setUploadingBanner(true);
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        setTempBannerImage(reader.result as string);
+        setShowCropDialog(true);
+      };
+      
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error handling banner upload:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process banner image",
+      });
+    }
+  };
+
+  const uploadCroppedImage = async (croppedImageBlob: Blob) => {
+    try {
+      setUploadingBanner(true);
+      
+      const fileExt = "png";
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -78,7 +114,7 @@ export const ProfilePage = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('profiles')
-        .upload(filePath, file);
+        .upload(filePath, croppedImageBlob);
 
       if (uploadError) throw uploadError;
 
@@ -99,6 +135,8 @@ export const ProfilePage = () => {
       });
 
       await fetchProfile();
+      setShowCropDialog(false);
+      setTempBannerImage(null);
     } catch (error) {
       console.error('Error uploading banner:', error);
       toast({
@@ -110,6 +148,47 @@ export const ProfilePage = () => {
       setUploadingBanner(false);
     }
   };
+
+  const handleCropComplete = useCallback(async () => {
+    if (!completedCrop || !tempBannerImage) {
+      return;
+    }
+
+    const image = new Image();
+    image.src = tempBannerImage;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return;
+    }
+
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+
+    ctx.drawImage(
+      image,
+      completedCrop.x,
+      completedCrop.y,
+      completedCrop.width,
+      completedCrop.height,
+      0,
+      0,
+      completedCrop.width,
+      completedCrop.height
+    );
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          uploadCroppedImage(blob);
+        }
+      },
+      'image/png',
+      1
+    );
+  }, [completedCrop, tempBannerImage]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -220,7 +299,7 @@ export const ProfilePage = () => {
           <CardContent className="pt-8">
             <div className="flex flex-col items-center mb-8">
               <div className="w-full mb-6 relative">
-                <div className="w-full h-32 rounded-lg bg-gray-100 overflow-hidden">
+                <div className="w-full aspect-video rounded-lg bg-gray-100 overflow-hidden">
                   {profile?.banner_image_url ? (
                     <img
                       src={profile.banner_image_url}
@@ -312,6 +391,51 @@ export const ProfilePage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
+        <DialogContent className="max-w-[800px] w-full">
+          <DialogHeader>
+            <DialogTitle>Crop Banner Image</DialogTitle>
+            <DialogDescription>
+              Adjust the crop area to fit your banner image. The image will be cropped to a 16:9 aspect ratio.
+            </DialogDescription>
+          </DialogHeader>
+          {tempBannerImage && (
+            <div className="mt-4">
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={16 / 9}
+                className="max-w-full"
+              >
+                <img
+                  src={tempBannerImage}
+                  alt="Crop preview"
+                  className="max-w-full h-auto"
+                />
+              </ReactCrop>
+            </div>
+          )}
+          <div className="flex justify-end gap-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCropDialog(false);
+                setTempBannerImage(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCropComplete}
+              disabled={!completedCrop || uploadingBanner}
+            >
+              {uploadingBanner ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
