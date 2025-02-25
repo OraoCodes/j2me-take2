@@ -31,6 +31,7 @@ import {
   Plus,
   Trash2,
   Edit,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -44,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { EditCategoryDialog } from "@/components/categories/EditCategoryDialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CreateService from "@/pages/CreateService";
+import { cn } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -65,6 +67,8 @@ interface Service {
 }
 
 const Dashboard = () => {
+  // Add new state for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
@@ -415,9 +419,42 @@ const Dashboard = () => {
     activeTab === "visible" ? category.is_visible : !category.is_visible
   );
 
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6">
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={toggleMobileMenu}
+      >
+        {isMobileMenuOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <MenuIcon className="h-6 w-6" />
+        )}
+      </Button>
+
+      {/* Backdrop for mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-40 md:hidden"
+          onClick={toggleMobileMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6 z-40",
+        "transform transition-transform duration-300 ease-in-out",
+        "md:transform-none",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
         <div className="px-6 mb-8">
           <div className="flex items-center gap-3 mb-2">
             <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8 w-8" />
@@ -501,7 +538,11 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="ml-64">
+      {/* Main Content */}
+      <div className={cn(
+        "transition-all duration-300 ease-in-out",
+        "md:ml-64"
+      )}>
         <Header />
         <div className="p-8 pt-20">
           <div className="max-w-5xl mx-auto">
