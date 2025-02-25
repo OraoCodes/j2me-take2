@@ -28,6 +28,7 @@ export interface Profile {
   company_name: string | null;
   profile_image_url: string | null;
   whatsapp_number: string | null;
+  banner_image_url: string | null;
 }
 
 export interface SetupStep {

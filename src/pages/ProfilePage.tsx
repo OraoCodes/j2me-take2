@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCircle, Upload } from "lucide-react";
+import { UserCircle, Upload, Image as ImageIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
 import type { Database } from "@/integrations/supabase/types";
@@ -17,6 +16,7 @@ export const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,7 +46,6 @@ export const ProfilePage = () => {
         .maybeSingle();
 
       if (!profileData) {
-        // Profile doesn't exist, create one
         profileData = await createProfile(user.id);
       } else if (error) {
         throw error;
@@ -79,19 +78,16 @@ export const ProfilePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // First, upload the file to storage
       const { error: uploadError } = await supabase.storage
         .from('profiles')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('profiles')
         .getPublicUrl(filePath);
 
-      // Update the profile with the new image URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ profile_image_url: publicUrl })
@@ -114,6 +110,55 @@ export const ProfilePage = () => {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      setUploadingBanner(true);
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ banner_image_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Banner image updated successfully",
+      });
+
+      await fetchProfile();
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload banner image",
+      });
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -176,6 +221,39 @@ export const ProfilePage = () => {
           </CardHeader>
           <CardContent className="pt-8">
             <div className="flex flex-col items-center mb-8">
+              <div className="w-full mb-6 relative">
+                <div className="w-full h-32 rounded-lg bg-gray-100 overflow-hidden">
+                  {profile?.banner_image_url ? (
+                    <img
+                      src={profile.banner_image_url}
+                      alt="Profile Banner"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ImageIcon className="w-8 h-8" />
+                    </div>
+                  )}
+                </div>
+                <label 
+                  htmlFor="bannerImage" 
+                  className="absolute bottom-2 right-2 p-2 rounded-full bg-gebeya-pink text-white cursor-pointer hover:bg-gebeya-orange transition-colors duration-200 shadow-md"
+                >
+                  <Upload className="h-5 w-5" />
+                  <input
+                    type="file"
+                    id="bannerImage"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleBannerUpload}
+                    disabled={uploadingBanner}
+                  />
+                </label>
+                {uploadingBanner && (
+                  <p className="text-sm text-gebeya-pink mt-2 text-center animate-pulse">Uploading banner...</p>
+                )}
+              </div>
+
               <div className="relative">
                 <Avatar className="h-28 w-28 border-4 border-gebeya-pink/20">
                   <AvatarImage src={profile?.profile_image_url || undefined} alt="Profile" />
