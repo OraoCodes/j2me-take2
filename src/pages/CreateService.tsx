@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -485,28 +484,46 @@ const CreateService = ({ onSuccess, initialData }: CreateServiceProps) => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="travelFee">Travel Fee (Optional)</Label>
-                  <Input
-                    id="travelFee"
-                    type="number"
-                    placeholder="e.g., 500"
-                    value={formData.travelFee}
-                    onChange={(e) => setFormData(prev => ({ ...prev, travelFee: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
+                {formData.serviceMode === 'client-location' && (
+                  <div>
+                    <Label htmlFor="travelFee">Travel Fee (Optional)</Label>
+                    <Input
+                      id="travelFee"
+                      type="number"
+                      placeholder="e.g., 500"
+                      value={formData.travelFee}
+                      onChange={(e) => setFormData(prev => ({ ...prev, travelFee: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
 
-                <div>
-                  <Label htmlFor="serviceArea">Service Area / Regions Covered</Label>
-                  <Input
-                    id="serviceArea"
-                    placeholder="e.g., Nairobi, Mombasa"
-                    value={formData.serviceArea}
-                    onChange={(e) => setFormData(prev => ({ ...prev, serviceArea: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
+                {formData.serviceMode === 'my-location' && (
+                  <div>
+                    <Label htmlFor="serviceArea">My Location Address *</Label>
+                    <Input
+                      id="serviceArea"
+                      placeholder="e.g., 123 Main Street, Building Name, City"
+                      value={formData.serviceArea}
+                      onChange={(e) => setFormData(prev => ({ ...prev, serviceArea: e.target.value }))}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                )}
+
+                {formData.serviceMode === 'client-location' && (
+                  <div>
+                    <Label htmlFor="serviceArea">Service Area / Regions Covered</Label>
+                    <Input
+                      id="serviceArea"
+                      placeholder="e.g., Nairobi, Mombasa"
+                      value={formData.serviceArea}
+                      onChange={(e) => setFormData(prev => ({ ...prev, serviceArea: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                )}
               </div>
             </FormSection>
 
