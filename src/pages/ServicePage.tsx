@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Helmet } from 'react-helmet';
 import { Card, CardContent } from '@/components/ui/card';
 import { Service } from '@/types/dashboard';
 import { MetaTags } from '@/components/shared/MetaTags';
