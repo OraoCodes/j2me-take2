@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -49,7 +50,6 @@ export const ServicesSection = ({
               setEditingService(null);
               // Optionally refresh the services list here
             }}
-            onCancel={() => setEditingService(null)}
           />
         </div>
       )}
