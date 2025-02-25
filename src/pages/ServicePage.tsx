@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Home, Search, PlusCircle, Send } from "lucide-react";
+import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceCheckoutDialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type Service = Database['public']['Tables']['services']['Row'];
@@ -25,6 +25,8 @@ const ServicePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("home");
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
     const fetchProfileAndData = async () => {
@@ -118,8 +120,9 @@ const ServicePage = () => {
     return { servicesByCategory, uncategorizedServices };
   };
 
-  const handleRequestService = (serviceId: string, serviceName: string) => {
-    console.log(`Requesting service: ${serviceName} (ID: ${serviceId})`);
+  const handleRequestService = (service: Service) => {
+    setSelectedService(service);
+    setCheckoutDialogOpen(true);
   };
 
   if (loading) {
@@ -201,7 +204,7 @@ const ServicePage = () => {
                                 <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#181326]">{service.name}</h3>
                                 <p className="text-gebeya-pink mb-2">Ksh {service.price.toLocaleString()}</p>
                                 <Button
-                                  onClick={() => handleRequestService(service.id, service.name)}
+                                  onClick={() => handleRequestService(service)}
                                   className="w-full sm:w-auto bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-colors duration-200"
                                 >
                                   <Send className="w-4 h-4 mr-2" />
@@ -239,7 +242,7 @@ const ServicePage = () => {
                           <h3 className="font-semibold text-base sm:text-lg mb-1 text-[#181326]">{service.name}</h3>
                           <p className="text-gebeya-pink mb-2">Ksh {service.price.toLocaleString()}</p>
                           <Button
-                            onClick={() => handleRequestService(service.id, service.name)}
+                            onClick={() => handleRequestService(service)}
                             className="w-full sm:w-auto bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white transition-colors duration-200"
                           >
                             <Send className="w-4 h-4 mr-2" />
@@ -279,6 +282,17 @@ const ServicePage = () => {
           <p className="text-sm sm:text-base text-gebeya-pink text-center">{profile?.service_page_link}</p>
         </div>
       </div>
+
+      {selectedService && (
+        <ServiceCheckoutDialog
+          isOpen={checkoutDialogOpen}
+          onClose={() => {
+            setCheckoutDialogOpen(false);
+            setSelectedService(null);
+          }}
+          service={selectedService}
+        />
+      )}
     </div>
   );
 };
