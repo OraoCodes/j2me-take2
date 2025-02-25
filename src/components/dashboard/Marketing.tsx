@@ -16,8 +16,19 @@ export const Marketing = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setStoreUrl(`/services/${user.id}`);
-        // Fetch business name from metadata or use a default
-        setBusinessName(user.user_metadata?.business_name || "My Business");
+        
+        // Fetch business name from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_name')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.company_name) {
+          setBusinessName(profile.company_name);
+        } else {
+          setBusinessName("My Business"); // Fallback only if no company name is set
+        }
       }
       setLoading(false);
     };
