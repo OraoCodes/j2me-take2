@@ -3,12 +3,19 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Autoplay from "embla-carousel-autoplay";
+import { useEffect, useRef } from "react";
 
 export const Hero = () => {
   const navigate = useNavigate();
+  const plugin = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-pink-50 to-white pt-32 pb-20">
@@ -39,12 +46,13 @@ export const Hero = () => {
               </Button>
             </div>
           </div>
-          <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms]">
+          <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms] relative">
             <Carousel
               opts={{
                 align: "start",
                 loop: true,
               }}
+              plugins={[plugin.current]}
               className="w-full"
             >
               <CarouselContent>
@@ -85,6 +93,8 @@ export const Hero = () => {
                   </div>
                 </CarouselItem>
               </CarouselContent>
+              <CarouselPrevious className="left-4" />
+              <CarouselNext className="right-4" />
             </Carousel>
           </div>
         </div>
