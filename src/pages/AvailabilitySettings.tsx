@@ -263,7 +263,10 @@ export default function AvailabilitySettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             {weeklySchedule.map((setting) => (
-              <div key={setting.day_of_week} className="flex items-center justify-between p-2 border border-gebeya-pink/20 rounded hover:border-gebeya-pink/40 transition-colors">
+              <div 
+                key={setting.day_of_week} 
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-2 border border-gebeya-pink/20 rounded hover:border-gebeya-pink/40 transition-colors space-y-2 sm:space-y-0"
+              >
                 <div className="flex items-center gap-4">
                   <Switch
                     checked={setting.is_available}
@@ -274,19 +277,19 @@ export default function AvailabilitySettings() {
                 </div>
                 
                 {setting.is_available && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-12 sm:ml-0">
                     <Input
                       type="time"
                       value={setting.start_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'start_time', e.target.value)}
-                      className="w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-24 sm:w-28 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
-                    <span className="text-gebeya-purple">to</span>
+                    <span className="text-gebeya-purple whitespace-nowrap">to</span>
                     <Input
                       type="time"
                       value={setting.end_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'end_time', e.target.value)}
-                      className="w-32 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-24 sm:w-28 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
                   </div>
                 )}
