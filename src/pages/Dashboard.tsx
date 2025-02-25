@@ -32,6 +32,7 @@ import {
   Trash2,
   Edit,
   X,
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -66,6 +67,13 @@ interface Service {
   category_id: string | null;
 }
 
+interface Profile {
+  id: string;
+  company_name: string | null;
+  profile_image_url: string | null;
+  whatsapp_number: string | null;
+}
+
 const Dashboard = () => {
   // Add new state for mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -88,6 +96,7 @@ const Dashboard = () => {
   const [showCreateService, setShowCreateService] = useState(false);
   const [userCategories, setUserCategories] = useState<Category[]>([]);
   const { toast } = useToast();
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -99,6 +108,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchUserCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
   const fetchCategories = async () => {
@@ -424,6 +437,28 @@ const Dashboard = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleBusinessNameClick = () => {
+    navigate(`/service-page/${profile?.id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Logo and Menu */}
@@ -464,7 +499,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-3 mb-2">
             <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8 w-8" />
             <div>
-              <h2 className="font-semibold">KicksandSneakers</h2>
+              <h2 className="font-semibold">{profile?.company_name || "KicksandSneakers"}</h2>
               <p className="text-sm text-gray-500">take.app/kicksandsneakers</p>
             </div>
           </div>
@@ -549,7 +584,13 @@ const Dashboard = () => {
         "md:ml-64"
       )}>
         <div className="p-4 md:p-8">
-          <h1 className="text-2xl font-bold mb-6">KickSandSneakers</h1>
+          <div 
+            className="flex items-center gap-2 mb-6 cursor-pointer group"
+            onClick={handleBusinessNameClick}
+          >
+            <h1 className="text-2xl font-bold">{profile?.company_name || "My Business"}</h1>
+            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+          </div>
 
           {!showCategories && !showServices && !showCreateService && (
             <>
@@ -856,33 +897,4 @@ const Dashboard = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteService(service.id)}
-                            className="hover:text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            service.is_active 
-                              ? 'bg-gebeya-pink/10 text-gebeya-pink' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {service.is_active ? 'VISIBLE' : 'HIDDEN'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    {filteredServices.length === 0 && (
-                      <div className="p-8 text-center text-gray-500">
-                        No services found
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : null}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Dashboard;
+                            className="hover:text-
