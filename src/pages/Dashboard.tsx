@@ -130,12 +130,20 @@ const Dashboard = () => {
   const fetchServices = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
 
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select('*')
-        .eq('user_id', user.id)
+        .select(`
+          *,
+          service_categories (
+            id,
+            name
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (servicesError) {
