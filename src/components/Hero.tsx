@@ -3,18 +3,16 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 export const Hero = () => {
   const navigate = useNavigate();
   const plugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 6000, stopOnInteraction: true })
   );
 
   return (
@@ -46,7 +44,7 @@ export const Hero = () => {
               </Button>
             </div>
           </div>
-          <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms] relative">
+          <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms]">
             <Carousel
               opts={{
                 align: "start",
@@ -93,8 +91,6 @@ export const Hero = () => {
                   </div>
                 </CarouselItem>
               </CarouselContent>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
             </Carousel>
           </div>
         </div>
