@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, Settings, BadgeDollarSign,
   Building2, Settings2, Users2, Mail, MessageSquare, Briefcase,
-  ArrowRight
+  ArrowRight, Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -23,6 +22,7 @@ import { fetchCategories } from "@/utils/categoryUtils";
 import { fetchServices, deleteService, updateServiceCategory } from "@/utils/serviceUtils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ServiceCategories from "./ServiceCategories";
+import AvailabilitySettings from "./AvailabilitySettings";
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,6 +40,7 @@ const Dashboard = () => {
   const [hasRequests, setHasRequests] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
   const [showMarketing, setShowMarketing] = useState(false);
+  const [showAvailability, setShowAvailability] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -134,6 +135,7 @@ const Dashboard = () => {
         setShowServiceRequests(false);
         setShowCustomers(false);
         setShowMarketing(false);
+        setShowAvailability(false);
       }
     },
     { 
@@ -145,6 +147,7 @@ const Dashboard = () => {
         setShowServiceRequests(true);
         setShowCustomers(false);
         setShowMarketing(false);
+        setShowAvailability(false);
       }
     },
     { 
@@ -164,6 +167,7 @@ const Dashboard = () => {
         setShowServiceRequests(false);
         setShowCustomers(true);
         setShowMarketing(false);
+        setShowAvailability(false);
       }
     },
     { 
@@ -175,15 +179,22 @@ const Dashboard = () => {
         setShowServiceRequests(false);
         setShowCustomers(false);
         setShowMarketing(true);
+        setShowAvailability(false);
       },
       isSelected: showMarketing
     },
     { 
-      icon: <Settings />, 
+      icon: <Calendar />, 
       label: "Availability",
       onClick: () => {
-        navigate('/availability');
-      }
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(false);
+        setShowMarketing(false);
+        setShowAvailability(true);
+      },
+      isSelected: showAvailability
     },
     { icon: <Settings />, label: "Settings" },
   ];
@@ -247,7 +258,8 @@ const Dashboard = () => {
             </div>
 
             {!showCategories && !showServices && !showServiceRequests && 
-             !showCustomers && !showCreateService && !showMarketing && (
+             !showCustomers && !showCreateService && !showMarketing &&
+             !showAvailability && (
               <>
                 <SetupGuideSection steps={setupSteps} />
                 <BasicPlanSection />
@@ -275,6 +287,8 @@ const Dashboard = () => {
             {showCustomers && <CustomersView />}
 
             {showMarketing && <Marketing />}
+
+            {showAvailability && <AvailabilitySettings />}
 
             {showCategories && (
               <div className="bg-white rounded-lg shadow-lg p-6">
