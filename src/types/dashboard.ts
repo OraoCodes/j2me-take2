@@ -16,6 +16,7 @@ export interface Service {
   description: string | null;
   image_url: string | null;
   category_id: string | null;
+  user_id: string;
   service_categories?: {
     id: string;
     name: string;
