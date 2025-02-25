@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ import { ServicesSection } from "@/components/dashboard/ServicesSection";
 import { Category, Profile, Service } from "@/types/dashboard";
 import { fetchCategories } from "@/utils/categoryUtils";
 import { fetchServices, deleteService, updateServiceCategory } from "@/utils/serviceUtils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -204,73 +206,75 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader 
-        isMobileMenuOpen={isMobileMenuOpen}
-        toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        profile={profile}
-      />
-
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-[90] md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
+    <TooltipProvider>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader 
+          isMobileMenuOpen={isMobileMenuOpen}
+          toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          profile={profile}
         />
-      )}
 
-      <DashboardSidebar
-        isMobileMenuOpen={isMobileMenuOpen}
-        profile={profile}
-        sidebarItems={sidebarItems}
-        premiumFeatures={premiumFeatures}
-        businessFeatures={businessFeatures}
-      />
-
-      <div className={cn(
-        "transition-all duration-300 ease-in-out pt-16",
-        "md:ml-64"
-      )}>
-        <div className="p-4 md:p-8">
+        {isMobileMenuOpen && (
           <div 
-            className="flex items-center gap-2 mb-6 cursor-pointer group"
-            onClick={handleBusinessNameClick}
-          >
-            <h1 className="text-2xl font-bold">{profile?.company_name || "My Business"}</h1>
-            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            className="fixed inset-0 bg-black/20 z-[90] md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        <DashboardSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          profile={profile}
+          sidebarItems={sidebarItems}
+          premiumFeatures={premiumFeatures}
+          businessFeatures={businessFeatures}
+        />
+
+        <div className={cn(
+          "transition-all duration-300 ease-in-out pt-16",
+          "md:ml-64"
+        )}>
+          <div className="p-4 md:p-8">
+            <div 
+              className="flex items-center gap-2 mb-6 cursor-pointer group"
+              onClick={handleBusinessNameClick}
+            >
+              <h1 className="text-2xl font-bold">{profile?.company_name || "My Business"}</h1>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            </div>
+
+            {!showCategories && !showServices && !showServiceRequests && 
+             !showCustomers && !showCreateService && !showMarketing && (
+              <>
+                <SetupGuideSection steps={setupSteps} />
+                <BasicPlanSection />
+              </>
+            )}
+
+            {showCreateService && (
+              <CreateService onSuccess={() => setShowCreateService(false)} />
+            )}
+
+            {showServices && (
+              <ServicesSection
+                services={filteredServices}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                userCategories={userCategories}
+                onDeleteService={deleteService}
+                onUpdateServiceCategory={updateServiceCategory}
+                setShowCreateService={setShowCreateService}
+              />
+            )}
+
+            {showServiceRequests && <ServiceRequestsView />}
+
+            {showCustomers && <CustomersView />}
+
+            {showMarketing && <Marketing />}
           </div>
-
-          {!showCategories && !showServices && !showServiceRequests && 
-           !showCustomers && !showCreateService && !showMarketing && (
-            <>
-              <SetupGuideSection steps={setupSteps} />
-              <BasicPlanSection />
-            </>
-          )}
-
-          {showCreateService && (
-            <CreateService onSuccess={() => setShowCreateService(false)} />
-          )}
-
-          {showServices && (
-            <ServicesSection
-              services={filteredServices}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              userCategories={userCategories}
-              onDeleteService={deleteService}
-              onUpdateServiceCategory={updateServiceCategory}
-              setShowCreateService={setShowCreateService}
-            />
-          )}
-
-          {showServiceRequests && <ServiceRequestsView />}
-
-          {showCustomers && <CustomersView />}
-
-          {showMarketing && <Marketing />}
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
