@@ -8,6 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parse, set, addMinutes } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ServiceCheckoutDialogProps {
   isOpen: boolean;
@@ -65,6 +72,7 @@ export const ServiceCheckoutDialog = ({
     name: initialData?.name || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
+    countryCode: "+254", // Default to Kenya
     notes: initialData?.notes || "",
     location: initialData?.location || "",
   });
@@ -257,12 +265,14 @@ export const ServiceCheckoutDialog = ({
         milliseconds: 0
       });
 
+      const fullPhoneNumber = `${formData.countryCode}${formData.phone.startsWith("0") ? formData.phone.slice(1) : formData.phone}`;
+      
       const requestData = {
         service_id: service.id,
         user_id: service.user_id,
         customer_name: formData.name,
         customer_email: formData.email,
-        customer_phone: formData.phone,
+        customer_phone: fullPhoneNumber,
         notes: formData.notes,
         scheduled_at: scheduledAt.toISOString(),
         status: service.instant_booking === true ? 'accepted' : 'pending',
@@ -373,16 +383,40 @@ export const ServiceCheckoutDialog = ({
 
             <div>
               <Label htmlFor="phone">Phone Number *</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                }
-                required
-                className="mt-1"
-              />
+              <div className="flex gap-2 mt-1">
+                <Select
+                  value={formData.countryCode}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, countryCode: value }))
+                  }
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="+254">🇰🇪 +254</SelectItem>
+                    <SelectItem value="+255">🇹🇿 +255</SelectItem>
+                    <SelectItem value="+256">🇺🇬 +256</SelectItem>
+                    <SelectItem value="+251">🇪🇹 +251</SelectItem>
+                    <SelectItem value="+250">🇷🇼 +250</SelectItem>
+                    <SelectItem value="+257">🇧🇮 +257</SelectItem>
+                    <SelectItem value="+253">🇩🇯 +253</SelectItem>
+                    <SelectItem value="+252">🇸🇴 +252</SelectItem>
+                    <SelectItem value="+211">🇸🇸 +211</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  placeholder="712345678"
+                  className="flex-1"
+                  required
+                />
+              </div>
             </div>
 
             {service.serviceMode === 'client-location' && (
