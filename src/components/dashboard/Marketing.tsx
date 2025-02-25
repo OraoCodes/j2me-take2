@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, HelpCircle, Download } from "lucide-react";
+import { ExternalLink, HelpCircle, Download, Instagram } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -32,6 +32,10 @@ export const Marketing = () => {
       '_blank',
       'noopener,noreferrer'
     );
+  };
+
+  const handleInstagramEdit = () => {
+    window.open('https://www.instagram.com/accounts/edit', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -72,15 +76,15 @@ export const Marketing = () => {
           </div>
 
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <img src="/lovable-uploads/4dcc2955-5c1c-46a7-8326-d2457dc799e7.png" alt="Instagram" className="h-6 w-6" />
+            <Instagram className="h-6 w-6 text-gray-600" />
             <span className="flex-1">Add link in bio</span>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => copyToClipboard(storeUrl)}
+              onClick={handleInstagramEdit}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
-              Copy
+              Link
             </Button>
           </div>
 
