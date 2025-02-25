@@ -171,14 +171,15 @@ export const Marketing = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <div className="flex-1 flex items-center gap-3">
-              <ExternalLink className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-600">{window.location.origin}{storeUrl}</span>
+            <div className="flex-1 flex items-center gap-3 min-w-0">
+              <ExternalLink className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              <span className="text-gray-600 truncate">{window.location.origin}{storeUrl}</span>
             </div>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => copyToClipboard(storeUrl)}
+              className="flex-shrink-0"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Copy
@@ -239,7 +240,7 @@ export const Marketing = () => {
               />
             </div>
             <p className="text-white font-semibold text-xl">{businessName}</p>
-            <p className="text-white text-sm">{window.location.origin}{storeUrl}</p>
+            <p className="text-white text-sm max-w-[250px] truncate">{window.location.origin}{storeUrl}</p>
           </div>
           <div className="flex justify-end gap-4">
             <Button variant="outline" onClick={handleDownloadQR}>
