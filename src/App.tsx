@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import EditService from "@/pages/EditService";
 import Onboarding from "@/pages/Onboarding";
 import PricingPage from "@/pages/Pricing";
+import ServiceShare from "@/pages/ServiceShare";
 import "./App.css";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/service-categories" element={<ServiceCategories />} />
         <Route path="/edit-service/:serviceId" element={<EditService />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/service-share" element={<ServiceShare />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
