@@ -75,7 +75,6 @@ interface Profile {
 }
 
 const Dashboard = () => {
-  // Add new state for mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
@@ -455,7 +454,9 @@ const Dashboard = () => {
   };
 
   const handleBusinessNameClick = () => {
-    navigate(`/service-page/${profile?.id}`);
+    if (profile?.id) {
+      navigate(`/services/${profile.id}`);
+    }
   };
 
   return (
