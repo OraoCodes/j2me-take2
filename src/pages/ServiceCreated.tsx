@@ -17,10 +17,10 @@ const ServiceCreated = () => {
           Your service page has been created successfully
         </p>
         <Button 
-          onClick={() => navigate('/dashboard', { state: { showServices: true } })} 
+          onClick={() => navigate('/add-services')} 
           className="w-full max-w-md h-14 text-lg text-white bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
         >
-          View All Services
+          Start customizing your page
         </Button>
       </div>
     </div>
