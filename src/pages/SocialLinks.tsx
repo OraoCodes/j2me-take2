@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Switch } from "@/components/ui/switch";
@@ -7,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { Instagram, Facebook, MapPin, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SocialLinkDetails {
   username?: string;
@@ -28,6 +29,8 @@ interface SocialLink {
 
 const SocialLinks = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
     {
       id: "instagram",
@@ -102,7 +105,7 @@ const SocialLinks = () => {
       name: "Youtube",
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#FF0000">
-          <path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.9 3.6 12 3.6 12 3.6s-7.9 0-9.5.5c-1 .3-1.7 1.1-2 2.1C0 7.9 0 12 0 12s0 4.1.5 5.8c.3 1 1 1.8 2 2.1 1.6.5 9.5.5 9.5.5s7.9 0 9.5-.5c1-.3 1.7-1.1 2-2.1.5-1.7.5-5.8.5-5.8s0-4.1-.5-5.8z" />
+          <path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.9 3.6 12 3.6 12 3.6s-7.9 0-9.5.5c-1 .3-1.7 1.1-2 2.1 1.6.5 9.5.5 9.5.5s7.9 0 9.5-.5c1-.3 1.7-1.1 2-2.1.5-1.7.5-5.8.5-5.8s0-4.1-.5-5.8z" />
           <path fill="#FFF" d="M9.6 15.6V8.4l6.4 3.6z" />
         </svg>
       ),
@@ -122,6 +125,100 @@ const SocialLinks = () => {
       placeholder: "https://",
     },
   ]);
+
+  useEffect(() => {
+    loadSocialLinks();
+  }, []);
+
+  const loadSocialLinks = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        navigate('/auth');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('social_links')
+        .select('*')
+        .eq('user_id', session.session.user.id);
+
+      if (error) throw error;
+
+      if (data) {
+        setSocialLinks(prevLinks => 
+          prevLinks.map(link => {
+            const savedData = data.find(item => item.platform_id === link.id);
+            if (savedData) {
+              return {
+                ...link,
+                enabled: savedData.enabled,
+                details: {
+                  username: savedData.username || "",
+                  url: savedData.url || "",
+                  location: savedData.location || "",
+                  title: savedData.title || "",
+                }
+              };
+            }
+            return link;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error loading social links:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load social links.",
+      });
+    }
+  };
+
+  const saveSocialLinks = async () => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        navigate('/auth');
+        return;
+      }
+
+      const socialLinksData = socialLinks.map(link => ({
+        user_id: session.session.user.id,
+        platform_id: link.id,
+        enabled: link.enabled,
+        username: link.details.username || null,
+        url: link.details.url || null,
+        location: link.details.location || null,
+        title: link.details.title || null,
+      }));
+
+      const { error } = await supabase
+        .from('social_links')
+        .upsert(socialLinksData, {
+          onConflict: 'user_id,platform_id'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Social links saved successfully!",
+      });
+
+      navigate('/store-optimization');
+    } catch (error) {
+      console.error('Error saving social links:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save social links.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleSocialLink = (id: string) => {
     setSocialLinks(links =>
@@ -143,7 +240,6 @@ const SocialLinks = () => {
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
       <div className="container mx-auto px-4 py-24 max-w-2xl">
-        {/* Progress Steps */}
         <div className="flex justify-center mb-12">
           <div className="flex items-center gap-3">
             {[1, 2, 3, 4, 5].map((step) => (
@@ -163,7 +259,6 @@ const SocialLinks = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Add social media and important links</h1>
           <p className="text-gray-600 text-lg">
@@ -171,7 +266,6 @@ const SocialLinks = () => {
           </p>
         </div>
 
-        {/* Social Links */}
         <div className="space-y-4">
           {socialLinks.map((link) => (
             <div
@@ -244,13 +338,13 @@ const SocialLinks = () => {
           ))}
         </div>
 
-        {/* Navigation */}
         <div className="mt-12">
           <Button
-            onClick={() => navigate("/store-optimization")}
+            onClick={saveSocialLinks}
+            disabled={isLoading}
             className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
-            Continue
+            {isLoading ? "Saving..." : "Continue"}
           </Button>
         </div>
       </div>
