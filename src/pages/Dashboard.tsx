@@ -1,53 +1,37 @@
-import { Button } from "@/components/ui/button";
-import { Header } from "@/components/Header";
-import { 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
+import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
+import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
+import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
+import CreateService from "@/pages/CreateService";
+import {
   Home,
   Package,
   Grid,
   Users,
   PenTool,
   Settings,
-  Tag, 
-  BarChart, 
-  FileText, 
-  CalendarClock, 
-  MessageCircle, 
-  Inbox, 
+  Tag,
+  BarChart,
+  FileText,
+  CalendarClock,
+  MessageCircle,
+  Inbox,
   BadgeDollarSign,
-  ChevronRight,
   MessagesSquare,
   ScrollText,
-  ChevronDown,
-  ChevronUp,
   Store,
   CreditCard,
   Palette,
   Menu as MenuIcon,
-  Info,
-  Import,
-  Filter,
-  ArrowUpDown,
-  FileDown,
-  Plus,
-  Trash2,
-  Edit,
-  X,
-  ArrowRight,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { CategoryItem } from "@/components/categories/CategoryItem";
-import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
-import { Input } from "@/components/ui/input";
-import { EditCategoryDialog } from "@/components/categories/EditCategoryDialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import CreateService from "@/pages/CreateService";
-import { cn } from "@/lib/utils";
-import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
 
 interface Category {
   id: string;
@@ -77,7 +61,6 @@ interface Profile {
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
@@ -95,23 +78,15 @@ const Dashboard = () => {
   const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>("");
   const [showCreateService, setShowCreateService] = useState(false);
   const [userCategories, setUserCategories] = useState<Category[]>([]);
-  const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showServiceRequests, setShowServiceRequests] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchCategories();
-  }, []);
-
-  useEffect(() => {
     fetchServices();
-  }, []);
-
-  useEffect(() => {
     fetchUserCategories();
-  }, []);
-
-  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -170,193 +145,31 @@ const Dashboard = () => {
     }
   };
 
-  const createCategory = async () => {
-    if (!newCategoryName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Category name cannot be empty.",
-      });
-      return;
-    }
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    const { error } = await supabase
-      .from('service_categories')
-      .insert([
-        {
-          name: newCategoryName.trim(),
-          sequence: categories.length,
-          user_id: user.id
-        }
-      ]);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create category. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category created successfully.",
-      });
-      setNewCategoryName("");
-      setIsDialogOpen(false);
-      fetchCategories();
+      if (error) throw error;
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
     }
   };
 
-  const startEditing = (category: Category) => {
-    setEditingId(category.id);
-    setEditingName(category.name);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditingName("");
-  };
-
-  const saveEditing = async () => {
-    if (!editingId || !editingName.trim()) return;
-
-    const { error } = await supabase
-      .from('service_categories')
-      .update({ name: editingName.trim() })
-      .eq('id', editingId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update category name. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category updated successfully.",
-      });
-      setEditingId(null);
-      setEditingName("");
-      fetchCategories();
-    }
-  };
-
-  const toggleVisibility = async (category: Category) => {
-    const { error } = await supabase
-      .from('service_categories')
-      .update({ is_visible: !category.is_visible })
-      .eq('id', category.id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update category visibility. Please try again.",
-      });
-    } else {
-      fetchCategories();
-    }
-  };
-
-  const handleDeleteService = async (id: string) => {
-    const { error } = await supabase
-      .from('services')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete service. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Service deleted successfully.",
-      });
-      fetchServices();
-    }
-  };
-
-  const handleEditService = (serviceId: string) => {
-    navigate(`/edit-service/${serviceId}`);
-  };
-
-  const handleEditCategory = async (categoryData: {
-    name: string;
-    is_visible: boolean;
-    description?: string;
-  }) => {
-    if (!selectedCategory) return;
-
-    const { error } = await supabase
-      .from('service_categories')
-      .update({
-        name: categoryData.name,
-        is_visible: categoryData.is_visible,
-      })
-      .eq('id', selectedCategory.id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update category. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category updated successfully.",
-      });
-      fetchCategories();
-    }
-  };
-
-  const handleDeleteCategory = async (id: string) => {
-    const { error } = await supabase
-      .from('service_categories')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete category. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category deleted successfully.",
-      });
-      fetchCategories();
-    }
-  };
-
-  const handleUpdateServiceCategory = async (serviceId: string, categoryId: string) => {
-    const { error } = await supabase
-      .from('services')
-      .update({ category_id: categoryId })
-      .eq('id', serviceId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update service category. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Service category updated successfully.",
-      });
-      fetchServices();
-      setSelectedServiceId(null);
+  const handleBusinessNameClick = () => {
+    if (profile?.id) {
+      navigate(`/services/${profile.id}`);
     }
   };
 
@@ -466,61 +279,12 @@ const Dashboard = () => {
     },
   ];
 
-  const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredCategories = categories.filter(category => 
-    activeTab === "visible" ? category.is_visible : !category.is_visible
-  );
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const fetchProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) throw error;
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const handleBusinessNameClick = () => {
-    if (profile?.id) {
-      navigate(`/services/${profile.id}`);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="fixed top-0 left-0 right-0 bg-white z-[100] border-b border-gray-200">
-        <div className="flex items-center px-4 h-16">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mr-3 md:hidden"
-            onClick={toggleMobileMenu}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <MenuIcon className="h-6 w-6" />
-            )}
-          </Button>
-          <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
-        </div>
-      </div>
+      <DashboardHeader 
+        isMobileMenuOpen={isMobileMenuOpen}
+        toggleMobileMenu={toggleMobileMenu}
+      />
 
       {isMobileMenuOpen && (
         <div 
@@ -529,94 +293,13 @@ const Dashboard = () => {
         />
       )}
 
-      <div className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6 z-[95]",
-        "transform transition-transform duration-300 ease-in-out",
-        "md:transform-none",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}>
-        <div className="px-6 mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8 w-8" />
-            <div>
-              <h2 className="font-semibold">{profile?.company_name || "KicksandSneakers"}</h2>
-              <p className="text-sm text-gray-500">take.app/kicksandsneakers</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="space-y-1 px-3">
-          {sidebarItems.map((item) => (
-            <div key={item.label}>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (item.onClick) item.onClick();
-                }}
-                className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
-                  item.hasSubmenu && item.isOpen
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {item.icon}
-                  {item.label}
-                </div>
-                {item.hasSubmenu && (
-                  item.isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                )}
-              </a>
-              {item.hasSubmenu && item.isOpen && (
-                <div className="ml-9 mt-1 space-y-1">
-                  {item.submenuItems?.map((subItem) => (
-                    <a
-                      key={subItem.label}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (subItem.onClick) subItem.onClick();
-                      }}
-                      className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
-                    >
-                      {subItem.icon}
-                      {subItem.label}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
-
-        <div className="mt-8">
-          <p className="px-6 text-xs font-medium text-gray-400 uppercase mb-2">Apps</p>
-          <nav className="space-y-1 px-3">
-            {[...premiumFeatures, ...businessFeatures].map((item) => (
-              <a
-                key={item.label}
-                href="#"
-                className="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-3">
-                  {item.icon}
-                  {item.label}
-                </div>
-                {item.badge && (
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    item.badge === "PREMIUM" 
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </div>
+      <DashboardSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        profile={profile}
+        sidebarItems={sidebarItems}
+        premiumFeatures={premiumFeatures}
+        businessFeatures={businessFeatures}
+      />
 
       <div className={cn(
         "transition-all duration-300 ease-in-out pt-16",
@@ -633,108 +316,17 @@ const Dashboard = () => {
 
           {!showCategories && !showServices && !showServiceRequests && !showCreateService && (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
-                <div className="p-4 md:p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Setup guide</h2>
-                    <a href="#" className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1">
-                      Tutorials
-                      <ChevronRight className="w-4 h-4" />
-                    </a>
-                  </div>
-
-                  <div className="space-y-6">
-                    {setupSteps.map((step) => (
-                      <div key={step.number} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
-                        <div className="flex gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                            step.completed
-                              ? "bg-green-100 text-green-600"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
-                            {step.completed ? (
-                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            ) : (
-                              step.number
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium mb-2">{step.title}</h3>
-                            <Button 
-                              variant={step.action === "Upgrade" ? "default" : "outline"}
-                              className={cn(
-                                "w-full justify-center",
-                                step.action === "Upgrade" ? "bg-blue-500 hover:bg-blue-600" : ""
-                              )}
-                              onClick={step.onClick}
-                            >
-                              {step.action}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-6 rounded-xl text-white mb-8">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Subscribe now at $1</h3>
-                    <p className="text-white/90 mb-4">
-                      Kickstart a strong 2025 with our Premium Plan - Now just $1 (originally $19)
-                    </p>
-                    <Button variant="secondary" className="bg-white text-gebeya-pink hover:bg-white/90">
-                      Upgrade
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold mb-4">Basic plan</h3>
-                <div className="space-y-4">
-                  {[
-                    { icon: <Settings className="w-5 h-5" />, label: "Setup wizard" },
-                    { icon: <FileText className="w-5 h-5" />, label: "Getting started" },
-                    { icon: <Users className="w-5 h-5" />, label: "Subscriber guide" },
-                    { icon: <MessageCircle className="w-5 h-5" />, label: "Helpdesk" },
-                  ].map((item) => (
-                    <a
-                      key={item.label}
-                      href="#"
-                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        {item.icon}
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </a>
-                  ))}
-                </div>
-              </div>
+              <SetupGuideSection steps={setupSteps} />
+              <SubscriptionCard />
+              <BasicPlanSection />
             </>
           )}
 
-          {showCreateService ? (
-            <>
-              <div className="flex items-center justify-between mb-8">
-                <h1 className="text-2xl font-semibold text-gray-900">Create Service</h1>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateService(false)}
-                  className="border-gebeya-pink text-gebeya-pink hover:bg-gebeya-pink/10"
-                >
-                  Back to Dashboard
-                </Button>
-              </div>
-              <CreateService onSuccess={() => setShowCreateService(false)} />
-            </>
-          ) : showCategories ? (
+          {showCreateService && (
+            <CreateService onSuccess={() => setShowCreateService(false)} />
+          )}
+
+          {showCategories && (
             <>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
@@ -827,7 +419,9 @@ const Dashboard = () => {
                 onDelete={handleDeleteCategory}
               />
             </>
-          ) : showServices ? (
+          )}
+
+          {showServices && (
             <>
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
@@ -917,4 +511,42 @@ const Dashboard = () => {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {userCategories.map((
+                            {userCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditService(service.id)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteService(service.id)}
+                          className="text-gray-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {showServiceRequests && <ServiceRequestsView />}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
