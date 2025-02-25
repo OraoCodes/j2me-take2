@@ -223,6 +223,7 @@ const ServicePage = () => {
                     src={serviceImages[service.id]?.[selectedImageIndex[service.id] || 0]?.image_url || service.image_url}
                     alt={service.name}
                     className="w-full h-full object-cover"
+                    style={{ transition: 'opacity 0.15s ease' }} // Faster image transition
                   />
                   {serviceImages[service.id]?.length > 1 && (
                     <div className="absolute bottom-2 right-2 flex gap-1">
