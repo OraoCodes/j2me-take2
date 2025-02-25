@@ -379,7 +379,11 @@ const Dashboard = () => {
         setShowServices(false);
       }
     },
-    { icon: <Grid />, label: "Service Requests" },
+    { 
+      icon: <Grid />, 
+      label: "Service Requests",
+      onClick: () => navigate('/service-requests')
+    },
     { 
       icon: <Package />, 
       label: "Services",
