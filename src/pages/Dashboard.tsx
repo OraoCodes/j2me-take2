@@ -53,6 +53,7 @@ import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
 import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
 import { supabase } from "@/integrations/supabase/client";
 import CustomersView from "@/components/customers/CustomersView";
+import { Marketing } from "@/components/dashboard/Marketing";
 
 interface Category {
   id: string;
@@ -103,6 +104,7 @@ const Dashboard = () => {
   const [showServiceRequests, setShowServiceRequests] = useState(false);
   const [hasRequests, setHasRequests] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
+  const [showMarketing, setShowMarketing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -256,6 +258,7 @@ const Dashboard = () => {
         setShowServices(false);
         setShowServiceRequests(false);
         setShowCustomers(false);
+        setShowMarketing(false);
       }
     },
     { 
@@ -266,6 +269,7 @@ const Dashboard = () => {
         setShowServices(false);
         setShowServiceRequests(true);
         setShowCustomers(false);
+        setShowMarketing(false);
       }
     },
     { 
@@ -284,6 +288,7 @@ const Dashboard = () => {
         setShowServices(false);
         setShowServiceRequests(false);
         setShowCustomers(true);
+        setShowMarketing(false);
       }
     },
     { 
@@ -293,6 +298,18 @@ const Dashboard = () => {
       isOpen: isDesignOpen,
       submenuItems: designMenuItems,
       onClick: () => setIsDesignOpen(!isDesignOpen)
+    },
+    { 
+      icon: <BadgeDollarSign />, 
+      label: "Marketing",
+      onClick: () => {
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(false);
+        setShowMarketing(true);
+      },
+      isSelected: showMarketing
     },
     { icon: <Settings />, label: "Settings" },
   ];
@@ -562,7 +579,8 @@ const Dashboard = () => {
             <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
           </div>
 
-          {!showCategories && !showServices && !showServiceRequests && !showCustomers && !showCreateService && (
+          {!showCategories && !showServices && !showServiceRequests && 
+           !showCustomers && !showCreateService && !showMarketing && (
             <>
               <SetupGuideSection steps={setupSteps} />
               <BasicPlanSection />
@@ -792,6 +810,8 @@ const Dashboard = () => {
           {showServiceRequests && <ServiceRequestsView />}
 
           {showCustomers && <CustomersView />}
+
+          {showMarketing && <Marketing />}
         </div>
       </div>
     </div>
