@@ -18,10 +18,11 @@ import {
 } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceCheckoutDialog";
 
 interface ServiceRequest {
   id: string;
@@ -43,6 +44,7 @@ const ServiceRequestsView = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,6 +106,15 @@ const ServiceRequestsView = () => {
     }
   };
 
+  const handleEditRequest = (request: ServiceRequest) => {
+    setEditingRequest(request);
+  };
+
+  const handleEditComplete = () => {
+    setEditingRequest(null);
+    fetchRequests(); // Refresh the requests list
+  };
+
   const getStatusBadge = (status: string) => {
     const statusStyles = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -153,6 +164,29 @@ const ServiceRequestsView = () => {
           </TooltipProvider>
         </div>
       </div>
+
+      {editingRequest && (
+        <ServiceCheckoutDialog
+          isOpen={true}
+          onClose={handleEditComplete}
+          service={{
+            id: editingRequest.service_id,
+            name: editingRequest.services.name,
+            price: editingRequest.services.price,
+            description: null,
+            user_id: editingRequest.user_id
+          }}
+          initialData={{
+            name: editingRequest.customer_name,
+            email: editingRequest.customer_email || "",
+            phone: editingRequest.customer_phone || "",
+            notes: editingRequest.notes || "",
+            scheduled_at: parseISO(editingRequest.scheduled_at)
+          }}
+          isEditing={true}
+          requestId={editingRequest.id}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -218,20 +252,30 @@ const ServiceRequestsView = () => {
                       {getStatusBadge(request.status)}
                     </div>
 
-                    <Select
-                      defaultValue={request.status}
-                      onValueChange={(value) => updateRequestStatus(request.id, value)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="accepted">Accept</SelectItem>
-                        <SelectItem value="rejected">Reject</SelectItem>
-                        <SelectItem value="completed">Complete</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        defaultValue={request.status}
+                        onValueChange={(value) => updateRequestStatus(request.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="accepted">Accept</SelectItem>
+                          <SelectItem value="rejected">Reject</SelectItem>
+                          <SelectItem value="completed">Complete</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditRequest(request)}
+                      >
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 ))}
 
@@ -274,20 +318,30 @@ const ServiceRequestsView = () => {
                     {getStatusBadge(request.status)}
                   </div>
 
-                  <Select
-                    defaultValue={request.status}
-                    onValueChange={(value) => updateRequestStatus(request.id, value)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="accepted">Accept</SelectItem>
-                      <SelectItem value="rejected">Reject</SelectItem>
-                      <SelectItem value="completed">Complete</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      defaultValue={request.status}
+                      onValueChange={(value) => updateRequestStatus(request.id, value)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="accepted">Accept</SelectItem>
+                        <SelectItem value="rejected">Reject</SelectItem>
+                        <SelectItem value="completed">Complete</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditRequest(request)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

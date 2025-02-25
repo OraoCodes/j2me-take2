@@ -33,24 +33,36 @@ interface ServiceCheckoutDialogProps {
     description: string | null;
     user_id: string;
   };
+  initialData?: {
+    name: string;
+    email: string;
+    phone: string;
+    notes: string;
+    scheduled_at: Date;
+  };
+  isEditing?: boolean;
+  requestId?: string;
 }
 
 export const ServiceCheckoutDialog = ({
   isOpen,
   onClose,
   service,
+  initialData,
+  isEditing = false,
+  requestId,
 }: ServiceCheckoutDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [hour, setHour] = useState<string>("");
-  const [minute, setMinute] = useState<string>("");
-  const [period, setPeriod] = useState<string>("AM");
+  const [date, setDate] = useState<Date | undefined>(initialData?.scheduled_at || undefined);
+  const [hour, setHour] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'hh') : "");
+  const [minute, setMinute] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'mm') : "");
+  const [period, setPeriod] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'a').toUpperCase() : "AM");
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
+    name: initialData?.name || "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
+    notes: initialData?.notes || "",
   });
 
   const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
@@ -80,40 +92,45 @@ export const ServiceCheckoutDialog = ({
       const scheduledAt = new Date(date);
       scheduledAt.setHours(hourIn24, parseInt(minute));
 
-      const { error } = await supabase.from("service_requests").insert({
+      const requestData = {
         service_id: service.id,
         user_id: service.user_id,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
         notes: formData.notes,
-        status: 'pending',
         scheduled_at: scheduledAt.toISOString()
-      });
+      };
+
+      let error;
+      if (isEditing && requestId) {
+        // Update existing request
+        const { error: updateError } = await supabase
+          .from("service_requests")
+          .update(requestData)
+          .eq('id', requestId);
+        error = updateError;
+      } else {
+        // Create new request
+        const { error: insertError } = await supabase
+          .from("service_requests")
+          .insert({ ...requestData, status: 'pending' });
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
         title: "Success!",
-        description: "Your service request has been submitted.",
+        description: isEditing ? "Service request updated successfully." : "Your service request has been submitted.",
       });
 
       onClose();
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-      });
-      setDate(undefined);
-      setHour("");
-      setMinute("");
-      setPeriod("AM");
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to submit service request. Please try again.",
+        description: isEditing ? "Failed to update service request." : "Failed to submit service request. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -134,9 +151,9 @@ export const ServiceCheckoutDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Request Service</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Service Request" : "Request Service"}</DialogTitle>
           <DialogDescription>
-            Fill in your details to request this service.
+            {isEditing ? "Update the service request details." : "Fill in your details to request this service."}
           </DialogDescription>
         </DialogHeader>
 
