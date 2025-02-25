@@ -20,6 +20,7 @@ interface ServiceCheckoutDialogProps {
     user_id: string;
     instant_booking: boolean;
     serviceMode?: string;
+    travelFee?: string;
   };
   initialData?: {
     name: string;
@@ -72,6 +73,14 @@ export const ServiceCheckoutDialog = ({
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
+
+  const calculateTotalPrice = () => {
+    let total = service.price;
+    if (service.serviceMode === 'client-location' && service.travelFee) {
+      total += parseFloat(service.travelFee);
+    }
+    return total;
+  };
 
   useEffect(() => {
     if (initialData?.scheduled_at) {
@@ -319,9 +328,16 @@ export const ServiceCheckoutDialog = ({
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
               <h3 className="font-medium">{service.name}</h3>
-              <p className="text-lg font-semibold text-gebeya-pink">
-                KES {service.price.toLocaleString()}
-              </p>
+              <div className="text-right">
+                <p className="text-lg font-semibold text-gebeya-pink">
+                  KES {calculateTotalPrice().toLocaleString()}
+                </p>
+                {service.serviceMode === 'client-location' && service.travelFee && (
+                  <p className="text-sm text-gray-500">
+                    (Includes travel fee: KES {parseFloat(service.travelFee).toLocaleString()})
+                  </p>
+                )}
+              </div>
             </div>
             {service.description && (
               <p className="text-sm text-gray-500">{service.description}</p>
