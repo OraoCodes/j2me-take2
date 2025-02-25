@@ -1,16 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
-import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
-import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
-import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
-import CreateService from "@/pages/CreateService";
 import {
   Home,
   Package,
@@ -31,7 +21,37 @@ import {
   CreditCard,
   Palette,
   Menu as MenuIcon,
+  X,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Import,
+  Filter,
+  ArrowUpDown,
+  FileDown,
+  Plus,
+  Trash2,
+  Edit,
+  ArrowRight,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CategoryItem } from "@/components/categories/CategoryItem";
+import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
+import { EditCategoryDialog } from "@/components/categories/EditCategoryDialog";
+import CreateService from "@/pages/CreateService";
+import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
+import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
+import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Category {
   id: string;
@@ -279,6 +299,14 @@ const Dashboard = () => {
     },
   ];
 
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter(category => 
+    activeTab === "visible" ? category.is_visible : !category.is_visible
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader 
@@ -360,13 +388,13 @@ const Dashboard = () => {
                 <TabsList className="w-full bg-white border-b border-gray-200 p-0 h-auto">
                   <TabsTrigger 
                     value="visible" 
-                    className="flex-1 py-3 data-[state=active]:text-gebeya-pink data-[state=active]:border-b-2 data-[state=active]:border-gebeya-pink"
+                    className="flex-1 py-3"
                   >
                     Visible
                   </TabsTrigger>
                   <TabsTrigger 
                     value="hidden"
-                    className="flex-1 py-3 data-[state=active]:text-gebeya-pink data-[state=active]:border-b-2 data-[state=active]:border-gebeya-pink"
+                    className="flex-1 py-3"
                   >
                     Hidden
                   </TabsTrigger>
