@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Filter, ArrowUpDown, FileDown, Plus, Trash2, Edit } from "lucide-react";
 import { Service } from "@/types/dashboard";
 import CreateService from "@/pages/CreateService";
+import { fetchServices } from "@/utils/serviceUtils";
 
 interface ServicesSectionProps {
   services: Service[];
@@ -28,11 +29,18 @@ export const ServicesSection = ({
 }: ServicesSectionProps) => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showServices, setShowServices] = useState(true);
+  const [localServices, setLocalServices] = useState<Service[]>(services);
 
-  const handleCreateServiceSuccess = () => {
+  useEffect(() => {
+    setLocalServices(services);
+  }, [services]);
+
+  const handleCreateServiceSuccess = async () => {
     setShowServices(true);
     setShowCreateService(false);
-    // You might want to refresh the services list here
+    // Fetch updated services list
+    const updatedServices = await fetchServices();
+    setLocalServices(updatedServices);
   };
 
   if (!showServices) {
@@ -64,9 +72,11 @@ export const ServicesSection = ({
         <div className="mb-8">
           <CreateService
             initialData={editingService}
-            onSuccess={() => {
+            onSuccess={async () => {
               setEditingService(null);
-              // Optionally refresh the services list here
+              // Fetch updated services list after editing
+              const updatedServices = await fetchServices();
+              setLocalServices(updatedServices);
             }}
           />
         </div>
@@ -88,7 +98,7 @@ export const ServicesSection = ({
         </div>
 
         <div className="divide-y divide-gray-100">
-          {services.map(service => (
+          {localServices.map(service => (
             <div key={service.id} className="p-4 flex items-center hover:bg-gray-50/80">
               <input type="checkbox" className="mr-4 rounded border-gebeya-pink text-gebeya-pink focus:ring-gebeya-pink" />
               <div className="w-16 h-16 rounded bg-gray-100 mr-4">
@@ -127,7 +137,13 @@ export const ServicesSection = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => onDeleteService(service.id)} 
+                  onClick={() => {
+                    onDeleteService(service.id);
+                    // Update local services after deletion
+                    setLocalServices(prevServices => 
+                      prevServices.filter(s => s.id !== service.id)
+                    );
+                  }} 
                   className="text-gray-500 hover:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
