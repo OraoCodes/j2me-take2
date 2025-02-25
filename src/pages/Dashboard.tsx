@@ -502,6 +502,7 @@ const Dashboard = () => {
       <DashboardHeader 
         isMobileMenuOpen={isMobileMenuOpen}
         toggleMobileMenu={toggleMobileMenu}
+        profile={profile}
       />
 
       {isMobileMenuOpen && (
