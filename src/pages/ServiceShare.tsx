@@ -1,15 +1,50 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Link2, Instagram, Facebook, MessageCircle, Settings, ArrowLeft, Copy, CheckCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ServiceShare = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-  const serviceLink = "https://yourplatform.co/yourname";
+  const [serviceLink, setServiceLink] = useState("");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate('/auth');
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('service_page_link')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        // If service_page_link exists, use it; otherwise, construct the default link
+        const link = profile?.service_page_link || `${window.location.origin}/services/${user.id}`;
+        setServiceLink(link);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        toast({
+          title: "Error loading profile",
+          description: "Could not load your service page link.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchUserProfile();
+  }, [navigate, toast]);
 
   const copyToClipboard = async () => {
     try {
