@@ -373,7 +373,7 @@ const AddServices = () => {
 
                 <div>
                   <Label htmlFor={`product-price-${index}`} className="flex items-center gap-2">
-                    <span>💰</span> Price
+                    <span>💰</span> Price (KES)
                   </Label>
                   <div className="relative mt-1">
                     <Input
@@ -385,10 +385,10 @@ const AddServices = () => {
                         newProducts[index].price = Number(e.target.value);
                         setProducts(newProducts);
                       }}
-                      className="pl-8"
+                      className="pl-12"
                       placeholder="Enter price"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">KES</span>
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                       <ChevronUp className="w-4 h-4 text-gray-400 cursor-pointer" />
                       <ChevronDown className="w-4 h-4 text-gray-400 cursor-pointer" />
