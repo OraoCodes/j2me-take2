@@ -1,20 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Home,
-  Package,
-  Grid,
-  Users,
-  PenTool,
-  Settings,
-  BadgeDollarSign,
-  Store,
-  CreditCard,
-  Palette,
-  Menu as MenuIcon,
-  ArrowRight,
+  Home, Package, Grid, Users, PenTool, Settings, BadgeDollarSign,
+  Store, CreditCard, Palette, Menu as MenuIcon, ArrowRight,
+  Briefcase, Building2, Settings2, Users2, Mail, MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -28,7 +18,7 @@ import CustomersView from "@/components/customers/CustomersView";
 import { Marketing } from "@/components/dashboard/Marketing";
 import { ServicesSection } from "@/components/dashboard/ServicesSection";
 import { Category, Profile, Service } from "@/types/dashboard";
-import { fetchCategories, fetchUserCategories, createCategory, updateCategory, toggleCategoryVisibility, deleteCategory } from "@/utils/categoryUtils";
+import { fetchCategories } from "@/utils/categoryUtils";
 import { fetchServices, deleteService, updateServiceCategory } from "@/utils/serviceUtils";
 
 const Dashboard = () => {
@@ -52,9 +42,11 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCategories().then(setCategories);
+    fetchCategories().then((fetchedCategories) => {
+      setCategories(fetchedCategories);
+      setUserCategories(fetchedCategories);
+    });
     fetchServices().then(setServices);
-    fetchUserCategories().then(setUserCategories);
     fetchProfile();
     checkServiceRequests();
   }, []);
@@ -111,6 +103,18 @@ const Dashboard = () => {
     { icon: <CreditCard className="w-4 h-4" />, label: "Checkout" },
     { icon: <Palette className="w-4 h-4" />, label: "Appearance" },
     { icon: <MenuIcon className="w-4 h-4" />, label: "Menu" },
+  ];
+
+  const premiumFeatures = [
+    { icon: <Briefcase className="h-4 w-4" />, label: "Team", badge: "PREMIUM" },
+    { icon: <Building2 className="h-4 w-4" />, label: "Multi-location", badge: "PREMIUM" },
+    { icon: <Settings2 className="h-4 w-4" />, label: "Advanced Settings", badge: "PREMIUM" },
+  ];
+
+  const businessFeatures = [
+    { icon: <Users2 className="h-4 w-4" />, label: "Staff Management", badge: "BUSINESS" },
+    { icon: <Mail className="h-4 w-4" />, label: "Email Marketing", badge: "BUSINESS" },
+    { icon: <MessageSquare className="h-4 w-4" />, label: "Chat Support", badge: "BUSINESS" },
   ];
 
   const sidebarItems = [
@@ -218,6 +222,8 @@ const Dashboard = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         profile={profile}
         sidebarItems={sidebarItems}
+        premiumFeatures={premiumFeatures}
+        businessFeatures={businessFeatures}
       />
 
       <div className={cn(
