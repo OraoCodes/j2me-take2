@@ -1,4 +1,9 @@
 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -35,15 +40,52 @@ export const Hero = () => {
             </div>
           </div>
           <div className="lg:w-1/2 animate-fade-up [animation-delay:600ms]">
-            <img
-              src="/lovable-uploads/0df23dea-45aa-4d4b-875f-c075ec41c4b7.png"
-              alt="Service Professional using SoloServe platform"
-              className="w-full h-auto rounded-2xl shadow-2xl"
-              style={{
-                maxWidth: "600px",
-                transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
               }}
-            />
+              className="w-full"
+            >
+              <CarouselContent>
+                <CarouselItem>
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                    <img
+                      src="/lovable-uploads/43596b3e-9e4c-4d5a-b25f-6019cc8e2c6c.png"
+                      alt="Service Professional managing their business"
+                      className="w-full h-auto"
+                      style={{
+                        transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
+                      }}
+                    />
+                  </div>
+                </CarouselItem>
+                <CarouselItem>
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                    <img
+                      src="/lovable-uploads/03acda6a-09af-4789-985c-0642df7b4b14.png"
+                      alt="Professional using SoloServe app"
+                      className="w-full h-auto"
+                      style={{
+                        transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
+                      }}
+                    />
+                  </div>
+                </CarouselItem>
+                <CarouselItem>
+                  <div className="w-full rounded-2xl shadow-2xl overflow-hidden">
+                    <img
+                      src="/lovable-uploads/8834b56d-b4d5-42a0-9364-175e2674f577.png"
+                      alt="Service provider interacting with customer"
+                      className="w-full h-auto"
+                      style={{
+                        transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
+                      }}
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
       </div>
