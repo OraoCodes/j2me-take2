@@ -43,16 +43,16 @@ export const Marketing = () => {
             <HelpCircle className="h-5 w-5 text-gray-400" />
           </TooltipTrigger>
           <TooltipContent>
-            <p>Share your store and increase visibility</p>
+            <p>Share your service page and increase visibility</p>
           </TooltipContent>
         </Tooltip>
       </div>
 
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Share your store link</CardTitle>
+          <CardTitle>Share your Service Page Link</CardTitle>
           <CardDescription>
-            Make your store visible on your social media and website
+            Make your service page visible on your social media
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
