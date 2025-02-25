@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-react";
@@ -14,7 +13,7 @@ export const Marketing = () => {
     const fetchStoreUrl = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setStoreUrl(`https://take.app/${user.id}`); // This is an example URL format
+        setStoreUrl(`/services/${user.id}`); // Updated to match the service page route
       }
       setLoading(false);
     };
@@ -23,12 +22,15 @@ export const Marketing = () => {
   }, []);
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    // Get the full URL by combining the current origin with the path
+    const fullUrl = `${window.location.origin}${text}`;
+    navigator.clipboard.writeText(fullUrl);
   };
 
   const handleFacebookShare = () => {
+    const fullUrl = `${window.location.origin}${storeUrl}`;
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}`,
       '_blank',
       'noopener,noreferrer'
     );
@@ -63,7 +65,7 @@ export const Marketing = () => {
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex-1 flex items-center gap-3">
               <ExternalLink className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-600">{storeUrl}</span>
+              <span className="text-gray-600">{window.location.origin}{storeUrl}</span>
             </div>
             <Button 
               variant="outline" 
