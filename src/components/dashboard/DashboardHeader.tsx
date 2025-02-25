@@ -70,7 +70,7 @@ export const DashboardHeader = ({
             )}
           </Button>
           <img src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" alt="Logo" className="h-8" />
-          <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
+          <span className="text-xl font-semibold text-gebeya-pink">Jitume</span>
         </div>
         
         <div className="flex items-center gap-4">
