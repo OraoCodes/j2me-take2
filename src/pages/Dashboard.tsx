@@ -307,6 +307,196 @@ const Dashboard = () => {
     activeTab === "visible" ? category.is_visible : !category.is_visible
   );
 
+  const createCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Category name cannot be empty.",
+      });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .insert([
+        {
+          name: newCategoryName.trim(),
+          sequence: categories.length,
+          user_id: user.id
+        }
+      ]);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category created successfully.",
+      });
+      setNewCategoryName("");
+      setIsDialogOpen(false);
+      fetchCategories();
+    }
+  };
+
+  const startEditing = (category: Category) => {
+    setEditingId(category.id);
+    setEditingName(category.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  const saveEditing = async () => {
+    if (!editingId || !editingName.trim()) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .update({ name: editingName.trim() })
+      .eq('id', editingId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category name. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category updated successfully.",
+      });
+      setEditingId(null);
+      setEditingName("");
+      fetchCategories();
+    }
+  };
+
+  const toggleVisibility = async (category: Category) => {
+    const { error } = await supabase
+      .from('service_categories')
+      .update({ is_visible: !category.is_visible })
+      .eq('id', category.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category visibility. Please try again.",
+      });
+    } else {
+      fetchCategories();
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete service. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Service deleted successfully.",
+      });
+      fetchServices();
+    }
+  };
+
+  const handleEditService = (serviceId: string) => {
+    navigate(`/edit-service/${serviceId}`);
+  };
+
+  const handleEditCategory = async (categoryData: {
+    name: string;
+    is_visible: boolean;
+    description?: string;
+  }) => {
+    if (!selectedCategory) return;
+
+    const { error } = await supabase
+      .from('service_categories')
+      .update({
+        name: categoryData.name,
+        is_visible: categoryData.is_visible,
+      })
+      .eq('id', selectedCategory.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category updated successfully.",
+      });
+      fetchCategories();
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Category deleted successfully.",
+      });
+      fetchCategories();
+    }
+  };
+
+  const handleUpdateServiceCategory = async (serviceId: string, categoryId: string) => {
+    const { error } = await supabase
+      .from('services')
+      .update({ category_id: categoryId })
+      .eq('id', serviceId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update service category. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Service category updated successfully.",
+      });
+      fetchServices();
+      setSelectedServiceId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader 
