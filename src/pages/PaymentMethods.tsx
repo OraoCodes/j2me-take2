@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { Wallet, Banknote, ChevronDown } from "lucide-react";
+import { Wallet, Banknote } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,15 @@ interface PaymentMethod {
 interface MpesaDetails {
   idType: string;
   phoneNumber: string;
+}
+
+interface PaymentMethodRecord {
+  user_id: string;
+  mpesa_id_type: string | null;
+  mpesa_phone: string | null;
+  cash_enabled: boolean;
+  mpesa_enabled: boolean;
+  wallet_enabled: boolean;
 }
 
 const PaymentMethods = () => {
@@ -77,16 +86,15 @@ const PaymentMethods = () => {
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
-        .single();
+        .eq('user_id', session.session.user.id)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data) {
         setPaymentMethods(methods => methods.map(method => ({
           ...method,
-          enabled: data[`${method.id}_enabled`]
+          enabled: Boolean(data[`${method.id}_enabled` as keyof PaymentMethodRecord])
         })));
 
         if (data.mpesa_id_type || data.mpesa_phone) {
@@ -115,7 +123,7 @@ const PaymentMethods = () => {
         return;
       }
 
-      const paymentData = {
+      const paymentData: PaymentMethodRecord = {
         user_id: session.session.user.id,
         mpesa_id_type: paymentMethods.find(m => m.id === 'mpesa')?.enabled ? mpesaDetails.idType : null,
         mpesa_phone: paymentMethods.find(m => m.id === 'mpesa')?.enabled ? mpesaDetails.phoneNumber : null,
@@ -126,7 +134,8 @@ const PaymentMethods = () => {
 
       const { error } = await supabase
         .from('payment_methods')
-        .upsert(paymentData, { onConflict: 'user_id' });
+        .upsert(paymentData)
+        .eq('user_id', session.session.user.id);
 
       if (error) throw error;
 

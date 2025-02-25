@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      payment_methods: {
+        Row: {
+          cash_enabled: boolean | null
+          created_at: string
+          id: string
+          mpesa_enabled: boolean | null
+          mpesa_id_type: string | null
+          mpesa_phone: string | null
+          user_id: string
+          wallet_enabled: boolean | null
+        }
+        Insert: {
+          cash_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          mpesa_enabled?: boolean | null
+          mpesa_id_type?: string | null
+          mpesa_phone?: string | null
+          user_id: string
+          wallet_enabled?: boolean | null
+        }
+        Update: {
+          cash_enabled?: boolean | null
+          created_at?: string
+          id?: string
+          mpesa_enabled?: boolean | null
+          mpesa_id_type?: string | null
+          mpesa_phone?: string | null
+          user_id?: string
+          wallet_enabled?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
