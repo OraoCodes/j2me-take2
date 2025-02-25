@@ -16,6 +16,7 @@ interface ServiceCheckoutDialogProps {
     name: string;
     price: number;
     description: string | null;
+    user_id: string;  // Add user_id to the service interface
   };
 }
 
@@ -38,15 +39,15 @@ export const ServiceCheckoutDialog = ({
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("service_requests").insert([
-        {
-          service_id: service.id,
-          customer_name: formData.name,
-          customer_email: formData.email,
-          customer_phone: formData.phone,
-          notes: formData.notes,
-        },
-      ]);
+      const { error } = await supabase.from("service_requests").insert({
+        service_id: service.id,
+        user_id: service.user_id, // Add the user_id from the service
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        notes: formData.notes,
+        status: 'pending' // Add default status
+      });
 
       if (error) throw error;
 
