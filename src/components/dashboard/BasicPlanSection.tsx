@@ -10,6 +10,7 @@ type TimePeriod = 'today' | 'week' | 'month';
 export const BasicPlanSection = () => {
   const [viewCount, setViewCount] = useState(0);
   const [requestCount, setRequestCount] = useState(0);
+  const [salesAmount, setSalesAmount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('today');
 
@@ -56,6 +57,30 @@ export const BasicPlanSection = () => {
 
       if (requestError) {
         console.error("Error fetching request count:", requestError);
+      }
+
+      // Fetch paid service requests with their associated service prices
+      const { data: paidRequests, error: paidRequestsError } = await supabase
+        .from('service_requests')
+        .select(`
+          *,
+          services (
+            price
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('paid', true)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endOfDay(now).toISOString());
+
+      if (paidRequestsError) {
+        console.error("Error fetching paid requests:", paidRequestsError);
+      } else {
+        // Calculate total sales from paid requests
+        const totalSales = paidRequests?.reduce((sum, request) => {
+          return sum + (request.services?.price || 0);
+        }, 0) || 0;
+        setSalesAmount(totalSales);
       }
 
       setViewCount(viewData?.view_count || 0);
@@ -123,7 +148,9 @@ export const BasicPlanSection = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="space-y-1">
               <div className="text-sm text-gray-600">Sales</div>
-              <div className="text-2xl font-semibold">Ksh 0.00</div>
+              <div className="text-2xl font-semibold">
+                {loading ? "-" : `Ksh ${salesAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </div>
             </div>
           </div>
         </div>
