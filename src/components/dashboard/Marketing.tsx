@@ -5,11 +5,13 @@ import { ExternalLink, HelpCircle, Download, Instagram, Facebook } from "lucide-
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 
 export const Marketing = () => {
   const [storeUrl, setStoreUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [businessName, setBusinessName] = useState("");
+  const [profileImage, setProfileImage] = useState("");
 
   useEffect(() => {
     const fetchStoreUrl = async () => {
@@ -17,17 +19,21 @@ export const Marketing = () => {
       if (user) {
         setStoreUrl(`/services/${user.id}`);
         
-        // Fetch business name from profiles table
+        // Fetch business name and profile image from profiles table
         const { data: profile } = await supabase
           .from('profiles')
-          .select('company_name')
+          .select('company_name, profile_image_url')
           .eq('id', user.id)
           .single();
 
         if (profile?.company_name) {
           setBusinessName(profile.company_name);
         } else {
-          setBusinessName("My Business"); // Fallback only if no company name is set
+          setBusinessName("My Business");
+        }
+
+        if (profile?.profile_image_url) {
+          setProfileImage(profile.profile_image_url);
         }
       }
       setLoading(false);
@@ -150,6 +156,15 @@ export const Marketing = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* Add meta tags for social sharing */}
+      <Helmet>
+        <meta property="og:title" content={`${businessName} - Services`} />
+        <meta property="og:description" content={`Check out our services at ${businessName}`} />
+        {profileImage && <meta property="og:image" content={profileImage} />}
+        <meta property="og:url" content={`${window.location.origin}${storeUrl}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
       <div className="flex items-center gap-2 mb-6">
         <h1 className="text-2xl font-semibold">Marketing</h1>
         <Tooltip>
@@ -268,3 +283,4 @@ export const Marketing = () => {
     </div>
   );
 };
+
