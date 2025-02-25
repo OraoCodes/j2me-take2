@@ -156,13 +156,22 @@ export const Marketing = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Add meta tags for social sharing */}
+      {/* Update meta tags to include absolute URL for image */}
       <Helmet>
+        <title>{`${businessName} - Services`}</title>
         <meta property="og:title" content={`${businessName} - Services`} />
         <meta property="og:description" content={`Check out our services at ${businessName}`} />
-        {profileImage && <meta property="og:image" content={profileImage} />}
+        {profileImage && (
+          <>
+            <meta property="og:image" content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} />
+            <meta name="twitter:image" content={profileImage.startsWith('http') ? profileImage : `${window.location.origin}${profileImage}`} />
+          </>
+        )}
         <meta property="og:url" content={`${window.location.origin}${storeUrl}`} />
+        <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${businessName} - Services`} />
+        <meta name="twitter:description" content={`Check out our services at ${businessName}`} />
       </Helmet>
 
       <div className="flex items-center gap-2 mb-6">
@@ -283,4 +292,3 @@ export const Marketing = () => {
     </div>
   );
 };
-
