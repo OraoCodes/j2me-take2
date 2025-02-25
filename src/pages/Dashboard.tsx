@@ -426,11 +426,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Updated z-index and position */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-6 left-4 z-[100] md:hidden"
         onClick={toggleMobileMenu}
       >
         {isMobileMenuOpen ? (
@@ -443,14 +443,14 @@ const Dashboard = () => {
       {/* Backdrop for mobile */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 md:hidden"
+          className="fixed inset-0 bg-black/20 z-[90] md:hidden"
           onClick={toggleMobileMenu}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Updated z-index */}
       <div className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6 z-40",
+        "fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 py-6 z-[95]",
         "transform transition-transform duration-300 ease-in-out",
         "md:transform-none",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
