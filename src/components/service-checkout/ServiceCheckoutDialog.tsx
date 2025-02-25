@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, parse, set } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -59,15 +60,36 @@ export const ServiceCheckoutDialog = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date | undefined>(initialData?.scheduled_at || undefined);
-  const [hour, setHour] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'hh') : "");
-  const [minute, setMinute] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'mm') : "");
-  const [period, setPeriod] = useState<string>(initialData?.scheduled_at ? format(initialData.scheduled_at, 'a').toUpperCase() : "AM");
+  const [hour, setHour] = useState<string>("");
+  const [minute, setMinute] = useState<string>("");
+  const [period, setPeriod] = useState<string>("AM");
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
     notes: initialData?.notes || "",
   });
+
+  useEffect(() => {
+    if (initialData?.scheduled_at) {
+      const scheduledDate = new Date(initialData.scheduled_at);
+      setDate(scheduledDate);
+      let hours = scheduledDate.getHours();
+      const minutes = scheduledDate.getMinutes();
+      const period = hours >= 12 ? "PM" : "AM";
+      
+      // Convert to 12-hour format
+      if (hours > 12) {
+        hours -= 12;
+      } else if (hours === 0) {
+        hours = 12;
+      }
+      
+      setHour(hours.toString().padStart(2, '0'));
+      setMinute(minutes.toString().padStart(2, '0'));
+      setPeriod(period);
+    }
+  }, [initialData]);
 
   const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
@@ -113,10 +135,13 @@ export const ServiceCheckoutDialog = ({
     
     if (!daySetting?.is_available) return [];
 
-    const startHour = parseInt(daySetting.start_time.split(':')[0]);
-    const startMinute = parseInt(daySetting.start_time.split(':')[1]);
-    const endHour = parseInt(daySetting.end_time.split(':')[0]);
-    const endMinute = parseInt(daySetting.end_time.split(':')[1]);
+    const startTime = parse(daySetting.start_time, 'HH:mm', new Date());
+    const endTime = parse(daySetting.end_time, 'HH:mm', new Date());
+    
+    const startHour = startTime.getHours();
+    const startMinute = startTime.getMinutes();
+    const endHour = endTime.getHours();
+    const endMinute = endTime.getMinutes();
 
     const slots: { hour: string; minute: string; period: string }[] = [];
     let currentHour = startHour;
@@ -126,7 +151,7 @@ export const ServiceCheckoutDialog = ({
       currentHour < endHour ||
       (currentHour === endHour && currentMinute <= endMinute)
     ) {
-      const hour = currentHour > 12 ? currentHour - 12 : currentHour === 0 ? 12 : currentHour;
+      const hour = currentHour % 12 || 12;
       const period = currentHour >= 12 ? 'PM' : 'AM';
       
       slots.push({
@@ -135,6 +160,7 @@ export const ServiceCheckoutDialog = ({
         period,
       });
 
+      // Increment by 15 minutes
       currentMinute += 15;
       if (currentMinute >= 60) {
         currentMinute = 0;
@@ -160,12 +186,20 @@ export const ServiceCheckoutDialog = ({
     }
 
     try {
+      // Convert selected time to 24-hour format
       let hourIn24 = parseInt(hour);
-      if (period === "PM" && hourIn24 !== 12) hourIn24 += 12;
-      if (period === "AM" && hourIn24 === 12) hourIn24 = 0;
+      if (period === "PM" && hourIn24 !== 12) {
+        hourIn24 += 12;
+      } else if (period === "AM" && hourIn24 === 12) {
+        hourIn24 = 0;
+      }
 
-      const scheduledAt = new Date(date);
-      scheduledAt.setHours(hourIn24, parseInt(minute));
+      const scheduledAt = set(date, {
+        hours: hourIn24,
+        minutes: parseInt(minute),
+        seconds: 0,
+        milliseconds: 0
+      });
 
       const requestData = {
         service_id: service.id,
@@ -174,7 +208,7 @@ export const ServiceCheckoutDialog = ({
         customer_email: formData.email,
         customer_phone: formData.phone,
         notes: formData.notes,
-        scheduled_at: scheduledAt.toISOString()
+        scheduled_at: scheduledAt.toISOString(),
       };
 
       let error;
@@ -210,10 +244,7 @@ export const ServiceCheckoutDialog = ({
     }
   };
 
-  const getTimeDisplay = () => {
-    if (!hour || !minute) return "Select time";
-    return `${hour}:${minute} ${period}`;
-  };
+  const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -297,59 +328,44 @@ export const ServiceCheckoutDialog = ({
                 </div>
               </div>
 
-              {date && (
+              {date && availableTimeSlots.length > 0 && (
                 <div>
                   <Label>Preferred Time *</Label>
                   <div className="grid grid-cols-3 gap-2 mt-1">
-                    <Select
-                      value={hour}
-                      onValueChange={setHour}
-                    >
+                    <Select value={hour} onValueChange={setHour}>
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getAvailableTimeSlots(date).map((slot) => (
-                          <SelectItem
-                            key={`${slot.hour}-${slot.minute}-${slot.period}`}
-                            value={slot.hour}
-                          >
-                            {slot.hour}
+                        {Array.from(new Set(availableTimeSlots.map(slot => slot.hour))).map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
 
-                    <Select
-                      value={minute}
-                      onValueChange={setMinute}
-                    >
+                    <Select value={minute} onValueChange={setMinute}>
                       <SelectTrigger>
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getAvailableTimeSlots(date)
+                        {availableTimeSlots
                           .filter(slot => slot.hour === hour)
                           .map((slot) => (
-                            <SelectItem
-                              key={`${slot.hour}-${slot.minute}`}
-                              value={slot.minute}
-                            >
+                            <SelectItem key={slot.minute} value={slot.minute}>
                               {slot.minute}
                             </SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
 
-                    <Select
-                      value={period}
-                      onValueChange={setPeriod}
-                    >
+                    <Select value={period} onValueChange={setPeriod}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from(new Set(getAvailableTimeSlots(date)
+                        {Array.from(new Set(availableTimeSlots
                           .filter(slot => slot.hour === hour && slot.minute === minute)
                           .map(slot => slot.period)))
                           .map((p) => (
@@ -362,19 +378,19 @@ export const ServiceCheckoutDialog = ({
                   </div>
                 </div>
               )}
-            </div>
 
-            <div>
-              <Label htmlFor="notes">Additional Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                }
-                className="mt-1"
-                placeholder="Any specific requirements or questions..."
-              />
+              <div>
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                  }
+                  className="mt-1"
+                  placeholder="Any specific requirements or questions..."
+                />
+              </div>
             </div>
           </div>
 
