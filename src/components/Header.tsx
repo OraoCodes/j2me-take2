@@ -101,7 +101,7 @@ export const Header = () => {
             alt="Gebeya" 
             className="h-8 hover:opacity-90 transition-opacity"
           />
-          <span className="text-xl font-semibold text-gebeya-pink">SoloServe</span>
+          <span className="text-xl font-semibold text-gebeya-pink">Jitume</span>
         </div>
         {!user && (
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
