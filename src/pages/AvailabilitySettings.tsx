@@ -273,23 +273,23 @@ export default function AvailabilitySettings() {
                     onCheckedChange={(checked) => updateDayAvailability(setting.day_of_week, checked)}
                     className="data-[state=checked]:bg-gebeya-pink"
                   />
-                  <Label className="w-24 font-medium text-gebeya-purple">{dayNames[setting.day_of_week]}</Label>
+                  <Label className="w-20 font-medium text-gebeya-purple">{dayNames[setting.day_of_week]}</Label>
                 </div>
                 
                 {setting.is_available && (
-                  <div className="flex items-center gap-2 ml-12 sm:ml-0">
+                  <div className="flex items-center gap-1 ml-12 sm:ml-0">
                     <Input
                       type="time"
                       value={setting.start_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'start_time', e.target.value)}
-                      className="w-24 sm:w-28 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-20 sm:w-24 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
-                    <span className="text-gebeya-purple whitespace-nowrap">to</span>
+                    <span className="text-gebeya-purple whitespace-nowrap px-1">to</span>
                     <Input
                       type="time"
                       value={setting.end_time}
                       onChange={(e) => updateDayTimes(setting.day_of_week, 'end_time', e.target.value)}
-                      className="w-24 sm:w-28 focus:border-gebeya-pink focus:ring-gebeya-pink"
+                      className="w-20 sm:w-24 focus:border-gebeya-pink focus:ring-gebeya-pink"
                     />
                   </div>
                 )}
