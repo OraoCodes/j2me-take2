@@ -100,6 +100,7 @@ const Dashboard = () => {
   const [userCategories, setUserCategories] = useState<Category[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showServiceRequests, setShowServiceRequests] = useState(false);
+  const [hasRequests, setHasRequests] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -108,6 +109,7 @@ const Dashboard = () => {
     fetchServices();
     fetchUserCategories();
     fetchProfile();
+    checkServiceRequests();
   }, []);
 
   const fetchCategories = async () => {
@@ -203,6 +205,24 @@ const Dashboard = () => {
     }
   };
 
+  const checkServiceRequests = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: requests, error } = await supabase
+        .from('service_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) throw error;
+      setHasRequests(requests && requests.length > 0);
+    } catch (error) {
+      console.error('Error checking service requests:', error);
+    }
+  };
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -289,8 +309,8 @@ const Dashboard = () => {
     { 
       number: 2, 
       title: "Create your first service request", 
-      action: "Create request", 
-      completed: false, 
+      action: "Create service request", 
+      completed: hasRequests, 
       onClick: () => navigate('/service-page') 
     },
     { 
