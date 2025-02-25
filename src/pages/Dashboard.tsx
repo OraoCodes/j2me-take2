@@ -288,8 +288,8 @@ const Dashboard = () => {
     },
     { 
       number: 2, 
-      title: "Create your first order", 
-      action: "Create order", 
+      title: "Create your first service request", 
+      action: "Create request", 
       completed: false, 
       onClick: () => navigate('/service-page') 
     },
