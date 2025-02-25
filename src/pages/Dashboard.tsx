@@ -128,19 +128,31 @@ const Dashboard = () => {
   };
 
   const fetchServices = async () => {
-    const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (error) {
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (servicesError) {
+        console.error("Services fetch error:", servicesError);
+        throw new Error("Failed to fetch services");
+      }
+
+      console.log("Services data:", servicesData);
+      setServices(servicesData || []);
+
+    } catch (error) {
+      console.error('Error fetching services:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to fetch services. Please try again.",
       });
-    } else {
-      setServices(data || []);
     }
   };
 
