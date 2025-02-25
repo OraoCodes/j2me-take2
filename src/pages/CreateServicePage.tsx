@@ -32,7 +32,7 @@ const Settings = () => {
         .from('profiles')
         .select('company_name, whatsapp_number, service_page_link')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -59,14 +59,19 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // First check if the custom link is already taken by another user
+      // Check if the custom link is already taken by another user
       if (customLink) {
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: searchError } = await supabase
           .from('profiles')
           .select('id')
           .eq('service_page_link', customLink)
           .neq('id', user.id)
-          .single();
+          .maybeSingle();
+
+        if (searchError) {
+          console.error('Error checking custom link:', searchError);
+          throw searchError;
+        }
 
         if (existingProfile) {
           toast({
@@ -79,7 +84,7 @@ const Settings = () => {
         }
       }
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           company_name: companyName,
@@ -88,9 +93,9 @@ const Settings = () => {
         })
         .eq('id', user.id);
 
-      if (error) {
-        console.error('Update error:', error);
-        throw error;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
       }
 
       toast({
