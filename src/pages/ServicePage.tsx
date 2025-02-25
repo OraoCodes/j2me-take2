@@ -160,24 +160,24 @@ const ServicePage = () => {
               onClick={() => setActiveTab("home")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                 activeTab === "home" 
-                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white [&>svg]:text-white shadow-md" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange [&>svg]:text-white [&>span]:text-white" 
                 : "text-[#181326] hover:bg-pink-50"
               }`}
             >
               <Home className="w-4 h-4" />
-              Home
+              <span>Home</span>
             </TabsTrigger>
             <TabsTrigger 
               value="search"
               onClick={() => setActiveTab("search")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                 activeTab === "search" 
-                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white [&>svg]:text-white shadow-md" 
+                ? "bg-gradient-to-r from-gebeya-pink to-gebeya-orange [&>svg]:text-white [&>span]:text-white" 
                 : "text-[#181326] hover:bg-pink-50"
               }`}
             >
               <Search className="w-4 h-4" />
-              Search
+              <span>Search</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
