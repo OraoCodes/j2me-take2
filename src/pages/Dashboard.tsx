@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { BasicPlanSection } from "@/components/dashboard/basic-plan-section";
-import { SetupGuideSection } from "@/components/dashboard/setup-guide-section";
+
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
+import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
 import { EmptyState } from "@/components/dashboard/empty-state";
 
 const Dashboard = () => {
@@ -149,7 +149,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
-      <DashboardHeader />
+      <DashboardHeader isMobileMenuOpen={false} toggleMobileMenu={() => {}} profile={null} />
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
@@ -184,7 +184,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="space-y-6">
-            <SetupGuideSection />
+            <SetupGuideSection steps={[]} />
           </div>
         </div>
       </div>
