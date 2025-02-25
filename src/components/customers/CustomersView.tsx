@@ -32,10 +32,14 @@ const CustomersView = () => {
         .select('*')
         .order('last_request_date', { ascending: false });
 
+      console.log('Fetched customers:', data);
+      console.log('Error if any:', error);
+
       if (error) throw error;
 
       setCustomers(data || []);
     } catch (error) {
+      console.error('Error fetching customers:', error);
       toast({
         variant: "destructive",
         title: "Error",
