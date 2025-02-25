@@ -149,7 +149,7 @@ const ServicePage = () => {
       />
 
       {bannerImage && (
-        <div className="w-full flex justify-center bg-gray-900">
+        <div className="w-full flex justify-center">
           <div className="w-full max-w-3xl relative">
             <div className="aspect-video">
               <div 
