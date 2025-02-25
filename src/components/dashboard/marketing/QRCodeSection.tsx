@@ -57,7 +57,6 @@ export const QRCodeSection = ({
                 />
               </div>
               <p className="text-white font-semibold text-xl">{businessName}</p>
-              <p className="text-white text-sm max-w-[250px] truncate">{fullUrl}</p>
               <img 
                 src="/lovable-uploads/14afcb65-2dcb-477c-8c08-3ae4cd079ee7.png"
                 alt="Gebeya Logo"

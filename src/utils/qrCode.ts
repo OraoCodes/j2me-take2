@@ -67,12 +67,10 @@ export const createStyledQRCode = async (
     ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
     ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
 
-    // Draw business name and URL
+    // Draw business name
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 36px Arial';
     ctx.fillText(businessName, canvas.width / 2, qrY + qrSize + 60);
-    ctx.font = '20px Arial';
-    ctx.fillText(serviceUrl, canvas.width / 2, qrY + qrSize + 100);
 
     // Load and draw Gebeya logo
     const logoImage = new Image();
