@@ -69,6 +69,9 @@ export const ServiceCheckoutDialog = ({
     notes: initialData?.notes || "",
   });
 
+  const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+
   useEffect(() => {
     if (initialData?.scheduled_at) {
       const scheduledDate = new Date(initialData.scheduled_at);
@@ -89,30 +92,40 @@ export const ServiceCheckoutDialog = ({
     }
   }, [initialData]);
 
-  const [availabilitySettings, setAvailabilitySettings] = useState<AvailabilitySetting[]>([]);
-  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
-
   useEffect(() => {
     fetchAvailabilitySettings();
   }, [service.user_id]);
 
   const fetchAvailabilitySettings = async () => {
-    const { data: availabilityData } = await supabase
-      .from('availability_settings')
-      .select('*')
-      .eq('user_id', service.user_id);
+    try {
+      const { data: availabilityData, error: availabilityError } = await supabase
+        .from('availability_settings')
+        .select('*')
+        .eq('user_id', service.user_id);
 
-    if (availabilityData) {
-      setAvailabilitySettings(availabilityData);
-    }
+      if (availabilityError) throw availabilityError;
+      
+      if (availabilityData) {
+        setAvailabilitySettings(availabilityData);
+      }
 
-    const { data: blockedData } = await supabase
-      .from('blocked_dates')
-      .select('blocked_date')
-      .eq('user_id', service.user_id);
+      const { data: blockedData, error: blockedError } = await supabase
+        .from('blocked_dates')
+        .select('blocked_date')
+        .eq('user_id', service.user_id);
 
-    if (blockedData) {
-      setBlockedDates(blockedData);
+      if (blockedError) throw blockedError;
+      
+      if (blockedData) {
+        setBlockedDates(blockedData);
+      }
+    } catch (error) {
+      console.error('Error fetching availability settings:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load availability settings. Please try again.",
+      });
     }
   };
 
@@ -127,45 +140,42 @@ export const ServiceCheckoutDialog = ({
     return daySetting?.is_available ?? false;
   };
 
+  const generateTimeSlots = (startTime: string, endTime: string) => {
+    const slots: { hour: string; minute: string; period: string }[] = [];
+    const start = parse(startTime, 'HH:mm', new Date());
+    const end = parse(endTime, 'HH:mm', new Date());
+
+    let current = start;
+    while (current <= end) {
+      let hours = current.getHours();
+      const minutes = current.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+
+      if (hours > 12) {
+        hours -= 12;
+      } else if (hours === 0) {
+        hours = 12;
+      }
+
+      slots.push({
+        hour: hours.toString().padStart(2, '0'),
+        minute: minutes.toString().padStart(2, '0'),
+        period
+      });
+
+      current = new Date(current.getTime() + 15 * 60000);
+    }
+
+    return slots;
+  };
+
   const getAvailableTimeSlots = (date: Date) => {
     const dayOfWeek = date.getDay();
     const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
     
     if (!daySetting?.is_available) return [];
-
-    const startTime = parse(daySetting.start_time, 'HH:mm', new Date());
-    const endTime = parse(daySetting.end_time, 'HH:mm', new Date());
     
-    const startHour = startTime.getHours();
-    const startMinute = startTime.getMinutes();
-    const endHour = endTime.getHours();
-    const endMinute = endTime.getMinutes();
-
-    const slots: { hour: string; minute: string; period: string }[] = [];
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-
-    while (
-      currentHour < endHour ||
-      (currentHour === endHour && currentMinute <= endMinute)
-    ) {
-      const hour = currentHour % 12 || 12;
-      const period = currentHour >= 12 ? 'PM' : 'AM';
-      
-      slots.push({
-        hour: hour.toString().padStart(2, '0'),
-        minute: currentMinute.toString().padStart(2, '0'),
-        period,
-      });
-
-      currentMinute += 15;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour += 1;
-      }
-    }
-
-    return slots;
+    return generateTimeSlots(daySetting.start_time, daySetting.end_time);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,6 +240,7 @@ export const ServiceCheckoutDialog = ({
 
       onClose();
     } catch (error) {
+      console.error('Error submitting service request:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -242,7 +253,9 @@ export const ServiceCheckoutDialog = ({
 
   const availableTimeSlots = date ? getAvailableTimeSlots(date) : [];
   const uniqueHours = Array.from(new Set(availableTimeSlots.map(slot => slot.hour)));
-  const availableMinutes = availableTimeSlots.filter(slot => slot.hour === hour).map(slot => slot.minute);
+  const availableMinutes = availableTimeSlots
+    .filter(slot => slot.hour === hour && slot.period === period)
+    .map(slot => slot.minute);
   const availablePeriods = Array.from(new Set(availableTimeSlots
     .filter(slot => slot.hour === hour)
     .map(slot => slot.period)));
@@ -338,7 +351,10 @@ export const ServiceCheckoutDialog = ({
                 <div>
                   <Label>Preferred Time *</Label>
                   <div className="grid grid-cols-3 gap-2 mt-1">
-                    <Select value={hour} onValueChange={setHour}>
+                    <Select value={hour} onValueChange={(value) => {
+                      setHour(value);
+                      setMinute("");
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Hour" />
                       </SelectTrigger>
@@ -370,7 +386,10 @@ export const ServiceCheckoutDialog = ({
 
                     <Select 
                       value={period} 
-                      onValueChange={setPeriod}
+                      onValueChange={(value) => {
+                        setPeriod(value);
+                        setMinute("");
+                      }}
                       disabled={!hour}
                     >
                       <SelectTrigger>
