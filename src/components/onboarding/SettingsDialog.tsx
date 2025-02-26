@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import { ProfileImageCropper } from "./ProfileImageCropper";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -144,25 +146,27 @@ export const SettingsDialog = ({
                   onChange={(e) => onBusinessNameChange(e.target.value)}
                   placeholder="Enter your business name"
                 />
-                <Tooltip defaultOpen>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onGenerateBusinessName}
-                      disabled={isGeneratingName}
-                    >
-                      {isGeneratingName ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Wand2 className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-white p-3 shadow-lg rounded-lg border max-w-[200px] text-center">
-                    <p>Click to generate a creative business name using AI!</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip defaultOpen>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onGenerateBusinessName}
+                        disabled={isGeneratingName}
+                      >
+                        {isGeneratingName ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Wand2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-white p-3 shadow-lg rounded-lg border max-w-[200px] text-center">
+                      <p>Click to generate a creative business name using AI!</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
