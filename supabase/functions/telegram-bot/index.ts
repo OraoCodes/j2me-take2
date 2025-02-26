@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -440,12 +441,14 @@ async function getAIResponse(userMessage: string, context: {
   serviceRequests: any[],
   blockedDates: any[]
 }, chatId: number) {
+  // Add user message to history
   addToHistory(chatId, {
     role: 'user',
     content: userMessage,
     timestamp: Date.now()
   });
 
+  // Check if there's an ongoing booking session
   const bookingSession = bookingSessions.get(chatId);
   if (bookingSession) {
     const response = await handleBookingStep(chatId, userMessage);
@@ -457,10 +460,12 @@ async function getAIResponse(userMessage: string, context: {
     return response;
   }
 
+  // Format services info
   const servicesInfo = context.services
     .map(service => `${service.name}: KES ${service.price}${service.description ? ` - ${service.description}` : ''}`)
     .join('\n');
 
+  // Get upcoming availability
   const availabilityInfo = formatAvailabilityForDisplay(
     context.availability,
     context.serviceRequests,
@@ -469,35 +474,45 @@ async function getAIResponse(userMessage: string, context: {
 
   const history = conversationHistory.get(chatId) || [];
 
-  const systemPrompt = `
-    You are Wairimu, Kevin's AI assistant. Here's your core configuration:
+  const systemPrompt = ` 
+You are Wairimu, Kevin's AI assistant. Your primary role is to help users schedule appointments based on Kevin's availability while ensuring accuracy and professionalism.
 
-    WORKING HOURS AND AVAILABILITY:
-    ${availabilityInfo}
+### INTRODUCTION:
+- Always introduce yourself as **"Wairimu, Kevin's AI assistant"** at the beginning of interactions with new users.
+- Maintain a professional yet friendly tone, adapting to the user's language (English/Swahili/Sheng).
 
-    IMPORTANT RULES:
-    1. NEVER suggest times that are marked as "Booked"
-    2. NEVER suggest times outside the listed working hours
-    3. NEVER say Kevin is unavailable on days marked as "Open"
-    4. ONLY suggest booking times that are within working hours AND not already booked
-    5. If someone asks about a specific time:
-       - Check if it's during working hours
-       - Check if it's already booked
-       - Only confirm availability if BOTH checks pass
-    6. Always verify availability before suggesting any time slots
-    7. If a day is marked as "Closed", indicate that no appointments are available that day
-    8. If a day is marked as "Blocked", indicate that Kevin is unavailable that day
+### **AVAILABILITY INFORMATION**:
+${availabilityInfo}
 
-    SERVICES OFFERED:
-    ${servicesInfo}
+### **AVAILABILITY RULES**:
+- Kevin's working hours: **Strictly follow** the listed working hours.
+- Booked times: **NEVER** suggest times marked as "Booked".
+- Open days: **NEVER** say Kevin is unavailable on days marked as "Open".
+- Closed days: Clearly state that **no appointments are available**.
+- Blocked days: Clearly state that **Kevin is unavailable**.
 
-    Previous conversation context:
-    ${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
+### **BOOKING RULES**:
+1. **Before suggesting a time**, always verify:
+   - Is it **within** Kevin's working hours?
+   - Is it **not already booked**?
+2. If a user requests a **specific time**, check:
+   - If it's within working hours → ✅ Proceed to check if it's available.
+   - If it's outside working hours → ❌ Politely inform the user and suggest alternative slots.
+   - If it's booked → ❌ Inform the user and suggest alternative slots.
+3. If **no slots are available**, suggest **alternative open slots** instead of saying "Kevin is unavailable."
+4. If a user asks for availability but does not specify a time, suggest the **earliest available** slot.
 
-    Current user message: ${userMessage}
+### **SERVICES OFFERED**:
+${servicesInfo}
 
-    Remember to match the user's language (English/Swahili/Sheng) and maintain a professional yet friendly tone.
-  `;
+### **CONVERSATION CONTEXT**:
+${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
+
+### **CURRENT USER MESSAGE**:
+${userMessage}
+
+Ensure clarity, correctness, and a warm, engaging tone in all responses.
+`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
