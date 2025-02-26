@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { format, parse, isWithinInterval, set, parseISO, addHours } from 'https://esm.sh/date-fns@2';
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
@@ -166,6 +167,57 @@ async function transcribeAudio(audioBuffer: ArrayBuffer): Promise<string> {
   return result.text;
 }
 
+function formatAvailabilityForDate(date: Date, availability: any[], serviceRequests: ServiceRequest[], blockedDates: any[]) {
+  // Check if date is blocked
+  const isDateBlocked = blockedDates.some(bd => 
+    format(parseISO(bd.blocked_date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+  );
+  
+  if (isDateBlocked) {
+    return `${format(date, 'MMMM d, yyyy')} is fully booked or blocked.`;
+  }
+
+  const dayOfWeek = date.getDay();
+  const daySetting = availability.find(a => a.day_of_week === dayOfWeek);
+  
+  if (!daySetting?.is_available) {
+    return `${format(date, 'MMMM d, yyyy')} (${format(date, 'EEEE')}) is not a working day.`;
+  }
+
+  // Get all booked slots for this date
+  const dayBookings = serviceRequests.filter(req => {
+    const bookingDate = parseISO(req.scheduled_at);
+    return format(bookingDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+  });
+
+  // Generate available time slots
+  const startTime = parse(daySetting.start_time, 'HH:mm:ss', date);
+  const endTime = parse(daySetting.end_time, 'HH:mm:ss', date);
+  const availableSlots: string[] = [];
+
+  let currentSlot = startTime;
+  while (currentSlot < endTime) {
+    const slotEnd = addHours(currentSlot, 1);
+    
+    const isBooked = dayBookings.some(booking => {
+      const bookingTime = parseISO(booking.scheduled_at);
+      return isWithinInterval(bookingTime, { start: currentSlot, end: slotEnd });
+    });
+
+    if (!isBooked) {
+      availableSlots.push(format(currentSlot, 'h:mm a'));
+    }
+    
+    currentSlot = slotEnd;
+  }
+
+  if (availableSlots.length === 0) {
+    return `${format(date, 'MMMM d, yyyy')} is fully booked.`;
+  }
+
+  return `Available slots for ${format(date, 'MMMM d, yyyy')}:\n${availableSlots.join('\n')}`;
+}
+
 async function getAIResponse(userMessage: string, context: { 
   services: Service[], 
   availability: any[],
@@ -178,18 +230,12 @@ async function getAIResponse(userMessage: string, context: {
     `${service.name} - ${service.price} KES${service.description ? ` (${service.description})` : ''}`
   ).join('\n');
 
-  const availabilityInfo = context.availability
-    .filter(a => a.is_available)
-    .map(a => `${a.day_of_week}: ${a.start_time} - ${a.end_time}`)
-    .join('\n');
-
-  const bookedSlots = context.serviceRequests
-    .map(req => `${new Date(req.scheduled_at).toLocaleString()} (${req.status})`)
-    .join('\n');
-
-  const blockedDatesInfo = context.blockedDates
-    .map(bd => `${bd.blocked_date}${bd.reason ? ` (${bd.reason})` : ''}`)
-    .join('\n');
+  // Generate availability info for next 7 days
+  const availabilityInfo = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return formatAvailabilityForDate(date, context.availability, context.serviceRequests, context.blockedDates);
+  }).join('\n\n');
 
   const prompt = `
     You are Wairimu, Kevin's AI assistant who helps manage appointments and answer questions about his services. Your personality is:
@@ -198,27 +244,23 @@ async function getAIResponse(userMessage: string, context: {
     - Can communicate in English, Swahili, and Sheng (respond in the same language the user uses)
     - Always introduces yourself as "Wairimu, Kevin's AI assistant" when meeting someone new
     - When asked about services, you MUST list all available services with their complete details
+    - When discussing availability, be very precise about available time slots
     
     Available services:
     ${servicesInfo || 'No services available at the moment.'}
     
-    Business hours:
-    ${availabilityInfo || 'Business hours not set.'}
-    
-    Currently booked slots:
-    ${bookedSlots || 'No current bookings.'}
-    
-    Blocked dates:
-    ${blockedDatesInfo || 'No blocked dates.'}
+    Availability for the next 7 days:
+    ${availabilityInfo}
     
     User message: ${userMessage}
     
     Important guidelines:
     1. If the user asks for services, list ALL available services with complete details
-    2. When suggesting appointment times, avoid already booked slots and blocked dates
+    2. When suggesting appointments, ONLY suggest times that are listed as available above
     3. Match the user's language (English/Swahili/Sheng)
     4. Maintain a helpful, professional, yet friendly tone
-    5. If services are not available, politely inform the user and ask what type of services they're looking for
+    5. If all slots are booked for a requested time, clearly communicate this and suggest alternative times
+    6. If services are not available, politely inform the user and ask what type of services they're looking for
   `;
 
   try {
