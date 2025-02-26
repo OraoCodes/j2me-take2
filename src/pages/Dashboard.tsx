@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, Settings, BadgeDollarSign,
-  Mail, MessageSquare, Calendar
+  Mail, MessageSquare, Calendar, ArrowRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
