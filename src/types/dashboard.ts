@@ -44,3 +44,10 @@ export interface SetupStep {
   completed: boolean;
   onClick?: () => void;
 }
+
+export interface ServiceImage {
+  id: string;
+  service_id: string;
+  image_url: string;
+  sequence: number;
+}
