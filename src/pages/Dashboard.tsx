@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, Settings, BadgeDollarSign,
-  Building2, Settings2, Users2, Mail, MessageSquare, Briefcase,
-  ArrowRight, Calendar
+  Mail, MessageSquare, Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -114,14 +113,11 @@ const Dashboard = () => {
   ];
 
   const premiumFeatures = [
-    { icon: <Briefcase className="h-4 w-4" />, label: "Team", badge: "PREMIUM" },
-    { icon: <Building2 className="h-4 w-4" />, label: "Multi-location", badge: "PREMIUM" },
-    { icon: <Settings2 className="h-4 w-4" />, label: "Advanced Settings", badge: "PREMIUM" },
+    { icon: <Mail className="h-4 w-4" />, label: "Email Marketing", badge: "PREMIUM" },
+    { icon: <MessageSquare className="h-4 w-4" />, label: "Chat Support", badge: "PREMIUM" },
   ];
 
   const businessFeatures = [
-    { icon: <Users2 className="h-4 w-4" />, label: "Staff Management", badge: "BUSINESS" },
-    { icon: <Mail className="h-4 w-4" />, label: "Email Marketing", badge: "BUSINESS" },
     { icon: <MessageSquare className="h-4 w-4" />, label: "Chat Support", badge: "BUSINESS" },
   ];
 
