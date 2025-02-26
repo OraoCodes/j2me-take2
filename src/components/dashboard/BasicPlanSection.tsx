@@ -40,8 +40,6 @@ export const BasicPlanSection = () => {
         .from('page_views')
         .select('view_count')
         .eq('user_id', user.id)
-        .gte('last_viewed_at', startDate.toISOString())
-        .lte('last_viewed_at', endOfDay(now).toISOString())
         .single();
 
       if (viewError && viewError.code !== 'PGRST116') {

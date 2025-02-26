@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +30,53 @@ const ServicePage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<{ [key: string]: number }>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    const incrementPageViews = async () => {
+      if (!userId) return;
+
+      try {
+        const { data: existingData, error: selectError } = await supabase
+          .from('page_views')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (selectError && selectError.code !== 'PGRST116') {
+          console.error('Error checking page views:', selectError);
+          return;
+        }
+
+        if (existingData) {
+          const { error: updateError } = await supabase
+            .from('page_views')
+            .update({ 
+              view_count: (existingData.view_count || 0) + 1,
+              last_viewed_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+
+          if (updateError) console.error('Error updating page views:', updateError);
+        } else {
+          const { error: insertError } = await supabase
+            .from('page_views')
+            .insert([
+              { 
+                user_id: userId,
+                view_count: 1,
+                last_viewed_at: new Date().toISOString()
+              }
+            ]);
+
+          if (insertError) console.error('Error inserting page views:', insertError);
+        }
+      } catch (error) {
+        console.error('Error handling page views:', error);
+      }
+    };
+
+    incrementPageViews();
+  }, [userId]);
 
   useEffect(() => {
     const fetchBusinessDetails = async () => {
