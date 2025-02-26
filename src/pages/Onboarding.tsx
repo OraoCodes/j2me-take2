@@ -33,7 +33,9 @@ const PROFESSIONS = [
   "Graphic Designer",
   "Social Media Manager",
   "Barber",
-  "Videographer"
+  "Videographer",
+  "Coach",
+  "Other"
 ] as const;
 
 const SERVICE_TYPES = [
@@ -68,6 +70,7 @@ const PHONE_PREFIXES = [
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
+  const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
   const [businessDetails, setBusinessDetails] = useState({
     profession: '',
     serviceType: '',
@@ -86,9 +89,12 @@ const Onboarding = () => {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const profession = formData.get("profession") as string;
+    const selectedProf = formData.get("profession") as string;
+    const customProf = formData.get("customProfession") as string;
     const serviceType = formData.get("serviceType") as string;
     const referralSource = formData.get("referralSource") as string;
+    
+    const profession = selectedProf === "Other" ? customProf : selectedProf;
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -201,7 +207,11 @@ const Onboarding = () => {
         <form onSubmit={handleBusinessDetailsSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="profession">What's your profession?</Label>
-            <Select name="profession" required>
+            <Select 
+              name="profession" 
+              required 
+              onValueChange={(value) => setSelectedProfession(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select your profession" />
               </SelectTrigger>
@@ -216,6 +226,16 @@ const Onboarding = () => {
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {selectedProfession === "Other" && (
+              <div className="mt-2">
+                <Input
+                  id="customProfession"
+                  name="customProfession"
+                  placeholder="Enter your profession"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
