@@ -25,14 +25,23 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
+        temperature: 0.9,
         messages: [
           { 
             role: 'system', 
-            content: 'You are a creative business name generator. Generate one short, catchy business name. Return only the business name, nothing else.' 
+            content: `You are a creative business name generator specialized in creating unique names that blend English, Swahili, and Sheng (Kenyan street language). 
+            Create catchy, memorable business names that could include:
+            - Clever wordplay
+            - Swahili words or phrases
+            - Sheng expressions
+            - Modern twists on traditional terms
+            Return only the business name, nothing else.`
           },
           { 
             role: 'user', 
-            content: `Generate a business name for a ${profession}. The owner's name is ${name}. Make it catchy and professional.` 
+            content: `Generate a unique and creative business name for a ${profession}. The owner's name is ${name}. 
+            The name should be catchy and could incorporate Swahili, Sheng, or English. Make it stand out and be memorable.
+            Each time you're asked, generate a completely different style of name.` 
           }
         ],
       }),
