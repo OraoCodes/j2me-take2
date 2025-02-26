@@ -1,9 +1,10 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
-const USER_ID = "YOUR_USER_ID";
+const USER_ID = "66ac5e44-5b18-4883-b323-b13cd0280046";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
