@@ -82,62 +82,47 @@ const Onboarding = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const whatsappNumber = formData.get("whatsappNumber") as string;
-    const customLink = formData.get("customLink") as string;
-    const phonePrefix = formData.get("phonePrefix") as string;
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      const cleanCustomLink = customLink.trim() || null;
-      const fullWhatsappNumber = `${phonePrefix}${whatsappNumber.replace(/^0+/, '')}`;
+      const formData = new FormData(e.currentTarget);
+      const phonePrefix = formData.get("phonePrefix") as string;
+      const phoneNumber = formData.get("whatsappNumber") as string;
 
-      if (cleanCustomLink) {
-        const { data: existingProfile, error: searchError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('service_page_link', cleanCustomLink)
-          .neq('id', user.id)
-          .maybeSingle();
+      // Handle empty phone number
+      const fullWhatsappNumber = phoneNumber 
+        ? `${phonePrefix}${phoneNumber.replace(/^0+/, '')}`
+        : null;
 
-        if (searchError) throw searchError;
-
-        if (existingProfile) {
-          toast({
-            title: "Error",
-            description: "This custom link is already taken. Please choose another one.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-      }
-
+      // Update profiles table
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          business_name: businessName,
+          business_name: businessName.trim() || null,
           whatsapp_number: fullWhatsappNumber,
-          service_page_link: cleanCustomLink,
         })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
 
       setCurrentStep('serviceCreated');
     } catch (error) {
+      console.error('Settings update error:', error);
       toast({
         title: "Error",
         description: "Could not update your settings. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
