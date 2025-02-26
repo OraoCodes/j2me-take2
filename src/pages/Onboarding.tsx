@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -88,15 +89,10 @@ const Onboarding = () => {
         `${phonePrefix}${phoneNumber.replace(/^0+/, '')}` : 
         null;
 
-      console.log('Updating profile with:', {
-        business_name: businessName,
-        whatsapp_number: fullWhatsappNumber
-      });
-
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          business_name: businessName.trim() || null,
+          company_name: businessName.trim() || null, // Changed from business_name to company_name
           whatsapp_number: fullWhatsappNumber,
         })
         .eq('id', user.id);
@@ -119,48 +115,61 @@ const Onboarding = () => {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setTempImageUrl(reader.result as string);
-        setShowCropDialog(true);
-      };
-      reader.readAsDataURL(file);
+      setTempImageUrl(URL.createObjectURL(file));
+      setShowCropDialog(true);
     }
   };
 
   const handleCropComplete = async (croppedImageUrl: string) => {
-    setProfileImage(croppedImageUrl);
-    const response = await fetch(croppedImageUrl);
-    const blob = await response.blob();
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      setIsLoading(true);
+      const response = await fetch(croppedImageUrl);
+      const blob = await response.blob();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('No user found');
 
-    const fileName = `${user.id}-${Date.now()}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from('profiles')
-      .upload(fileName, blob);
+      const fileName = `${user.id}-${Date.now()}.jpg`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('profiles')
+        .upload(fileName, blob, {
+          upsert: true
+        });
 
-    if (uploadError) {
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_image_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setProfileImage(publicUrl);
+      setShowCropDialog(false);
+      setTempImageUrl(null);
+      
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to upload profile image. Please try again.",
+        title: "Success",
+        description: "Profile image updated successfully",
       });
-      return;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('profiles')
-      .getPublicUrl(fileName);
-
-    await supabase
-      .from('profiles')
-      .update({ profile_image_url: publicUrl })
-      .eq('id', user.id);
   };
 
   const generateBusinessName = async () => {
@@ -169,7 +178,6 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Clear the existing business name to show the loading state
       setBusinessName('');
 
       const { data, error } = await supabase.functions.invoke('generate-business-name', {
@@ -181,7 +189,6 @@ const Onboarding = () => {
 
       if (error) throw error;
 
-      // Set the new business name
       setBusinessName(data.businessName);
     } catch (error) {
       console.error('Error generating business name:', error);
@@ -235,7 +242,10 @@ const Onboarding = () => {
 
         <ProfileImageCropper
           open={showCropDialog}
-          onClose={() => setShowCropDialog(false)}
+          onClose={() => {
+            setShowCropDialog(false);
+            setTempImageUrl(null);
+          }}
           imageUrl={tempImageUrl || ''}
           onCropComplete={handleCropComplete}
         />
