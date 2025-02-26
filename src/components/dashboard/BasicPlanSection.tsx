@@ -140,9 +140,9 @@ export const BasicPlanSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#F1F0FB] rounded-xl p-6 transition-all hover:shadow-md">
+          <div className="bg-white rounded-xl p-6 transition-all hover:shadow-md border border-gray-100">
             <div className="flex items-center gap-4">
-              <div className="bg-white p-3 rounded-lg">
+              <div className="bg-[#F1F0FB] p-3 rounded-lg">
                 <Eye className="w-6 h-6 text-[#9b87f5]" />
               </div>
               <div>
@@ -154,9 +154,9 @@ export const BasicPlanSection = () => {
             </div>
           </div>
 
-          <div className="bg-[#FEF7CD] rounded-xl p-6 transition-all hover:shadow-md">
+          <div className="bg-white rounded-xl p-6 transition-all hover:shadow-md border border-gray-100">
             <div className="flex items-center gap-4">
-              <div className="bg-white p-3 rounded-lg">
+              <div className="bg-[#F1F0FB] p-3 rounded-lg">
                 <ShoppingBag className="w-6 h-6 text-[#f5c054]" />
               </div>
               <div>
@@ -168,9 +168,9 @@ export const BasicPlanSection = () => {
             </div>
           </div>
 
-          <div className="bg-[#F2FCE2] rounded-xl p-6 transition-all hover:shadow-md">
+          <div className="bg-white rounded-xl p-6 transition-all hover:shadow-md border border-gray-100">
             <div className="flex items-center gap-4">
-              <div className="bg-white p-3 rounded-lg">
+              <div className="bg-[#F1F0FB] p-3 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-[#6ab04c]" />
               </div>
               <div>
