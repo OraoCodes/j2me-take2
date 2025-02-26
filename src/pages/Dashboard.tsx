@@ -10,6 +10,7 @@ import CreateService from "@/pages/CreateService";
 import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { SetupGuideSection } from "@/components/dashboard/SetupGuideSection";
 import { BasicPlanSection } from "@/components/dashboard/BasicPlanSection";
 import { supabase } from "@/integrations/supabase/client";
 import CustomersView from "@/components/customers/CustomersView";
@@ -38,7 +39,7 @@ const Dashboard = () => {
   const [hasRequests, setHasRequests] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
   const [showMarketing, setShowMarketing] = useState(false);
-  const [showAvailability, setShowAvailability] = useState(true);
+  const [showAvailability, setShowAvailability] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -101,7 +102,6 @@ const Dashboard = () => {
       setShowServiceRequests(false);
       setShowCustomers(false);
       setShowMarketing(false);
-      setShowAvailability(false);
     }},
     { label: "Category", onClick: () => {
       setShowCategories(true);
@@ -109,24 +109,10 @@ const Dashboard = () => {
       setShowServiceRequests(false);
       setShowCustomers(false);
       setShowMarketing(false);
-      setShowAvailability(false);
     }},
   ];
 
   const sidebarItems = [
-    { 
-      icon: <Calendar />, 
-      label: "Availability",
-      onClick: () => {
-        setShowCategories(false);
-        setShowServices(false);
-        setShowServiceRequests(false);
-        setShowCustomers(false);
-        setShowMarketing(false);
-        setShowAvailability(true);
-      },
-      isSelected: showAvailability
-    },
     { 
       icon: <Home />, 
       label: "Dashboard", 
@@ -183,8 +169,42 @@ const Dashboard = () => {
         setShowAvailability(false);
       },
       isSelected: showMarketing
+    },
+    { 
+      icon: <Calendar />, 
+      label: "Availability",
+      onClick: () => {
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(false);
+        setShowMarketing(false);
+        setShowAvailability(true);
+      },
+      isSelected: showAvailability
     }
   ];
+
+  const setupSteps = [
+    { 
+      number: 1, 
+      title: "Add your first service", 
+      action: "Add service", 
+      completed: services.length > 0,
+      onClick: () => setShowCreateService(true)
+    },
+    { 
+      number: 2, 
+      title: "Create your first service request", 
+      action: "Create service request", 
+      completed: hasRequests, 
+      onClick: () => navigate('/service-page') 
+    }
+  ];
+
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <TooltipProvider>
@@ -215,44 +235,51 @@ const Dashboard = () => {
           "md:ml-64"
         )}>
           <div className="p-4 md:p-8">
-            {showAvailability ? (
-              <AvailabilitySettings />
-            ) : (
+            <div 
+              className="flex items-center gap-2 mb-6 cursor-pointer group"
+              onClick={handleBusinessNameClick}
+            >
+              <h1 className="text-2xl font-bold">{profile?.company_name || "My Business"}</h1>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            </div>
+
+            {!showCategories && !showServices && !showServiceRequests && 
+             !showCustomers && !showCreateService && !showMarketing &&
+             !showAvailability && (
               <>
-                {!showCategories && !showServices && !showServiceRequests && 
-                 !showCustomers && !showCreateService && !showMarketing && (
-                  <>
-                    <div className="flex items-center gap-2 mb-6 cursor-pointer group">
-                      <h1 className="text-2xl font-bold">{profile?.company_name || "My Business"}</h1>
-                    </div>
-                    <BasicPlanSection />
-                  </>
-                )}
-
-                {showCreateService && (
-                  <CreateService onSuccess={() => setShowCreateService(false)} />
-                )}
-
-                {showServices && (
-                  <ServicesSection
-                    services={services.filter(service =>
-                      service.name.toLowerCase().includes(searchQuery.toLowerCase())
-                    )}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    userCategories={userCategories}
-                    onDeleteService={deleteService}
-                    onUpdateServiceCategory={updateServiceCategory}
-                    setShowCreateService={setShowCreateService}
-                  />
-                )}
-
-                {showServiceRequests && <ServiceRequestsView />}
-
-                {showCustomers && <CustomersView />}
-
-                {showMarketing && <Marketing />}
+                <SetupGuideSection steps={setupSteps} />
+                <BasicPlanSection />
               </>
+            )}
+
+            {showCreateService && (
+              <CreateService onSuccess={() => setShowCreateService(false)} />
+            )}
+
+            {showServices && (
+              <ServicesSection
+                services={filteredServices}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                userCategories={userCategories}
+                onDeleteService={deleteService}
+                onUpdateServiceCategory={updateServiceCategory}
+                setShowCreateService={setShowCreateService}
+              />
+            )}
+
+            {showServiceRequests && <ServiceRequestsView />}
+
+            {showCustomers && <CustomersView />}
+
+            {showMarketing && <Marketing />}
+
+            {showAvailability && <AvailabilitySettings />}
+
+            {showCategories && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <ServiceCategories />
+              </div>
             )}
           </div>
         </div>
