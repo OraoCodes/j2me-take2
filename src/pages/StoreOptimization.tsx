@@ -4,74 +4,76 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
-import { Calendar, MessageSquareMore, Gift, Globe, CreditCard, Mail } from "lucide-react";
+import { Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface OptimizationOption {
-  id: string;
-  name: string;
-  description: string;
-  icon: JSX.Element;
-  enabled: boolean;
-  plan?: "BUSINESS" | "PREMIUM";
+interface TimeSlot {
+  dayOfWeek: number;
+  dayName: string;
+  isAvailable: boolean;
+  startTime: string;
+  endTime: string;
 }
 
 const StoreOptimization = () => {
   const navigate = useNavigate();
-  const [options, setOptions] = useState<OptimizationOption[]>([
-    {
-      id: "instantBooking",
-      name: "Enable Instant Booking",
-      description: "Clients can book your services automatically without manual confirmation.",
-      icon: <Calendar className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-    },
-    {
-      id: "whatsappBot",
-      name: "WhatsApp Auto-Responses",
-      description: "Automate replies & confirmations for client inquiries.",
-      icon: <MessageSquareMore className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-      plan: "BUSINESS",
-    },
-    {
-      id: "loyalty",
-      name: "Client Loyalty & Rewards",
-      description: "Offer discounts & exclusive deals for repeat clients.",
-      icon: <Gift className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-      plan: "BUSINESS",
-    },
-    {
-      id: "customDomain",
-      name: "Custom Domain & Branding",
-      description: "Use your own domain & remove platform branding.",
-      icon: <Globe className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-      plan: "PREMIUM",
-    },
-    {
-      id: "onlinePayments",
-      name: "Accept Online Payments",
-      description: "Enable MPesa, Card, PayPal, and other payment options.",
-      icon: <CreditCard className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-      plan: "PREMIUM",
-    },
-    {
-      id: "reminders",
-      name: "Send SMS & Email Reminders",
-      description: "Automatically remind clients of upcoming appointments.",
-      icon: <Mail className="w-6 h-6 text-gebeya-pink" />,
-      enabled: false,
-    },
+  const { toast } = useToast();
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
+    { dayOfWeek: 0, dayName: "Sunday", isAvailable: false, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 1, dayName: "Monday", isAvailable: true, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 2, dayName: "Tuesday", isAvailable: true, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 3, dayName: "Wednesday", isAvailable: true, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 4, dayName: "Thursday", isAvailable: true, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 5, dayName: "Friday", isAvailable: true, startTime: "09:00", endTime: "17:00" },
+    { dayOfWeek: 6, dayName: "Saturday", isAvailable: false, startTime: "09:00", endTime: "17:00" },
   ]);
 
-  const toggleOption = (id: string) => {
-    setOptions(opts =>
-      opts.map(opt =>
-        opt.id === id ? { ...opt, enabled: !opt.enabled } : opt
+  const handleTimeChange = (dayOfWeek: number, field: 'startTime' | 'endTime', value: string) => {
+    setTimeSlots(slots =>
+      slots.map(slot =>
+        slot.dayOfWeek === dayOfWeek ? { ...slot, [field]: value } : slot
       )
     );
+  };
+
+  const toggleAvailability = (dayOfWeek: number) => {
+    setTimeSlots(slots =>
+      slots.map(slot =>
+        slot.dayOfWeek === dayOfWeek ? { ...slot, isAvailable: !slot.isAvailable } : slot
+      )
+    );
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const availabilitySettings = timeSlots.map(slot => ({
+        user_id: user.id,
+        day_of_week: slot.dayOfWeek,
+        start_time: slot.startTime,
+        end_time: slot.endTime,
+        is_available: slot.isAvailable
+      }));
+
+      const { error } = await supabase
+        .from('availability_settings')
+        .upsert(availabilitySettings, { onConflict: 'user_id,day_of_week' });
+
+      if (error) throw error;
+
+      navigate("/pricing");
+    } catch (error) {
+      console.error('Error saving availability:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save availability settings. Please try again.",
+      });
+    }
   };
 
   return (
@@ -107,42 +109,47 @@ const StoreOptimization = () => {
         {/* Main Content */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Optimize Your Service Page & Enhance Your Branding
+            Set Your Availability
           </h1>
           <p className="text-gray-600 text-lg">
-            Customize your service page with advanced features
+            Define when you're available to provide your services
           </p>
         </div>
 
-        {/* Optimization Options */}
+        {/* Availability Settings */}
         <div className="space-y-4">
-          {options.map((option) => (
+          {timeSlots.map((slot) => (
             <div
-              key={option.id}
+              key={slot.dayOfWeek}
               className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    {option.icon}
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{option.name}</span>
-                      {option.plan && (
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          option.plan === "BUSINESS" 
-                            ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600" 
-                            : "bg-gradient-to-r from-purple-50 to-purple-100 text-purple-600"
-                        }`}>
-                          {option.plan}
-                        </span>
-                      )}
-                    </div>
+                    <Clock className="w-6 h-6 text-gebeya-pink" />
+                    <span className="font-medium">{slot.dayName}</span>
                   </div>
-                  <p className="text-sm text-gray-500 ml-9">{option.description}</p>
+                  {slot.isAvailable && (
+                    <div className="flex items-center gap-2 ml-9 mt-3">
+                      <Input
+                        type="time"
+                        value={slot.startTime}
+                        onChange={(e) => handleTimeChange(slot.dayOfWeek, 'startTime', e.target.value)}
+                        className="w-32"
+                      />
+                      <span className="text-gray-500">to</span>
+                      <Input
+                        type="time"
+                        value={slot.endTime}
+                        onChange={(e) => handleTimeChange(slot.dayOfWeek, 'endTime', e.target.value)}
+                        className="w-32"
+                      />
+                    </div>
+                  )}
                 </div>
                 <Switch
-                  checked={option.enabled}
-                  onCheckedChange={() => toggleOption(option.id)}
+                  checked={slot.isAvailable}
+                  onCheckedChange={() => toggleAvailability(slot.dayOfWeek)}
                   className="data-[state=checked]:bg-gebeya-pink"
                 />
               </div>
@@ -153,7 +160,7 @@ const StoreOptimization = () => {
         {/* Navigation */}
         <div className="mt-12">
           <Button
-            onClick={() => navigate("/pricing")}
+            onClick={handleSubmit}
             className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white font-medium"
           >
             Continue
