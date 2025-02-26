@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, Wand2 } from "lucide-react";
 import { ProfileImageCropper } from "./ProfileImageCropper";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PHONE_PREFIXES = [
   { value: "+254", label: "🇰🇪 +254" },
@@ -71,7 +75,6 @@ export const SettingsDialog = ({
   };
 
   const handleCropComplete = (croppedImageUrl: string) => {
-    // Convert base64 to file and trigger the upload
     fetch(croppedImageUrl)
       .then(res => res.blob())
       .then(blob => {
@@ -141,18 +144,25 @@ export const SettingsDialog = ({
                   onChange={(e) => onBusinessNameChange(e.target.value)}
                   placeholder="Enter your business name"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onGenerateBusinessName}
-                  disabled={isGeneratingName}
-                >
-                  {isGeneratingName ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4" />
-                  )}
-                </Button>
+                <Tooltip defaultOpen>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onGenerateBusinessName}
+                      disabled={isGeneratingName}
+                    >
+                      {isGeneratingName ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-white p-3 shadow-lg rounded-lg border max-w-[200px] text-center">
+                    <p>Click to generate a creative business name using AI!</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
