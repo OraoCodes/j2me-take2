@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Home, Package, Grid, Users, Settings, BadgeDollarSign,
-  Mail, MessageSquare, Calendar, ArrowRight
+  Home, Package, Grid, Users, BadgeDollarSign,
+  Calendar, ArrowRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -113,15 +112,6 @@ const Dashboard = () => {
     }},
   ];
 
-  const premiumFeatures = [
-    { icon: <Mail className="h-4 w-4" />, label: "Email Marketing", badge: "PREMIUM" },
-    { icon: <MessageSquare className="h-4 w-4" />, label: "Chat Support", badge: "PREMIUM" },
-  ];
-
-  const businessFeatures = [
-    { icon: <MessageSquare className="h-4 w-4" />, label: "Chat Support", badge: "BUSINESS" },
-  ];
-
   const sidebarItems = [
     { 
       icon: <Home />, 
@@ -192,8 +182,7 @@ const Dashboard = () => {
         setShowAvailability(true);
       },
       isSelected: showAvailability
-    },
-    { icon: <Settings />, label: "Settings" },
+    }
   ];
 
   const setupSteps = [
@@ -237,8 +226,8 @@ const Dashboard = () => {
           isMobileMenuOpen={isMobileMenuOpen}
           profile={profile}
           sidebarItems={sidebarItems}
-          premiumFeatures={premiumFeatures}
-          businessFeatures={businessFeatures}
+          premiumFeatures={[]}
+          businessFeatures={[]}
         />
 
         <div className={cn(
