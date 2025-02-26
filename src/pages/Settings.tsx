@@ -57,11 +57,16 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      const formData = new FormData(e.currentTarget as HTMLFormElement);
+      const phonePrefix = formData.get("phonePrefix") as string;
+      const phoneNumber = formData.get("whatsappNumber") as string;
+      const fullWhatsappNumber = `${phonePrefix}${phoneNumber.replace(/^0+/, '')}`;
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           company_name: companyName.trim() || null,
-          whatsapp_number: whatsappNumber.trim() || null,
+          whatsapp_number: fullWhatsappNumber || null,
         })
         .eq('id', user.id);
 
@@ -120,6 +125,7 @@ const Settings = () => {
                   value={whatsappNumber}
                   onChange={(e) => setWhatsappNumber(e.target.value)}
                   placeholder="Enter your WhatsApp number"
+                  name="whatsappNumber"
                 />
               </div>
             </div>
