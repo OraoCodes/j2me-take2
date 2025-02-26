@@ -1,4 +1,3 @@
-
 import { useRef, useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,14 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const PHONE_PREFIXES = [
-  { value: "+254", label: "🇰🇪 +254" },
-  { value: "+256", label: "🇺🇬 +256" },
-  { value: "+255", label: "🇹🇿 +255" },
-  { value: "+251", label: "🇪🇹 +251" },
-  { value: "+250", label: "🇷🇼 +250" },
-] as const;
+import { PHONE_PREFIXES } from "@/constants/phone";
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -63,7 +55,7 @@ export const SettingsDialog = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
-  const [selectedPrefix, setSelectedPrefix] = useState("+254");
+  const [selectedPrefix, setSelectedPrefix] = useState<string>("+254");
   const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
