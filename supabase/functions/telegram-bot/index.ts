@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { format, parse, isWithinInterval, set, parseISO, addHours } from 'https://esm.sh/date-fns@2';
+import { format, parse, isWithinInterval, set, parseISO, addHours, isSameDay, startOfDay, endOfDay } from 'https://esm.sh/date-fns@2';
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
@@ -29,18 +29,15 @@ interface BookingSession {
   customerEmail?: string;
 }
 
-// Track booking sessions and conversation history by chat ID
 const bookingSessions = new Map<number, BookingSession>();
 const conversationHistory = new Map<number, Message[]>();
 
-// Maximum number of messages to keep in history
 const MAX_HISTORY = 30;
 
 function addToHistory(chatId: number, message: Message) {
   const history = conversationHistory.get(chatId) || [];
   history.push(message);
   
-  // Keep only the last MAX_HISTORY messages
   if (history.length > MAX_HISTORY) {
     history.splice(0, history.length - MAX_HISTORY);
   }
@@ -167,19 +164,19 @@ async function fetchServiceRequests(userId: string) {
 }
 
 async function fetchBlockedDates(userId: string) {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data, error } = await supabase
-      .from('blocked_dates')
-      .select('*')
-      .eq('user_id', userId);
-  
-    if (error) {
-      console.error('Error fetching blocked dates:', error);
-      return [];
-    }
-  
-    return data;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const { data, error } = await supabase
+    .from('blocked_dates')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error fetching blocked dates:', error);
+    return [];
   }
+
+  return data;
+}
 
 async function createServiceRequest(booking: BookingSession, chatId: number) {
   if (!booking.serviceId || !booking.scheduledAt || !booking.customerName || !booking.customerPhone) {
@@ -201,7 +198,6 @@ async function createServiceRequest(booking: BookingSession, chatId: number) {
 
   if (error) throw error;
   
-  // Clear the booking session
   bookingSessions.delete(chatId);
 }
 
@@ -209,102 +205,117 @@ async function handleBookingStep(chatId: number, userMessage: string) {
   let session = bookingSessions.get(chatId) || { step: 'service' };
   let response = '';
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  try {
+    const context = {
+      services: await fetchServices(USER_ID),
+      availability: await fetchAvailability(USER_ID),
+      serviceRequests: await fetchServiceRequests(USER_ID),
+      blockedDates: await fetchBlockedDates(USER_ID)
+    };
 
-  switch (session.step) {
-    case 'service':
-      // Find service by name or ask for clarification
-      const { data: services } = await supabase
-        .from('services')
-        .select('*')
-        .eq('user_id', USER_ID);
-      
-      const service = services?.find(s => 
-        s.name.toLowerCase().includes(userMessage.toLowerCase())
-      );
-
-      if (service) {
-        session.serviceId = service.id;
-        session.step = 'date';
-        response = "Great! What date would you like to book? (Please use format DD/MM/YYYY)";
-      } else {
-        response = "I couldn't find that service. Please choose from these available services:\n" +
-          services?.map(s => `- ${s.name}`).join('\n');
-      }
-      break;
-
-    case 'date':
-      try {
-        const [day, month, year] = userMessage.split('/').map(Number);
-        const date = new Date(year, month - 1, day);
-        if (isNaN(date.getTime())) throw new Error('Invalid date');
+    switch (session.step) {
+      case 'service':
+        const { data: services } = await supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', USER_ID);
         
-        session.scheduledAt = date.toISOString();
-        session.step = 'time';
-        response = "What time would you prefer? (Please use 24-hour format, e.g., 14:00)";
-      } catch {
-        response = "Sorry, I didn't understand that date. Please use the format DD/MM/YYYY (e.g., 27/02/2025)";
-      }
-      break;
+        const service = services?.find(s => 
+          s.name.toLowerCase().includes(userMessage.toLowerCase())
+        );
 
-    case 'time':
-      try {
-        const [hours, minutes] = userMessage.split(':').map(Number);
-        const date = new Date(session.scheduledAt!);
-        date.setHours(hours, minutes, 0, 0);
-        
-        session.scheduledAt = date.toISOString();
-        session.step = 'name';
-        response = "Please provide your full name:";
-      } catch {
-        response = "Sorry, I didn't understand that time. Please use 24-hour format (e.g., 14:00)";
-      }
-      break;
-
-    case 'name':
-      session.customerName = userMessage;
-      session.step = 'phone';
-      response = "Please provide your phone number:";
-      break;
-
-    case 'phone':
-      session.customerPhone = userMessage;
-      session.step = 'email';
-      response = "Please provide your email address (or type 'skip' to skip):";
-      break;
-
-    case 'email':
-      if (userMessage.toLowerCase() !== 'skip') {
-        session.customerEmail = userMessage;
-      }
-      session.step = 'confirm';
-      
-      // Show booking summary
-      response = `Please confirm your booking details:\n\n` +
-        `Date: ${format(parseISO(session.scheduledAt!), 'PPP p')}\n` +
-        `Name: ${session.customerName}\n` +
-        `Phone: ${session.customerPhone}\n` +
-        `Email: ${session.customerEmail || 'Not provided'}\n\n` +
-        `Reply with 'confirm' to book or 'cancel' to start over.`;
-      break;
-
-    case 'confirm':
-      if (userMessage.toLowerCase() === 'confirm') {
-        try {
-          await createServiceRequest(session, chatId);
-          response = "Your booking has been confirmed! Kevin will review it shortly and get back to you.";
-        } catch (error) {
-          console.error('Booking error:', error);
-          response = "Sorry, there was an error creating your booking. Please try again.";
-          bookingSessions.delete(chatId);
+        if (service) {
+          session.serviceId = service.id;
+          session.step = 'date';
+          response = "Great! What date would you like to book? (Please use format DD/MM/YYYY)";
+        } else {
+          response = "I couldn't find that service. Please choose from these available services:\n" +
+            services?.map(s => `- ${s.name}`).join('\n');
         }
-      } else if (userMessage.toLowerCase() === 'cancel') {
-        bookingSessions.delete(chatId);
-        response = "Booking cancelled. How else can I help you?";
-      } else {
-        response = "Please reply with 'confirm' to book or 'cancel' to start over.";
-      }
-      break;
+        break;
+
+      case 'date':
+        try {
+          const [day, month, year] = userMessage.split('/').map(Number);
+          const date = new Date(year, month - 1, day);
+          if (isNaN(date.getTime())) throw new Error('Invalid date');
+          
+          session.scheduledAt = date.toISOString();
+          session.step = 'time';
+          response = "What time would you prefer? (Please use 24-hour format, e.g., 14:00)";
+        } catch {
+          response = "Sorry, I didn't understand that date. Please use the format DD/MM/YYYY (e.g., 27/02/2025)";
+        }
+        break;
+
+      case 'time':
+        try {
+          const [hours, minutes] = userMessage.split(':').map(Number);
+          const date = new Date(session.scheduledAt!);
+          date.setHours(hours, minutes, 0, 0);
+          
+          const availability = await isTimeSlotAvailable(date, `${hours}:${minutes}`, context);
+          
+          if (!availability.available) {
+            response = `Sorry, ${availability.reason} Please choose another time:`;
+            break;
+          }
+          
+          session.scheduledAt = date.toISOString();
+          session.step = 'name';
+          response = "Please provide your full name:";
+        } catch {
+          response = "Sorry, I didn't understand that time. Please use 24-hour format (e.g., 14:00)";
+        }
+        break;
+
+      case 'name':
+        session.customerName = userMessage;
+        session.step = 'phone';
+        response = "Please provide your phone number:";
+        break;
+
+      case 'phone':
+        session.customerPhone = userMessage;
+        session.step = 'email';
+        response = "Please provide your email address (or type 'skip' to skip):";
+        break;
+
+      case 'email':
+        if (userMessage.toLowerCase() !== 'skip') {
+          session.customerEmail = userMessage;
+        }
+        session.step = 'confirm';
+        
+        response = `Please confirm your booking details:\n\n` +
+          `Date: ${format(parseISO(session.scheduledAt!), 'PPP p')}\n` +
+          `Name: ${session.customerName}\n` +
+          `Phone: ${session.customerPhone}\n` +
+          `Email: ${session.customerEmail || 'Not provided'}\n\n` +
+          `Reply with 'confirm' to book or 'cancel' to start over.`;
+        break;
+
+      case 'confirm':
+        if (userMessage.toLowerCase() === 'confirm') {
+          try {
+            await createServiceRequest(session, chatId);
+            response = "Your booking has been confirmed! Kevin will review it shortly and get back to you.";
+          } catch (error) {
+            console.error('Booking error:', error);
+            response = "Sorry, there was an error creating your booking. Please try again.";
+            bookingSessions.delete(chatId);
+          }
+        } else if (userMessage.toLowerCase() === 'cancel') {
+          bookingSessions.delete(chatId);
+          response = "Booking cancelled. How else can I help you?";
+        } else {
+          response = "Please reply with 'confirm' to book or 'cancel' to start over.";
+        }
+        break;
+    }
+  } catch (error) {
+    console.error('Error in handleBookingStep:', error);
+    response = "Sorry, there was an error processing your request. Please try again.";
   }
 
   bookingSessions.set(chatId, session);
@@ -317,18 +328,15 @@ async function getAIResponse(userMessage: string, context: {
   serviceRequests: any[],
   blockedDates: any[]
 }, chatId: number) {
-  // Add user message to history
   addToHistory(chatId, {
     role: 'user',
     content: userMessage,
     timestamp: Date.now()
   });
 
-  // Check if there's an ongoing booking session
   const bookingSession = bookingSessions.get(chatId);
   if (bookingSession) {
     const response = await handleBookingStep(chatId, userMessage);
-    // Add assistant's response to history
     addToHistory(chatId, {
       role: 'assistant',
       content: response,
@@ -337,7 +345,6 @@ async function getAIResponse(userMessage: string, context: {
     return response;
   }
 
-  // If message contains booking intent, start a booking session
   if (userMessage.toLowerCase().includes('book') || 
       userMessage.toLowerCase().includes('schedule') ||
       userMessage.toLowerCase().includes('appointment')) {
@@ -347,7 +354,6 @@ async function getAIResponse(userMessage: string, context: {
       .join('\n');
     const response = `I'll help you book an appointment. Which service would you like to book?\n\nAvailable services:\n${servicesInfo}`;
     
-    // Add assistant's response to history
     addToHistory(chatId, {
       role: 'assistant',
       content: response,
@@ -358,7 +364,6 @@ async function getAIResponse(userMessage: string, context: {
 
   const history = conversationHistory.get(chatId) || [];
   
-  // Generate availability info
   const availabilityInfo = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
@@ -424,7 +429,6 @@ async function getAIResponse(userMessage: string, context: {
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
-    // Add assistant's response to history
     addToHistory(chatId, {
       role: 'assistant',
       content: aiResponse,
@@ -438,32 +442,111 @@ async function getAIResponse(userMessage: string, context: {
   }
 }
 
-function formatAvailabilityForDate(date: Date, availability: any[], serviceRequests: any[], blockedDates: any[]) {
-  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
-  const dayOfMonth = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
+function formatAvailabilityForDate(
+  date: Date,
+  availabilitySettings: any[],
+  serviceRequests: any[],
+  blockedDates: any[]
+) {
+  const isDateBlocked = blockedDates.some(blocked => 
+    isSameDay(parseISO(blocked.blocked_date), date)
+  );
 
-  const availabilityForDay = availability.find(a => a.day_of_week === dayOfWeek);
-  const serviceRequestsForDay = serviceRequests.filter(r => r.scheduled_at && new Date(r.scheduled_at).toLocaleDateString('en-US', { weekday: 'long' }) === dayOfWeek);
-  const blockedDate = blockedDates.find(d => d.blocked_date === `${year}-${month}-${dayOfMonth}`);
-
-  let availabilityString = '';
-  if (availabilityForDay) {
-    availabilityString = availabilityForDay.start_time + ' - ' + availabilityForDay.end_time;
-  } else {
-    availabilityString = 'Not available';
+  if (isDateBlocked) {
+    return `${format(date, 'EEEE, MMMM d, yyyy')}: BLOCKED FOR THE ENTIRE DAY`;
   }
 
-  if (serviceRequestsForDay.length > 0) {
-    availabilityString += ' (Booked)';
+  const dayOfWeek = date.getDay();
+  const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
+
+  if (!daySetting?.is_available) {
+    return `${format(date, 'EEEE, MMMM d, yyyy')}: NOT AVAILABLE (Not a working day)`;
   }
 
-  if (blockedDate) {
-    availabilityString += ' (Blocked)';
+  const dayStart = startOfDay(date);
+  const dayEnd = endOfDay(date);
+  
+  const bookedSlots = serviceRequests
+    .filter(request => {
+      const requestDate = parseISO(request.scheduled_at);
+      return isWithinInterval(requestDate, { start: dayStart, end: dayEnd }) &&
+             ['pending', 'accepted'].includes(request.status);
+    })
+    .map(request => format(parseISO(request.scheduled_at), 'HH:mm'));
+
+  const timeSlots = [];
+  const startTime = parse(daySetting.start_time, 'HH:mm:ss', date);
+  const endTime = parse(daySetting.end_time, 'HH:mm:ss', date);
+
+  let currentSlot = startTime;
+  while (currentSlot < endTime) {
+    const timeStr = format(currentSlot, 'HH:mm');
+    const status = bookedSlots.includes(timeStr) ? 'BOOKED' : 'AVAILABLE';
+    timeSlots.push(`${timeStr} - ${status}`);
+    currentSlot = addHours(currentSlot, 1);
   }
 
-  return `${dayOfWeek}, ${dayOfMonth}/${month}/${year}: ${availabilityString}`;
+  return `${format(date, 'EEEE, MMMM d, yyyy')}:\n${timeSlots.join('\n')}`;
+}
+
+async function isTimeSlotAvailable(date: Date, time: string, context: {
+  services: any[],
+  availability: any[],
+  serviceRequests: any[],
+  blockedDates: any[]
+}) {
+  const isDateBlocked = context.blockedDates.some(blocked => 
+    isSameDay(parseISO(blocked.blocked_date), date)
+  );
+
+  if (isDateBlocked) {
+    return {
+      available: false,
+      reason: 'This date is blocked in the calendar.'
+    };
+  }
+
+  const dayOfWeek = date.getDay();
+  const daySetting = context.availability.find(s => s.day_of_week === dayOfWeek);
+
+  if (!daySetting?.is_available) {
+    return {
+      available: false,
+      reason: 'This is not a working day.'
+    };
+  }
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const requestedTime = set(date, { hours, minutes });
+  
+  const startTime = parse(daySetting.start_time, 'HH:mm:ss', date);
+  const endTime = parse(daySetting.end_time, 'HH:mm:ss', date);
+
+  if (requestedTime < startTime || requestedTime >= endTime) {
+    return {
+      available: false,
+      reason: `The requested time is outside working hours (${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}).`
+    };
+  }
+
+  const isBooked = context.serviceRequests.some(request => {
+    const requestDate = parseISO(request.scheduled_at);
+    return isSameDay(requestDate, date) &&
+           format(requestDate, 'HH:mm') === time &&
+           ['pending', 'accepted'].includes(request.status);
+  });
+
+  if (isBooked) {
+    return {
+      available: false,
+      reason: 'This time slot is already booked.'
+    };
+  }
+
+  return {
+    available: true,
+    reason: 'Time slot is available.'
+  };
 }
 
 serve(async (req) => {
