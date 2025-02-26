@@ -22,6 +22,9 @@ interface TelegramUpdate {
       id: number;
     };
     text?: string;
+    voice?: {
+      file_id: string;
+    };
   };
 }
 
@@ -120,6 +123,49 @@ async function sendTelegramMessage(chatId: number, text: string) {
   }
 }
 
+async function downloadVoiceMessage(fileId: string): Promise<ArrayBuffer> {
+  // First, get the file path
+  const getFileUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`;
+  const filePathResponse = await fetch(getFileUrl);
+  const fileData = await filePathResponse.json();
+
+  if (!fileData.ok) {
+    throw new Error('Failed to get voice file path');
+  }
+
+  // Download the file
+  const filePath = fileData.result.file_path;
+  const downloadUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`;
+  const fileResponse = await fetch(downloadUrl);
+  return await fileResponse.arrayBuffer();
+}
+
+async function transcribeAudio(audioBuffer: ArrayBuffer): Promise<string> {
+  // Convert ArrayBuffer to Blob
+  const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });
+  
+  // Create FormData and append the audio file
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'voice.ogg');
+  formData.append('model', 'whisper-1');
+
+  // Send to OpenAI's Whisper API
+  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to transcribe audio');
+  }
+
+  const result = await response.json();
+  return result.text;
+}
+
 async function getAIResponse(userMessage: string, context: { 
   services: Service[], 
   availability: any[],
@@ -214,8 +260,30 @@ serve(async (req) => {
     const update: TelegramUpdate = await req.json();
     console.log('Received update:', update);
 
-    if (!update.message?.chat.id || !update.message.text) {
+    if (!update.message?.chat.id) {
       return new Response('Invalid update', { status: 400 });
+    }
+
+    let userMessage: string;
+
+    if (update.message.voice) {
+      try {
+        console.log('Processing voice message...');
+        const audioBuffer = await downloadVoiceMessage(update.message.voice.file_id);
+        userMessage = await transcribeAudio(audioBuffer);
+        console.log('Transcribed text:', userMessage);
+      } catch (error) {
+        console.error('Error processing voice message:', error);
+        await sendTelegramMessage(
+          update.message.chat.id,
+          "Samahani, sikuweza kusikia vizuri ujumbe wako wa sauti. Tafadhali jaribu tena. (Sorry, I couldn't process your voice message. Please try again.)"
+        );
+        return new Response('OK', { status: 200 });
+      }
+    } else if (update.message.text) {
+      userMessage = update.message.text;
+    } else {
+      return new Response('Invalid message format', { status: 400 });
     }
 
     const services = await fetchServices(USER_ID);
@@ -225,7 +293,7 @@ serve(async (req) => {
 
     console.log('Context for AI:', { services, availability, serviceRequests, blockedDates });
 
-    const aiResponse = await getAIResponse(update.message.text, {
+    const aiResponse = await getAIResponse(userMessage, {
       services,
       availability,
       serviceRequests,
