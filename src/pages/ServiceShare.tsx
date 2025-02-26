@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -30,7 +29,6 @@ const ServiceShare = () => {
 
         if (error) throw error;
 
-        // If service_page_link exists, use it; otherwise, construct the default link
         const link = profile?.service_page_link || `${window.location.origin}/services/${user.id}`;
         setServiceLink(link);
       } catch (err) {
@@ -69,10 +67,7 @@ const ServiceShare = () => {
     switch (platform) {
       case "instagram":
         copyToClipboard();
-        toast({
-          title: "Ready to share on Instagram",
-          description: "The link has been copied. You can now paste it in your Instagram bio.",
-        });
+        window.open("https://www.instagram.com/accounts/edit", "_blank");
         break;
       case "facebook":
         url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(serviceLink)}`;
