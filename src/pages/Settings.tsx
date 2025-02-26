@@ -13,7 +13,6 @@ const Settings = () => {
   const { toast } = useToast();
   const [companyName, setCompanyName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [customLink, setCustomLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const Settings = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_name, whatsapp_number, service_page_link')
+        .select('company_name, whatsapp_number')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -39,7 +38,6 @@ const Settings = () => {
       if (profile) {
         setCompanyName(profile.company_name || "");
         setWhatsappNumber(profile.whatsapp_number || "");
-        setCustomLink(profile.service_page_link || "");
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -59,47 +57,15 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Clean up the custom link value
-      const cleanCustomLink = customLink.trim() || null;
-
-      // Only check for duplicates if a non-empty custom link is provided
-      if (cleanCustomLink) {
-        const { data: existingProfile, error: searchError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('service_page_link', cleanCustomLink)
-          .neq('id', user.id)
-          .maybeSingle();
-
-        if (searchError) {
-          console.error('Error checking custom link:', searchError);
-          throw searchError;
-        }
-
-        if (existingProfile) {
-          toast({
-            title: "Error",
-            description: "This custom link is already taken. Please choose another one.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-      }
-
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           company_name: companyName.trim() || null,
           whatsapp_number: whatsappNumber.trim() || null,
-          service_page_link: cleanCustomLink,
         })
         .eq('id', user.id);
 
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
       toast({
         title: "Success",
@@ -156,24 +122,6 @@ const Settings = () => {
                   placeholder="Enter your WhatsApp number"
                 />
               </div>
-            </div>
-          </FormSection>
-
-          <FormSection number="2" title="Customize Your Link">
-            <div>
-              <label htmlFor="customLink" className="block text-sm font-medium text-gray-700 mb-1">
-                Custom Service Page Link
-              </label>
-              <Input
-                id="customLink"
-                type="text"
-                value={customLink}
-                onChange={(e) => setCustomLink(e.target.value)}
-                placeholder="Enter your custom link (optional)"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                This will be your public service page URL
-              </p>
             </div>
           </FormSection>
 

@@ -70,12 +70,16 @@ export const SettingsDialog = ({
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="flex flex-col items-center space-y-4">
-              <Avatar className="w-24 h-24">
+              <Avatar className="w-24 h-24 border-2 border-gebeya-pink">
                 {profileImage ? (
-                  <AvatarImage src={profileImage} alt="Profile" />
+                  <AvatarImage 
+                    src={profileImage} 
+                    alt="Profile" 
+                    className="object-cover"
+                  />
                 ) : (
-                  <AvatarFallback>
-                    <Upload className="w-8 h-8 text-muted-foreground" />
+                  <AvatarFallback className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white">
+                    <Upload className="w-8 h-8" />
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -146,19 +150,6 @@ export const SettingsDialog = ({
                   className="flex-1"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customLink">Custom Service Page Link</Label>
-              <Input
-                id="customLink"
-                name="customLink"
-                type="text"
-                placeholder="Enter your custom link (optional)"
-              />
-              <p className="text-sm text-gray-500">
-                This will be your public service page URL
-              </p>
             </div>
           </div>
 
