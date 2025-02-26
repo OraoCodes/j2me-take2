@@ -33,6 +33,11 @@ interface Service {
   description: string | null;
 }
 
+interface ServiceRequest {
+  scheduled_at: string;
+  status: string;
+}
+
 async function fetchServices(userId: string): Promise<Service[]> {
   console.log('Fetching services for user:', userId);
   const { data, error } = await supabase
@@ -65,6 +70,39 @@ async function fetchAvailability(userId: string) {
   return data || [];
 }
 
+async function fetchServiceRequests(userId: string): Promise<ServiceRequest[]> {
+  console.log('Fetching service requests for user:', userId);
+  const { data, error } = await supabase
+    .from('service_requests')
+    .select('scheduled_at, status')
+    .eq('user_id', userId)
+    .in('status', ['pending', 'accepted']);
+
+  if (error) {
+    console.error('Error fetching service requests:', error);
+    throw error;
+  }
+
+  console.log('Service requests fetched:', data);
+  return data || [];
+}
+
+async function fetchBlockedDates(userId: string) {
+  console.log('Fetching blocked dates for user:', userId);
+  const { data, error } = await supabase
+    .from('blocked_dates')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error fetching blocked dates:', error);
+    throw error;
+  }
+
+  console.log('Blocked dates fetched:', data);
+  return data || [];
+}
+
 async function sendTelegramMessage(chatId: number, text: string) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   const response = await fetch(url, {
@@ -83,10 +121,14 @@ async function sendTelegramMessage(chatId: number, text: string) {
   }
 }
 
-async function getAIResponse(userMessage: string, context: { services: Service[], availability: any[] }) {
+async function getAIResponse(userMessage: string, context: { 
+  services: Service[], 
+  availability: any[],
+  serviceRequests: ServiceRequest[],
+  blockedDates: any[]
+}) {
   console.log('Getting AI response with context:', context);
   
-  // Create a context string that includes information about services and availability
   const servicesInfo = context.services.map(service => 
     `${service.name} - ${service.price} KES${service.description ? ` (${service.description})` : ''}`
   ).join('\n');
@@ -96,17 +138,33 @@ async function getAIResponse(userMessage: string, context: { services: Service[]
     .map(a => `${a.day_of_week}: ${a.start_time} - ${a.end_time}`)
     .join('\n');
 
+  const bookedSlots = context.serviceRequests
+    .map(req => `${new Date(req.scheduled_at).toLocaleString()} (${req.status})`)
+    .join('\n');
+
+  const blockedDatesInfo = context.blockedDates
+    .map(bd => `${bd.blocked_date}${bd.reason ? ` (${bd.reason})` : ''}`)
+    .join('\n');
+
   const prompt = `
     You are a helpful assistant managing appointments and inquiries for a service business.
+    
     Available services:
     ${servicesInfo || 'No services available at the moment.'}
     
     Business hours:
     ${availabilityInfo || 'Business hours not set.'}
     
+    Currently booked slots:
+    ${bookedSlots || 'No current bookings.'}
+    
+    Blocked dates:
+    ${blockedDatesInfo || 'No blocked dates.'}
+    
     User message: ${userMessage}
     
-    Please provide a helpful response based on the available services and business hours.
+    Please provide a helpful response based on the available services, business hours, and current bookings.
+    When suggesting appointment times, make sure to avoid already booked slots and blocked dates.
     If services are not available, kindly inform the user and ask what type of services they're looking for.
   `;
 
@@ -155,12 +213,16 @@ serve(async (req) => {
 
     const services = await fetchServices(USER_ID);
     const availability = await fetchAvailability(USER_ID);
+    const serviceRequests = await fetchServiceRequests(USER_ID);
+    const blockedDates = await fetchBlockedDates(USER_ID);
 
-    console.log('Context for AI:', { services, availability });
+    console.log('Context for AI:', { services, availability, serviceRequests, blockedDates });
 
     const aiResponse = await getAIResponse(update.message.text, {
       services,
       availability,
+      serviceRequests,
+      blockedDates
     });
 
     await sendTelegramMessage(update.message.chat.id, aiResponse);
