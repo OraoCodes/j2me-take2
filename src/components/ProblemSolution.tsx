@@ -31,19 +31,6 @@ export const ProblemSolution = () => {
               "With Jitume, your WhatsApp messages get answered, bookings are handled, and payments collected—so you never miss a client while you're working."
             </p>
           </div>
-
-          <Button
-            size="lg"
-            onClick={() => {
-              const howItWorksSection = document.getElementById('how-it-works');
-              howItWorksSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            variant="outline"
-            className="gap-2"
-          >
-            See How It Works
-            <ArrowRight className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </section>
