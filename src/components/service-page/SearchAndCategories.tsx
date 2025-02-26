@@ -38,14 +38,14 @@ export const SearchAndCategories: React.FC<SearchAndCategoriesProps> = ({
       </div>
 
       <Select
-        value={selectedCategory || ""}
-        onValueChange={(value) => onCategoryChange(value === "" ? null : value)}
+        value={selectedCategory || "all"}
+        onValueChange={(value) => onCategoryChange(value === "all" ? null : value)}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select category" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All categories</SelectItem>
+          <SelectItem value="all">All categories</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.id} value={category.id}>
               {category.name}
