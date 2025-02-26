@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,16 +86,23 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      const formData = new FormData(e.currentTarget);
-      const phonePrefix = formData.get("phonePrefix") as string;
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      
+      // Get values from form
+      const phonePrefix = formData.get("phonePrefix") as string || "+254"; // Default to +254 if not set
       const phoneNumber = formData.get("whatsappNumber") as string;
 
-      // Handle empty phone number
-      const fullWhatsappNumber = phoneNumber 
-        ? `${phonePrefix}${phoneNumber.replace(/^0+/, '')}`
-        : null;
+      // Only create whatsapp number if phone number is provided
+      const fullWhatsappNumber = phoneNumber ? 
+        `${phonePrefix}${phoneNumber.replace(/^0+/, '')}` : 
+        null;
 
-      // Update profiles table
+      console.log('Updating profile with:', {
+        business_name: businessName,
+        whatsapp_number: fullWhatsappNumber
+      });
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -105,7 +112,7 @@ const Onboarding = () => {
         .eq('id', user.id);
 
       if (updateError) {
-        console.error('Update error:', updateError);
+        console.error('Profile update error:', updateError);
         throw updateError;
       }
 
