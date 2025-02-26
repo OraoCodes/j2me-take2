@@ -145,11 +145,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
         <DialogContent className="sm:max-w-[425px]">
           <div className="space-y-4">
-            <div className="aspect-[16/9] relative">
+            <div className="relative flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
               <img
                 src={serviceImages[selectedImageIndex]?.image_url || service.image_url}
                 alt={service.name}
-                className="w-full h-full object-cover rounded-lg"
+                className="max-w-full max-h-[70vh] w-auto h-auto object-contain"
               />
               {serviceImages.length > 1 && (
                 <div className="absolute bottom-2 right-2 flex gap-1">
