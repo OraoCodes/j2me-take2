@@ -1,9 +1,9 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
+const USER_ID = "YOUR_USER_ID";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,7 +118,6 @@ async function getAIResponse(userMessage: string, context: any) {
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -131,19 +130,14 @@ serve(async (req) => {
       return new Response('Invalid update', { status: 400 });
     }
 
-    // Fetch services and availability for the context
-    // Note: Replace with your actual user ID - you might want to store this in an env variable
-    const userId = 'your-user-id'; // Replace this with your actual user ID
-    const services = await fetchServices(userId);
-    const availability = await fetchAvailability(userId);
+    const services = await fetchServices(USER_ID);
+    const availability = await fetchAvailability(USER_ID);
 
-    // Get AI response based on the context
     const aiResponse = await getAIResponse(update.message.text, {
       services,
       availability,
     });
 
-    // Send the response back to the user
     await sendTelegramMessage(update.message.chat.id, aiResponse);
 
     return new Response('OK', { status: 200 });
