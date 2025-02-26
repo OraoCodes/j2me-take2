@@ -36,25 +36,11 @@ const ServicePage = () => {
       if (!userId) return;
 
       try {
-        const { error } = await supabase
-          .from('page_views')
-          .upsert(
-            {
-              user_id: userId,
-              view_count: 1,
-              last_viewed_at: new Date().toISOString()
-            },
-            {
-              onConflict: 'user_id',
-              update: {
-                view_count: supabase.raw('page_views.view_count + 1'),
-                last_viewed_at: new Date().toISOString()
-              }
-            }
-          );
+        const { data: updateResult, error: updateError } = await supabase
+          .rpc('increment_page_views', { user_id_param: userId });
 
-        if (error) {
-          console.error('Error tracking page view:', error);
+        if (updateError) {
+          console.error('Error tracking page view:', updateError);
         }
       } catch (error) {
         console.error('Error handling page views:', error);
