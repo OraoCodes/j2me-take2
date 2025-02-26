@@ -1,197 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Header } from "@/components/Header";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, Wand2 } from "lucide-react";
-import ReactCrop, { type Crop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
-
-const PROFESSIONS = [
-  "Hairdresser / Hairstylist",
-  "Nail Technician",
-  "Makeup Artist",
-  "Personal Trainer",
-  "Massage Therapist",
-  "Photographer",
-  "Graphic Designer",
-  "Social Media Manager",
-  "Barber",
-  "Videographer",
-  "Coach",
-  "Other"
-] as const;
-
-const SERVICE_TYPES = [
-  "Beauty & Wellness",
-  "Home Services",
-  "Professional Services",
-  "Health & Fitness",
-  "Education & Tutoring",
-  "Tech Services",
-  "Other"
-] as const;
-
-const PROFESSION_TO_SERVICE_TYPE: Record<string, typeof SERVICE_TYPES[number]> = {
-  "Hairdresser / Hairstylist": "Beauty & Wellness",
-  "Nail Technician": "Beauty & Wellness",
-  "Makeup Artist": "Beauty & Wellness",
-  "Personal Trainer": "Health & Fitness",
-  "Massage Therapist": "Health & Fitness",
-  "Photographer": "Professional Services",
-  "Graphic Designer": "Professional Services",
-  "Social Media Manager": "Professional Services",
-  "Barber": "Beauty & Wellness",
-  "Videographer": "Professional Services",
-  "Coach": "Education & Tutoring",
-};
-
-const REFERRAL_SOURCES = [
-  "Search Engine",
-  "Social Media",
-  "Friend/Family",
-  "Business Partner",
-  "Advertisement",
-  "Other"
-] as const;
-
-const PHONE_PREFIXES = [
-  { value: "+254", label: "🇰🇪 +254" },
-  { value: "+256", label: "🇺🇬 +256" },
-  { value: "+255", label: "🇹🇿 +255" },
-  { value: "+251", label: "🇪🇹 +251" },
-  { value: "+250", label: "🇷🇼 +250" },
-] as const;
+import { BusinessDetailsDialog } from "@/components/onboarding/BusinessDetailsDialog";
+import { SettingsDialog } from "@/components/onboarding/SettingsDialog";
+import { ServiceCreatedDialog } from "@/components/onboarding/ServiceCreatedDialog";
+import { AddServicesDialog } from "@/components/onboarding/AddServicesDialog";
+import { ProfileImageCropper } from "@/components/onboarding/ProfileImageCropper";
 
 type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
 
-interface CropImageDialogProps {
-  open: boolean;
-  onClose: () => void;
-  imageUrl: string;
-  onCropComplete: (croppedImageUrl: string) => void;
-}
-
-const CropImageDialog = ({ open, onClose, imageUrl, onCropComplete }: CropImageDialogProps) => {
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 100,
-    height: 100,
-    x: 0,
-    y: 0,
-    aspect: 1,
-  });
-
-  const handleCropComplete = async () => {
-    const image = new Image();
-    image.src = imageUrl;
-    
-    await new Promise((resolve) => {
-      image.onload = resolve;
-    });
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    canvas.width = crop.width;
-    canvas.height = crop.height;
-
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
-      0,
-      0,
-      crop.width,
-      crop.height
-    );
-
-    const croppedImageUrl = canvas.toDataURL('image/jpeg');
-    onCropComplete(croppedImageUrl);
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Crop Profile Image</DialogTitle>
-          <DialogDescription>
-            Adjust the crop area to create a square profile image
-          </DialogDescription>
-        </DialogHeader>
-        <div className="mt-4">
-          <ReactCrop
-            crop={crop}
-            onChange={c => setCrop(c)}
-            aspect={1}
-            className="max-h-[500px] object-contain"
-          >
-            <img src={imageUrl} alt="Crop preview" />
-          </ReactCrop>
-        </div>
-        <Button onClick={handleCropComplete}>Save Crop</Button>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const Onboarding = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
-  const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
-  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [businessDetails, setBusinessDetails] = useState({
     profession: '',
     serviceType: '',
     referralSource: '',
-  });
-  const [settingsDetails, setSettingsDetails] = useState({
-    whatsappNumber: '',
-    customLink: '',
-    phonePrefix: "+254",
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
   const [businessName, setBusinessName] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (selectedProfession && selectedProfession !== "Other") {
-      const mappedServiceType = PROFESSION_TO_SERVICE_TYPE[selectedProfession];
-      setSelectedServiceType(mappedServiceType);
-    }
-  }, [selectedProfession]);
 
   const handleBusinessDetailsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -282,6 +118,7 @@ const Onboarding = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
+          business_name: businessName,
           whatsapp_number: fullWhatsappNumber,
           service_page_link: cleanCustomLink,
         })
@@ -289,7 +126,6 @@ const Onboarding = () => {
 
       if (updateError) throw updateError;
 
-      setSettingsDetails({ whatsappNumber, customLink, phonePrefix });
       setCurrentStep('serviceCreated');
     } catch (error) {
       toast({
@@ -373,271 +209,6 @@ const Onboarding = () => {
     }
   };
 
-  const renderBusinessDetailsDialog = () => (
-    <Dialog open={currentStep === 'businessDetails'} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Tell us about yourself
-          </DialogTitle>
-          <DialogDescription>
-            Select your profession and service details
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleBusinessDetailsSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="profession">What's your profession?</Label>
-            <Select 
-              name="profession" 
-              required 
-              onValueChange={(value) => setSelectedProfession(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your profession" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Available Professions</SelectLabel>
-                  {PROFESSIONS.map((profession) => (
-                    <SelectItem key={profession} value={profession}>
-                      {profession}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {selectedProfession === "Other" && (
-              <div className="mt-2">
-                <Input
-                  id="customProfession"
-                  name="customProfession"
-                  placeholder="Enter your profession"
-                  required
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="serviceType">Type of Service</Label>
-            <Select 
-              name="serviceType" 
-              required
-              value={selectedServiceType || undefined}
-              onValueChange={setSelectedServiceType}
-              disabled={selectedProfession !== "Other" && selectedProfession !== null}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your service type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Service Categories</SelectLabel>
-                  {SERVICE_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="referralSource">How did you hear about us?</Label>
-            <Select name="referralSource" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select how you found us" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Referral Sources</SelectLabel>
-                  {REFERRAL_SOURCES.map((source) => (
-                    <SelectItem key={source} value={source}>
-                      {source}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
-            disabled={isLoading}
-          >
-            {isLoading ? "Saving..." : "Continue"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const renderSettingsDialog = () => (
-    <Dialog open={currentStep === 'settings'} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Customize Your Service Page
-          </DialogTitle>
-          <DialogDescription>
-            Set up your profile and communication preferences
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSettingsSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="w-24 h-24">
-                {profileImage ? (
-                  <AvatarImage src={profileImage} alt="Profile" />
-                ) : (
-                  <AvatarFallback>
-                    <Upload className="w-8 h-8 text-muted-foreground" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Upload Profile Picture
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="businessName"
-                  name="businessName"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="Enter your business name"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={generateBusinessName}
-                  disabled={isGeneratingName}
-                >
-                  {isGeneratingName ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
-              <div className="flex gap-2">
-                <Select name="phonePrefix" defaultValue="+254">
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Select prefix" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Phone Prefixes</SelectLabel>
-                      {PHONE_PREFIXES.map((prefix) => (
-                        <SelectItem key={prefix.value} value={prefix.value}>
-                          {prefix.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <Input
-                  id="whatsappNumber"
-                  name="whatsappNumber"
-                  type="tel"
-                  placeholder="712345678"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customLink">Custom Service Page Link</Label>
-              <Input
-                id="customLink"
-                name="customLink"
-                type="text"
-                placeholder="Enter your custom link (optional)"
-              />
-              <p className="text-sm text-gray-500">
-                This will be your public service page URL
-              </p>
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
-            disabled={isLoading}
-          >
-            {isLoading ? "Saving..." : "Continue"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const renderServiceCreatedDialog = () => (
-    <Dialog open={currentStep === 'serviceCreated'} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md text-center">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold mb-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            🎉 Your Service Page is Live!
-          </DialogTitle>
-          <DialogDescription className="text-xl">
-            Your service page has been created successfully
-          </DialogDescription>
-        </DialogHeader>
-
-        <Button 
-          onClick={() => setCurrentStep('addServices')}
-          className="w-full h-14 text-lg text-white bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
-        >
-          Start customizing your page
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-
-  const renderAddServicesDialog = () => (
-    <Dialog open={currentStep === 'addServices'} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md text-center">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold mb-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Add Your Services
-          </DialogTitle>
-          <DialogDescription className="text-xl">
-            Start adding the services you offer
-          </DialogDescription>
-        </DialogHeader>
-
-        <Button 
-          onClick={() => navigate('/add-services')}
-          className="w-full h-14 text-lg text-white bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 transition-opacity"
-        >
-          Add Services
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
@@ -647,11 +218,36 @@ const Onboarding = () => {
           alt="Gebeya" 
           className="h-12 mb-8" 
         />
-        {renderBusinessDetailsDialog()}
-        {renderSettingsDialog()}
-        {renderServiceCreatedDialog()}
-        {renderAddServicesDialog()}
-        <CropImageDialog
+        
+        <BusinessDetailsDialog
+          isOpen={currentStep === 'businessDetails'}
+          isLoading={isLoading}
+          onSubmit={handleBusinessDetailsSubmit}
+        />
+
+        <SettingsDialog
+          isOpen={currentStep === 'settings'}
+          isLoading={isLoading}
+          businessName={businessName}
+          profileImage={profileImage}
+          isGeneratingName={isGeneratingName}
+          onSubmit={handleSettingsSubmit}
+          onBusinessNameChange={setBusinessName}
+          onGenerateBusinessName={generateBusinessName}
+          onImageUpload={handleImageUpload}
+        />
+
+        <ServiceCreatedDialog
+          isOpen={currentStep === 'serviceCreated'}
+          onNext={() => setCurrentStep('addServices')}
+        />
+
+        <AddServicesDialog
+          isOpen={currentStep === 'addServices'}
+          onNavigateToServices={() => navigate('/add-services')}
+        />
+
+        <ProfileImageCropper
           open={showCropDialog}
           onClose={() => setShowCropDialog(false)}
           imageUrl={tempImageUrl || ''}
