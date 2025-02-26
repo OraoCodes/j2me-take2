@@ -2,7 +2,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Category {
   id: string;
@@ -37,34 +37,22 @@ export const SearchAndCategories: React.FC<SearchAndCategoriesProps> = ({
         />
       </div>
 
-      <ScrollArea className="w-full">
-        <div className="flex space-x-2 p-1">
-          <button
-            onClick={() => onCategoryChange(null)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
-              selectedCategory === null
-                ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All
-          </button>
+      <Select
+        value={selectedCategory || ""}
+        onValueChange={(value) => onCategoryChange(value === "" ? null : value)}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select category" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">All categories</SelectItem>
           {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => onCategoryChange(category.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
-                selectedCategory === category.id
-                  ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
+            <SelectItem key={category.id} value={category.id}>
               {category.name}
-            </button>
+            </SelectItem>
           ))}
-        </div>
-        <ScrollBar orientation="horizontal" className="h-2" />
-      </ScrollArea>
+        </SelectContent>
+      </Select>
     </div>
   );
 };
