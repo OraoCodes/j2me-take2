@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Features } from "@/components/Features";
 import { Cta } from "@/components/Cta";
 import { ProblemSolution } from "@/components/ProblemSolution";
+import { Testimonials } from "@/components/Testimonials";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ const Index = () => {
         <Hero />
         <ProblemSolution />
         <HowItWorks />
+        <Testimonials />
         <Features />
         <Cta />
       </main>
