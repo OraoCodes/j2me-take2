@@ -255,6 +255,7 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           id: string
+          location: string | null
           notes: string | null
           paid: boolean | null
           scheduled_at: string | null
@@ -268,6 +269,7 @@ export type Database = {
           customer_name: string
           customer_phone?: string | null
           id?: string
+          location?: string | null
           notes?: string | null
           paid?: boolean | null
           scheduled_at?: string | null
@@ -281,6 +283,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string | null
           id?: string
+          location?: string | null
           notes?: string | null
           paid?: boolean | null
           scheduled_at?: string | null
