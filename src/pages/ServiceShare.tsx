@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { Link2, Instagram, Facebook, MessageCircle, Settings, ArrowLeft, Copy, CheckCheck } from "lucide-react";
+import { Link2, Instagram, Facebook, MessageCircle, ArrowLeft, Copy, CheckCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -155,24 +155,15 @@ const ServiceShare = () => {
           </Button>
         </div>
 
-        {/* Settings and Dashboard Buttons */}
-        <div className="mt-12 space-y-4">
-          <Button
-            onClick={() => navigate("/settings")}
-            variant="outline"
-            className="w-full flex gap-2 items-center justify-center h-12 border-gebeya-pink text-gebeya-pink hover:bg-pink-50"
-          >
-            <Settings className="w-5 h-5" />
-            Setup Wizard
-          </Button>
-          
+        {/* Dashboard Button */}
+        <div className="mt-12">
           <Button
             onClick={() => navigate("/dashboard")}
             variant="ghost"
             className="w-full flex gap-2 items-center justify-center h-12 text-gray-600 hover:bg-gray-50"
           >
             <ArrowLeft className="w-5 h-5" />
-            Return to Dashboard
+            Proceed to Dashboard
           </Button>
         </div>
       </div>
