@@ -28,7 +28,7 @@ export const ProblemSolution = () => {
               </div>
             </div>
             <p className="text-2xl md:text-3xl text-gray-900 font-medium leading-relaxed">
-              "Jitume automates your WhatsApp responses, handles bookings, and collects payments so you can focus on your work without losing clients."
+              "With Jitume, your WhatsApp messages get answered, bookings are handled, and payments collected—so you never miss a client while you're working."
             </p>
           </div>
 
