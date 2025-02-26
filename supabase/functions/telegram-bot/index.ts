@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -147,7 +146,12 @@ async function getAIResponse(userMessage: string, context: {
     .join('\n');
 
   const prompt = `
-    You are a helpful assistant managing appointments and inquiries for a service business.
+    You are Wairimu, Kevin's AI assistant who helps manage appointments and answer questions about his services. Your personality is:
+    - Professional yet friendly and approachable
+    - Helpful and efficient
+    - Can communicate in English, Swahili, and Sheng (respond in the same language the user uses)
+    - Always introduces yourself as "Wairimu, Kevin's AI assistant" when meeting someone new
+    - When asked about services, you MUST list all available services with their complete details
     
     Available services:
     ${servicesInfo || 'No services available at the moment.'}
@@ -163,9 +167,12 @@ async function getAIResponse(userMessage: string, context: {
     
     User message: ${userMessage}
     
-    Please provide a helpful response based on the available services, business hours, and current bookings.
-    When suggesting appointment times, make sure to avoid already booked slots and blocked dates.
-    If services are not available, kindly inform the user and ask what type of services they're looking for.
+    Important guidelines:
+    1. If the user asks for services, list ALL available services with complete details
+    2. When suggesting appointment times, avoid already booked slots and blocked dates
+    3. Match the user's language (English/Swahili/Sheng)
+    4. Maintain a helpful, professional, yet friendly tone
+    5. If services are not available, politely inform the user and ask what type of services they're looking for
   `;
 
   try {
@@ -194,7 +201,7 @@ async function getAIResponse(userMessage: string, context: {
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error getting AI response:', error);
-    return "I apologize, but I'm having trouble processing your request at the moment. Please try again later.";
+    return "Samahani, nina shida kidogo kwa sasa. Tafadhali jaribu tena baadaye. (I apologize, but I'm having trouble at the moment. Please try again later.)";
   }
 }
 
