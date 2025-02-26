@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,21 +29,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const PHONE_PREFIXES = [
-  { value: "+254", label: "🇰🇪 +254" },
-  { value: "+256", label: "🇺🇬 +256" },
-  { value: "+255", label: "🇹🇿 +255" },
-  { value: "+251", label: "🇪🇹 +251" },
-  { value: "+250", label: "🇷🇼 +250" },
-] as const;
-
 interface SettingsDialogProps {
   isOpen: boolean;
   isLoading: boolean;
   businessName: string;
   profileImage: string | null;
   isGeneratingName: boolean;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSubmit: (phonePrefix: string, phoneNumber: string | null, businessName: string) => Promise<void>;
   onBusinessNameChange: (value: string) => void;
   onGenerateBusinessName: () => Promise<void>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -64,6 +56,7 @@ export const SettingsDialog = ({
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [selectedPrefix, setSelectedPrefix] = useState("+254");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,6 +68,11 @@ export const SettingsDialog = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await onSubmit(selectedPrefix, phoneNumber || null, businessName);
   };
 
   const handleCropComplete = async (croppedImageUrl: string) => {
@@ -105,7 +103,7 @@ export const SettingsDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="w-24 h-24 border-2 border-gebeya-pink">
@@ -142,7 +140,6 @@ export const SettingsDialog = ({
               <div className="flex gap-2">
                 <Input
                   id="businessName"
-                  name="businessName"
                   value={businessName}
                   onChange={(e) => onBusinessNameChange(e.target.value)}
                   placeholder="Enter your business name"
@@ -174,11 +171,6 @@ export const SettingsDialog = ({
             <div className="space-y-2">
               <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
               <div className="flex gap-2">
-                <input
-                  type="hidden"
-                  name="phonePrefix"
-                  value={selectedPrefix}
-                />
                 <Select 
                   value={selectedPrefix}
                   onValueChange={setSelectedPrefix}
@@ -199,10 +191,11 @@ export const SettingsDialog = ({
                 </Select>
                 <Input
                   id="whatsappNumber"
-                  name="whatsappNumber"
                   type="tel"
                   placeholder="712345678"
                   className="flex-1"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                 />
               </div>
             </div>

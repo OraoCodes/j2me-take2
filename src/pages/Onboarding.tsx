@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -78,22 +77,13 @@ const Onboarding = () => {
     setIsLoading(false);
   };
 
-  const handleSettingsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSettingsSubmit = async (phonePrefix: string, phoneNumber: string | null, businessName: string) => {
     setIsLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      const form = e.currentTarget;
-      const formData = new FormData(form);
-      
-      // Get values from form
-      const phonePrefix = formData.get("phonePrefix") as string || "+254"; // Default to +254 if not set
-      const phoneNumber = formData.get("whatsappNumber") as string;
-
-      // Only create whatsapp number if phone number is provided
       const fullWhatsappNumber = phoneNumber ? 
         `${phonePrefix}${phoneNumber.replace(/^0+/, '')}` : 
         null;
