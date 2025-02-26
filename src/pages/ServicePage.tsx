@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ const ServicePage = () => {
       if (!userId) return;
 
       try {
+        // First try to update existing record
         const { data: existingData, error: selectError } = await supabase
           .from('page_views')
           .select('*')
@@ -48,6 +50,7 @@ const ServicePage = () => {
         }
 
         if (existingData) {
+          // Update existing record
           const { error: updateError } = await supabase
             .from('page_views')
             .update({ 
@@ -58,6 +61,7 @@ const ServicePage = () => {
 
           if (updateError) console.error('Error updating page views:', updateError);
         } else {
+          // Insert new record
           const { error: insertError } = await supabase
             .from('page_views')
             .insert([
