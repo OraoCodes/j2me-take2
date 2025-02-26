@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
@@ -98,19 +97,7 @@ serve(async (req) => {
     // Generate appropriate response based on message content
     const botResponse = generateBookingResponse(message.text);
 
-    // First, send the customer message to Telegram
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: `💬 Customer: ${message.text}`,
-      }),
-    });
-
-    // Then, send the bot's response to Telegram
+    // Send only the bot's response to Telegram
     const telegramResponse = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -118,7 +105,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         chat_id: CHAT_ID,
-        text: `🤖 Bot Response: ${botResponse}`,
+        text: botResponse,
       }),
     });
 
