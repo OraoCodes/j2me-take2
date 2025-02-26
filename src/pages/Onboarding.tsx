@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Header } from "@/components/Header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Upload, Wand2 } from "lucide-react";
+import ReactCrop, { type Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const PROFESSIONS = [
   "Hairdresser / Hairstylist",
@@ -81,6 +85,83 @@ const PHONE_PREFIXES = [
 
 type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
 
+interface CropImageDialogProps {
+  open: boolean;
+  onClose: () => void;
+  imageUrl: string;
+  onCropComplete: (croppedImageUrl: string) => void;
+}
+
+const CropImageDialog = ({ open, onClose, imageUrl, onCropComplete }: CropImageDialogProps) => {
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 100,
+    height: 100,
+    x: 0,
+    y: 0,
+    aspect: 1,
+  });
+
+  const handleCropComplete = async () => {
+    const image = new Image();
+    image.src = imageUrl;
+    
+    await new Promise((resolve) => {
+      image.onload = resolve;
+    });
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    const croppedImageUrl = canvas.toDataURL('image/jpeg');
+    onCropComplete(croppedImageUrl);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Crop Profile Image</DialogTitle>
+          <DialogDescription>
+            Adjust the crop area to create a square profile image
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4">
+          <ReactCrop
+            crop={crop}
+            onChange={c => setCrop(c)}
+            aspect={1}
+            className="max-h-[500px] object-contain"
+          >
+            <img src={imageUrl} alt="Crop preview" />
+          </ReactCrop>
+        </div>
+        <Button onClick={handleCropComplete}>Save Crop</Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
@@ -96,6 +177,12 @@ const Onboarding = () => {
     customLink: '',
     phonePrefix: "+254",
   });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [isGeneratingName, setIsGeneratingName] = useState(false);
+  const [businessName, setBusinessName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -214,6 +301,78 @@ const Onboarding = () => {
     setIsLoading(false);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTempImageUrl(reader.result as string);
+        setShowCropDialog(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = async (croppedImageUrl: string) => {
+    setProfileImage(croppedImageUrl);
+    const response = await fetch(croppedImageUrl);
+    const blob = await response.blob();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const fileName = `${user.id}-${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('profiles')
+      .upload(fileName, blob);
+
+    if (uploadError) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload profile image. Please try again.",
+      });
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('profiles')
+      .getPublicUrl(fileName);
+
+    await supabase
+      .from('profiles')
+      .update({ profile_image_url: publicUrl })
+      .eq('id', user.id);
+  };
+
+  const generateBusinessName = async () => {
+    setIsGeneratingName(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const response = await fetch('/api/generate-business-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: user.user_metadata?.full_name || '',
+          profession: businessDetails.profession,
+        }),
+      });
+
+      const { businessName } = await response.json();
+      setBusinessName(businessName);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate business name. Please try again.",
+      });
+    } finally {
+      setIsGeneratingName(false);
+    }
+  };
+
   const renderBusinessDetailsDialog = () => (
     <Dialog open={currentStep === 'businessDetails'} onOpenChange={() => {}}>
       <DialogContent className="max-w-md">
@@ -324,53 +483,103 @@ const Onboarding = () => {
             Customize Your Service Page
           </DialogTitle>
           <DialogDescription>
-            Set up your communication preferences and custom link
+            Set up your profile and communication preferences
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSettingsSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
-            <div className="flex gap-2">
-              <Select 
-                name="phonePrefix" 
-                defaultValue="+254"
+          <div className="space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="w-24 h-24">
+                {profileImage ? (
+                  <AvatarImage src={profileImage} alt="Profile" />
+                ) : (
+                  <AvatarFallback>
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
               >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select prefix" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Phone Prefixes</SelectLabel>
-                    {PHONE_PREFIXES.map((prefix) => (
-                      <SelectItem key={prefix.value} value={prefix.value}>
-                        {prefix.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Input
-                id="whatsappNumber"
-                name="whatsappNumber"
-                type="tel"
-                placeholder="712345678"
-                className="flex-1"
+                Upload Profile Picture
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="customLink">Custom Service Page Link</Label>
-            <Input
-              id="customLink"
-              name="customLink"
-              type="text"
-              placeholder="Enter your custom link (optional)"
-            />
-            <p className="text-sm text-gray-500">
-              This will be your public service page URL
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Business Name</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="businessName"
+                  name="businessName"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Enter your business name"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={generateBusinessName}
+                  disabled={isGeneratingName}
+                >
+                  {isGeneratingName ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+              <div className="flex gap-2">
+                <Select name="phonePrefix" defaultValue="+254">
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select prefix" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Phone Prefixes</SelectLabel>
+                      {PHONE_PREFIXES.map((prefix) => (
+                        <SelectItem key={prefix.value} value={prefix.value}>
+                          {prefix.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="whatsappNumber"
+                  name="whatsappNumber"
+                  type="tel"
+                  placeholder="712345678"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customLink">Custom Service Page Link</Label>
+              <Input
+                id="customLink"
+                name="customLink"
+                type="text"
+                placeholder="Enter your custom link (optional)"
+              />
+              <p className="text-sm text-gray-500">
+                This will be your public service page URL
+              </p>
+            </div>
           </div>
 
           <Button 
@@ -442,6 +651,12 @@ const Onboarding = () => {
         {renderSettingsDialog()}
         {renderServiceCreatedDialog()}
         {renderAddServicesDialog()}
+        <CropImageDialog
+          open={showCropDialog}
+          onClose={() => setShowCropDialog(false)}
+          imageUrl={tempImageUrl || ''}
+          onCropComplete={handleCropComplete}
+        />
       </div>
     </div>
   );
