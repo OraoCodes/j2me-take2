@@ -441,6 +441,8 @@ async function getAIResponse(userMessage: string, context: {
   serviceRequests: any[],
   blockedDates: any[]
 }, chatId: number) {
+  const history = conversationHistory.get(chatId) || [];
+  
   // Add user message to history
   addToHistory(chatId, {
     role: 'user',
@@ -472,15 +474,13 @@ async function getAIResponse(userMessage: string, context: {
     context.blockedDates
   );
 
-  const history = conversationHistory.get(chatId) || [];
-  const isFirstMessage = history.length === 1; // Only the current user message
+  const isFirstInteraction = history.length === 0;
 
   const systemPrompt = ` 
 You are Wairimu, Kevin's AI assistant. Your primary role is to help users schedule appointments based on Kevin's availability while ensuring accuracy and professionalism.
 
-### INTRODUCTION:
-${isFirstMessage ? '- Introduce yourself as "Wairimu, Kevin\'s AI assistant"\n' : '- Continue the ongoing conversation naturally without reintroducing yourself\n'}
-- Maintain a professional yet friendly tone, adapting to the user's language (English/Swahili/Sheng).
+### CONVERSATION STATE:
+${isFirstInteraction ? 'NEW_CONVERSATION' : 'ONGOING_CONVERSATION'}
 
 ### **AVAILABILITY INFORMATION**:
 ${availabilityInfo}
@@ -506,14 +506,19 @@ ${availabilityInfo}
 ### **SERVICES OFFERED**:
 ${servicesInfo}
 
-### **CONVERSATION CONTEXT**:
+### **IMPORTANT INSTRUCTIONS**:
+${isFirstInteraction 
+  ? '- This is a new conversation. Introduce yourself as "Wairimu, Kevin\'s AI assistant" before proceeding.' 
+  : '- This is an ongoing conversation. DO NOT introduce yourself again. Continue the conversation naturally.'}
+- Maintain a professional yet friendly tone, adapting to the user's language (English/Swahili/Sheng).
+- Stay focused on the current conversation topic.
+- If a booking is in progress, continue with that process.
+
+### **CONVERSATION HISTORY**:
 ${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
 
 ### **CURRENT USER MESSAGE**:
 ${userMessage}
-
-Ensure clarity, correctness, and a warm, engaging tone in all responses.
-${isFirstMessage ? '' : '\nIMPORTANT: This is an ongoing conversation. Do NOT reintroduce yourself.'}
 `;
 
   try {
@@ -527,8 +532,7 @@ ${isFirstMessage ? '' : '\nIMPORTANT: This is an ongoing conversation. Do NOT re
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...history.map(msg => ({ role: msg.role, content: msg.content })),
-          { role: 'user', content: userMessage }
+          ...history.map(msg => ({ role: msg.role, content: msg.content }))
         ],
         temperature: 0.7,
         max_tokens: 2048,
