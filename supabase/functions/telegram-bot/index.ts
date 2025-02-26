@@ -9,25 +9,86 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to generate booking assistance response
-function generateBookingResponse(message: string, context: any = {}): string {
-  // Initialize with a greeting if it's the first message
-  if (!context.history?.length) {
-    return "Habari! I'm Wairimu, Kevin's AI assistant. I'm here to help you schedule appointments and answer any questions about our services. How can I assist you today?";
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+const conversationHistory = new Map<string, Message[]>();
+const MAX_HISTORY_LENGTH = 10;
+
+function updateHistory(chatId: string, message: Message) {
+  if (!conversationHistory.has(chatId)) {
+    conversationHistory.set(chatId, []);
   }
+  
+  const history = conversationHistory.get(chatId)!;
+  history.push(message);
+  
+  if (history.length > MAX_HISTORY_LENGTH) {
+    history.shift();
+  }
+  
+  conversationHistory.set(chatId, history);
+}
+
+function getHistory(chatId: string): Message[] {
+  return conversationHistory.get(chatId) || [];
+}
+
+function generateBookingResponse(message: string, context: { history: Message[] } = { history: [] }): string {
+  const history = context.history;
+  const isFirstMessage = history.length === 0;
+
+  const hasProvidedService = history.some(msg => 
+    msg.role === 'user' && 
+    (msg.content.toLowerCase().includes('training') || 
+     msg.content.toLowerCase().includes('assessment') || 
+     msg.content.toLowerCase().includes('meal'))
+  );
+
+  const hasProvidedDate = history.some(msg => 
+    msg.role === 'user' && 
+    (msg.content.toLowerCase().includes('tomorrow') || 
+     msg.content.toLowerCase().includes('next') || 
+     /\d{1,2}(st|nd|rd|th)/.test(msg.content))
+  );
+
+  const hasProvidedContact = history.some(msg => 
+    msg.role === 'user' && 
+    (/\d{10}/.test(msg.content) || msg.content.toLowerCase().includes('phone'))
+  );
 
   const lowerMessage = message.toLowerCase();
   
+  if (isFirstMessage) {
+    return "Habari! I'm Wairimu, Kevin's AI assistant. I'm here to help you schedule appointments and answer any questions about our services. How can I assist you today?";
+  }
+
   if (lowerMessage.includes('book') || lowerMessage.includes('appointment') || lowerMessage.includes('schedule')) {
-    return "I can help you schedule an appointment with Kevin! To ensure I find the best time slot, please let me know:\n\n" +
-           "1. Which service you're interested in? We offer:\n" +
-           "   • 1-on-1 Personal Training (KSH 3,000)\n" +
-           "   • Virtual Training Sessions (KSH 2,000)\n" +
-           "   • Body Composition Assessment (KSH 1,500)\n" +
-           "   • Custom Meal Planning (KSH 2,500)\n\n" +
-           "2. What's your preferred date and time?\n" +
-           "3. Your contact number for confirmation\n\n" +
-           "Kevin's working hours are Monday-Saturday, 9 AM to 5 PM. Sunday is reserved for rest.";
+    let response = "I can help you schedule an appointment with Kevin!";
+    
+    if (!hasProvidedService) {
+      response += "\n\nWhich service are you interested in? We offer:\n" +
+                 "   • 1-on-1 Personal Training (KSH 3,000)\n" +
+                 "   • Virtual Training Sessions (KSH 2,000)\n" +
+                 "   • Body Composition Assessment (KSH 1,500)\n" +
+                 "   • Custom Meal Planning (KSH 2,500)";
+    }
+    
+    if (!hasProvidedDate) {
+      response += "\n\nWhat's your preferred date and time? Kevin's working hours are Monday-Saturday, 9 AM to 5 PM.";
+    }
+    
+    if (!hasProvidedContact && (hasProvidedService || hasProvidedDate)) {
+      response += "\n\nCould you please provide your contact number for confirmation?";
+    }
+    
+    if (hasProvidedService && hasProvidedDate && hasProvidedContact) {
+      response = "Great! I have all the information needed. Let me check Kevin's availability and confirm your appointment.";
+    }
+    
+    return response;
   }
   
   if (lowerMessage.includes('cancel') || lowerMessage.includes('reschedule')) {
@@ -62,17 +123,14 @@ function generateBookingResponse(message: string, context: any = {}): string {
            "I'll find the earliest available slot that works for you!";
   }
 
-  // Default response
-  return "I'm Wairimu, Kevin's AI assistant. I can help you with:\n\n" +
+  return "I'm Wairimu, Kevin's AI assistant. Based on our conversation, how else can I help you with:\n\n" +
          "🗓️ Scheduling appointments\n" +
          "💰 Service pricing information\n" +
          "📅 Checking availability\n" +
-         "🔄 Managing existing bookings\n\n" +
-         "How can I assist you today?";
+         "🔄 Managing existing bookings";
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -86,18 +144,15 @@ serve(async (req) => {
       throw new Error('No message text provided');
     }
 
-    // Log the request being sent
-    console.log('Context for AI:', {
-      services: await getServices(),
-      availability: await getAvailability(),
-      serviceRequests: await getServiceRequests(),
-      blockedDates: await getBlockedDates()
-    });
+    updateHistory(CHAT_ID, { role: 'user', content: message.text });
 
-    // Generate appropriate response based on message content
-    const botResponse = generateBookingResponse(message.text);
+    const history = getHistory(CHAT_ID);
+    console.log('Conversation history:', history);
 
-    // Send only the bot's response to Telegram
+    const botResponse = generateBookingResponse(message.text, { history });
+
+    updateHistory(CHAT_ID, { role: 'assistant', content: botResponse });
+
     const telegramResponse = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -115,7 +170,6 @@ serve(async (req) => {
       throw new Error('Failed to send message to Telegram');
     }
 
-    // Send response back to web client
     console.log('Sending response:', botResponse);
 
     return new Response(
@@ -137,7 +191,6 @@ serve(async (req) => {
   }
 });
 
-// Helper functions to fetch data from Supabase
 async function getServices() {
   const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/services?select=*`, {
     headers: {
