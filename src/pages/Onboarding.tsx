@@ -27,11 +27,13 @@ const SERVICE_TYPES = [
   "Other"
 ] as const;
 
-const REQUEST_RANGES = [
-  "1-10",
-  "11-50",
-  "51-100",
-  "100+"
+const REFERRAL_SOURCES = [
+  "Search Engine",
+  "Social Media",
+  "Friend/Family",
+  "Business Partner",
+  "Advertisement",
+  "Other"
 ] as const;
 
 const Onboarding = () => {
@@ -46,7 +48,7 @@ const Onboarding = () => {
     const formData = new FormData(e.currentTarget);
     const businessName = formData.get("businessName") as string;
     const serviceType = formData.get("serviceType") as string;
-    const requestsPerMonth = formData.get("requestsPerMonth") as string;
+    const referralSource = formData.get("referralSource") as string;
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -66,7 +68,7 @@ const Onboarding = () => {
         .update({
           company_name: businessName,
           service_type: serviceType,
-          service_requests_per_month: requestsPerMonth,
+          referral_source: referralSource,
         })
         .eq('id', user.id);
 
@@ -76,7 +78,7 @@ const Onboarding = () => {
         title: "Success",
         description: "Your business details have been saved!",
       });
-      navigate("/settings"); // Changed from "/service-share" to "/settings"
+      navigate("/settings");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -139,17 +141,17 @@ const Onboarding = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="requestsPerMonth">Monthly Service Requests</Label>
-                <Select name="requestsPerMonth" required>
+                <Label htmlFor="referralSource">How did you hear about us?</Label>
+                <Select name="referralSource" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select request range" />
+                    <SelectValue placeholder="Select how you found us" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Request Ranges</SelectLabel>
-                      {REQUEST_RANGES.map((range) => (
-                        <SelectItem key={range} value={range}>
-                          {range} requests per month
+                      <SelectLabel>Referral Sources</SelectLabel>
+                      {REFERRAL_SOURCES.map((source) => (
+                        <SelectItem key={source} value={source}>
+                          {source}
                         </SelectItem>
                       ))}
                     </SelectGroup>
