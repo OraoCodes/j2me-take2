@@ -187,18 +187,18 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const response = await fetch('/api/generate-business-name', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('generate-business-name', {
+        body: {
           name: user.user_metadata?.full_name || '',
           profession: businessDetails.profession,
-        }),
+        },
       });
 
-      const { businessName } = await response.json();
-      setBusinessName(businessName);
+      if (error) throw error;
+
+      setBusinessName(data.businessName);
     } catch (error) {
+      console.error('Error generating business name:', error);
       toast({
         variant: "destructive",
         title: "Error",
