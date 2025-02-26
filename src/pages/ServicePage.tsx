@@ -1,14 +1,15 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Service, Profile } from '@/types/dashboard';
+import { Service } from '@/types/dashboard';
 import { MetaTags } from '@/components/shared/MetaTags';
-import { Search, Loader2, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 import { ServiceCheckoutDialog } from '@/components/service-checkout/ServiceCheckoutDialog';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Button } from '@/components/ui/button';
+import { ServiceBanner } from '@/components/service-page/ServiceBanner';
+import { BusinessProfile } from '@/components/service-page/BusinessProfile';
+import { SearchAndCategories } from '@/components/service-page/SearchAndCategories';
+import { ServiceCard } from '@/components/service-page/ServiceCard';
 
 interface ServiceImage {
   id: string;
@@ -148,157 +149,33 @@ const ServicePage = () => {
         url={window.location.href}
       />
 
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-3xl relative">
-          <div className="aspect-[21/9] sm:aspect-video">
-            {bannerImage ? (
-              <>
-                <div 
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${bannerImage})`
-                  }}
-                />
-                <div className="absolute inset-0 bg-black/20" />
-              </>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-gebeya-pink to-gebeya-orange opacity-10" />
-            )}
-          </div>
-        </div>
-      </div>
+      <ServiceBanner bannerImage={bannerImage} />
 
       <div className="container mx-auto px-4 -mt-16 relative z-10">
-        <div className="text-center mb-6">
-          <div className="inline-block">
-            <img
-              src={profileImage || '/placeholder.svg'}
-              alt={businessName}
-              className="w-20 h-20 md:w-24 md:h-24 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
-            />
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{businessName}</h1>
-          <p className="text-gray-600 mt-2">Available Services</p>
-          
-          <Button
-            onClick={shareOnWhatsApp}
-            className="mt-4 bg-[#25D366] hover:bg-[#128C7E] text-white w-full sm:w-auto"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share on WhatsApp
-          </Button>
-        </div>
+        <BusinessProfile
+          businessName={businessName}
+          profileImage={profileImage}
+          onShare={shareOnWhatsApp}
+        />
 
-        <div className="space-y-4 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
-
-          <ScrollArea className="w-full">
-            <div className="flex space-x-2 p-1">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
-                  selectedCategory === null
-                    ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm transition-colors whitespace-nowrap ${
-                    selectedCategory === category.id
-                      ? 'bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" className="h-2" />
-          </ScrollArea>
-        </div>
+        <SearchAndCategories
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          categories={categories}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredServices.map((service) => (
-            <Card 
-              key={service.id} 
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedService(service)}
-            >
-              <div className="aspect-[4/3] relative group">
-                {(service.image_url || (serviceImages[service.id] && serviceImages[service.id].length > 0)) && (
-                  <>
-                    <img
-                      src={serviceImages[service.id]?.[selectedImageIndex[service.id] || 0]?.image_url || service.image_url}
-                      alt={service.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {serviceImages[service.id]?.length > 1 && (
-                      <div className="absolute bottom-2 right-2 flex gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleImageNavigation(service.id, 'prev');
-                          }}
-                          className="bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleImageNavigation(service.id, 'next');
-                          }}
-                          className="bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold text-lg">{service.name}</h3>
-                    {service.service_categories && (
-                      <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block mt-1">
-                        {service.service_categories.name}
-                      </span>
-                    )}
-                  </div>
-                  <p className="font-bold text-gebeya-pink whitespace-nowrap">
-                    KSh {service.price.toLocaleString()}
-                  </p>
-                </div>
-                {service.description && (
-                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">{service.description}</p>
-                )}
-                <Button
-                  className="mt-4 w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange text-white hover:opacity-90 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedService(service);
-                  }}
-                >
-                  Request Service
-                </Button>
-              </CardContent>
-            </Card>
+            <ServiceCard
+              key={service.id}
+              service={service}
+              serviceImages={serviceImages[service.id] || []}
+              selectedImageIndex={selectedImageIndex[service.id] || 0}
+              onImageNavigation={(direction) => handleImageNavigation(service.id, direction)}
+              onServiceSelect={() => setSelectedService(service)}
+            />
           ))}
         </div>
 
