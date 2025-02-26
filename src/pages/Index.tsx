@@ -5,6 +5,7 @@ import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Features } from "@/components/Features";
 import { Cta } from "@/components/Cta";
+import { ProblemSolution } from "@/components/ProblemSolution";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ const Index = () => {
       </header>
       <main>
         <Hero />
+        <ProblemSolution />
         <HowItWorks />
         <Features />
         <Cta />
