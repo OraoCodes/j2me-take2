@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,10 @@ const ServiceRequestsView = () => {
 
       if (error) throw error;
 
+      console.log('Fetched service requests:', data); // Debug log
       setRequests(data || []);
     } catch (error) {
+      console.error('Error fetching requests:', error); // Debug log
       toast({
         variant: "destructive",
         title: "Error",
@@ -100,6 +103,7 @@ const ServiceRequestsView = () => {
         description: "Request status updated successfully",
       });
     } catch (error) {
+      console.error('Error updating status:', error); // Debug log
       toast({
         variant: "destructive",
         title: "Error",
@@ -128,6 +132,7 @@ const ServiceRequestsView = () => {
         description: `Service request marked as ${!currentPaidStatus ? 'paid' : 'unpaid'}`,
       });
     } catch (error) {
+      console.error('Error toggling paid status:', error); // Debug log
       toast({
         variant: "destructive",
         title: "Error",
@@ -177,6 +182,11 @@ const ServiceRequestsView = () => {
     );
   }
 
+  const upcomingRequests = requests.filter(request => {
+    const scheduledDate = parseISO(request.scheduled_at);
+    return scheduledDate >= new Date() && request.status !== 'rejected';
+  });
+
   return (
     <>
       <div className="flex items-center justify-between mb-8">
@@ -194,6 +204,45 @@ const ServiceRequestsView = () => {
           </TooltipProvider>
         </div>
       </div>
+
+      {upcomingRequests.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Upcoming Appointments</CardTitle>
+            <CardDescription>Your next scheduled sessions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {upcomingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="p-4 border rounded-lg space-y-3 bg-gray-50"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{request.services.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {request.customer_name} - {request.customer_phone}
+                      </p>
+                      {request.scheduled_at && (
+                        <p className="text-sm font-medium text-gebeya-pink">
+                          Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {getStatusBadge(request.status)}
+                      {request.paid && (
+                        <Badge className="bg-green-100 text-green-800">PAID</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {editingRequest && (
         <ServiceCheckoutDialog
