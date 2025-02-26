@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { format, parse, isWithinInterval, set, parseISO, addHours, isSameDay, startOfDay, endOfDay, addDays } from 'https://esm.sh/date-fns@2';
+import { formatInTimeZone, utcToZonedTime, zonedTimeToUtc } from 'https://esm.sh/date-fns-tz@2';
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
@@ -9,10 +10,15 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const USER_ID = "66ac5e44-5b18-4883-b323-b13cd0280046";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const TIMEZONE = 'Africa/Nairobi';
+
+function toNairobiTime(date: Date): Date {
+  return utcToZonedTime(date, TIMEZONE);
+}
+
+function fromNairobiTime(date: Date): Date {
+  return zonedTimeToUtc(date, TIMEZONE);
+}
 
 interface Message {
   role: 'user' | 'assistant';
@@ -236,23 +242,30 @@ async function handleBookingStep(chatId: number, userMessage: string) {
 
       case 'date':
         try {
-          const [day, month, year] = userMessage.split('/').map(Number);
-          const date = new Date(year, month - 1, day);
-          if (isNaN(date.getTime())) throw new Error('Invalid date');
-          
-          session.scheduledAt = date.toISOString();
+          const date = parseISO(userMessage);
+          session.scheduledAt = fromNairobiTime(date).toISOString();
           session.step = 'time';
-          response = "What time would you prefer? (Please use 24-hour format, e.g., 14:00)";
+          
+          const dayOfWeek = toNairobiTime(date).getDay();
+          const daySetting = context.availability.find(s => s.day_of_week === dayOfWeek);
+          
+          if (!daySetting?.is_available) {
+            response = "Sorry, that day is not available. Please choose another date:";
+            session.step = 'date';
+            break;
+          }
+
+          response = `Please choose a time (format: HH:mm) between ${daySetting.start_time.slice(0, 5)} and ${daySetting.end_time.slice(0, 5)}:`;
         } catch {
-          response = "Sorry, I didn't understand that date. Please use the format DD/MM/YYYY (e.g., 27/02/2025)";
+          response = "Sorry, I didn't understand that date. Please use YYYY-MM-DD format:";
         }
         break;
 
       case 'time':
         try {
           const [hours, minutes] = userMessage.split(':').map(Number);
-          const date = new Date(session.scheduledAt!);
-          date.setHours(hours, minutes, 0, 0);
+          const date = parseISO(session.scheduledAt!);
+          const localDate = set(toNairobiTime(date), { hours, minutes, seconds: 0, milliseconds: 0 });
           
           const availability = await isTimeSlotAvailable(date, `${hours}:${minutes}`, context);
           
@@ -261,7 +274,7 @@ async function handleBookingStep(chatId: number, userMessage: string) {
             break;
           }
           
-          session.scheduledAt = date.toISOString();
+          session.scheduledAt = fromNairobiTime(localDate).toISOString();
           session.step = 'name';
           response = "Please provide your full name:";
         } catch {
@@ -329,31 +342,31 @@ function formatAvailabilityForDisplay(
   daysToShow: number = 7
 ): string {
   const days = Array.from({ length: daysToShow }, (_, i) => {
-    const date = addDays(new Date(), i);
+    const date = toNairobiTime(addDays(new Date(), i));
     const dayOfWeek = date.getDay();
     const daySetting = availability.find(s => s.day_of_week === dayOfWeek);
     
     const isBlocked = blockedDates.some(blocked => 
-      isSameDay(parseISO(blocked.blocked_date), date)
+      isSameDay(toNairobiTime(parseISO(blocked.blocked_date)), date)
     );
 
     if (isBlocked) {
-      return `${format(date, 'EEEE')}: Blocked`;
+      return `${formatInTimeZone(date, TIMEZONE, 'EEEE')}: Blocked`;
     }
 
     if (!daySetting?.is_available) {
-      return `${format(date, 'EEEE')}: Closed`;
+      return `${formatInTimeZone(date, TIMEZONE, 'EEEE')}: Closed`;
     }
 
-    const dayBookings = serviceRequests.filter(req => 
-      isSameDay(parseISO(req.scheduled_at), date) &&
-      ['pending', 'accepted'].includes(req.status)
-    ).map(req => format(parseISO(req.scheduled_at), 'HH:mm'));
+    const dayBookings = serviceRequests.filter(req => {
+      const requestDate = toNairobiTime(parseISO(req.scheduled_at));
+      return isSameDay(requestDate, date) && ['pending', 'accepted'].includes(req.status);
+    }).map(req => formatInTimeZone(parseISO(req.scheduled_at), TIMEZONE, 'HH:mm'));
 
     const workingHours = `${daySetting.start_time.slice(0, 5)} - ${daySetting.end_time.slice(0, 5)}`;
     const bookedSlots = dayBookings.length > 0 ? ` (Booked: ${dayBookings.join(', ')})` : '';
     
-    return `${format(date, 'EEEE')}: Open ${workingHours}${bookedSlots}`;
+    return `${formatInTimeZone(date, TIMEZONE, 'EEEE')}: Open ${workingHours}${bookedSlots}`;
   });
 
   return days.join('\n');
@@ -365,8 +378,10 @@ async function isTimeSlotAvailable(date: Date, time: string, context: {
   serviceRequests: any[],
   blockedDates: any[]
 }) {
+  const nairobiDate = toNairobiTime(date);
+  
   const isDateBlocked = context.blockedDates.some(blocked => 
-    isSameDay(parseISO(blocked.blocked_date), date)
+    isSameDay(toNairobiTime(parseISO(blocked.blocked_date)), nairobiDate)
   );
 
   if (isDateBlocked) {
@@ -376,7 +391,7 @@ async function isTimeSlotAvailable(date: Date, time: string, context: {
     };
   }
 
-  const dayOfWeek = date.getDay();
+  const dayOfWeek = nairobiDate.getDay();
   const daySetting = context.availability.find(s => s.day_of_week === dayOfWeek);
 
   if (!daySetting?.is_available) {
@@ -387,10 +402,10 @@ async function isTimeSlotAvailable(date: Date, time: string, context: {
   }
 
   const [hours, minutes] = time.split(':').map(Number);
-  const requestedTime = set(date, { hours, minutes });
+  const requestedTime = set(nairobiDate, { hours, minutes });
   
-  const startTime = parse(daySetting.start_time, 'HH:mm:ss', date);
-  const endTime = parse(daySetting.end_time, 'HH:mm:ss', date);
+  const startTime = parse(daySetting.start_time, 'HH:mm:ss', nairobiDate);
+  const endTime = parse(daySetting.end_time, 'HH:mm:ss', nairobiDate);
 
   if (requestedTime < startTime || requestedTime >= endTime) {
     return {
@@ -400,8 +415,8 @@ async function isTimeSlotAvailable(date: Date, time: string, context: {
   }
 
   const isBooked = context.serviceRequests.some(request => {
-    const requestDate = parseISO(request.scheduled_at);
-    return isSameDay(requestDate, date) &&
+    const requestDate = toNairobiTime(parseISO(request.scheduled_at));
+    return isSameDay(requestDate, nairobiDate) &&
            format(requestDate, 'HH:mm') === time &&
            ['pending', 'accepted'].includes(request.status);
   });
