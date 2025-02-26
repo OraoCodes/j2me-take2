@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,42 +36,25 @@ const ServicePage = () => {
       if (!userId) return;
 
       try {
-        // First try to update existing record
-        const { data: existingData, error: selectError } = await supabase
+        const { error } = await supabase
           .from('page_views')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        if (selectError && selectError.code !== 'PGRST116') {
-          console.error('Error checking page views:', selectError);
-          return;
-        }
-
-        if (existingData) {
-          // Update existing record
-          const { error: updateError } = await supabase
-            .from('page_views')
-            .update({ 
-              view_count: (existingData.view_count || 0) + 1,
+          .upsert(
+            {
+              user_id: userId,
+              view_count: 1,
               last_viewed_at: new Date().toISOString()
-            })
-            .eq('user_id', userId);
-
-          if (updateError) console.error('Error updating page views:', updateError);
-        } else {
-          // Insert new record
-          const { error: insertError } = await supabase
-            .from('page_views')
-            .insert([
-              { 
-                user_id: userId,
-                view_count: 1,
+            },
+            {
+              onConflict: 'user_id',
+              update: {
+                view_count: supabase.raw('page_views.view_count + 1'),
                 last_viewed_at: new Date().toISOString()
               }
-            ]);
+            }
+          );
 
-          if (insertError) console.error('Error inserting page views:', insertError);
+        if (error) {
+          console.error('Error tracking page view:', error);
         }
       } catch (error) {
         console.error('Error handling page views:', error);
