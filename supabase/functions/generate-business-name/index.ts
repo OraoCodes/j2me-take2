@@ -39,12 +39,13 @@ serve(async (req) => {
     });
 
     const data = await response.json();
-    const businessName = data.choices[0].message.content;
+    const businessName = data.choices[0].message.content.trim();
 
     return new Response(JSON.stringify({ businessName }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    console.error('Error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
