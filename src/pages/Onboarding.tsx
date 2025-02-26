@@ -187,6 +187,9 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Clear the existing business name to show the loading state
+      setBusinessName('');
+
       const { data, error } = await supabase.functions.invoke('generate-business-name', {
         body: {
           name: user.user_metadata?.full_name || '',
@@ -196,6 +199,7 @@ const Onboarding = () => {
 
       if (error) throw error;
 
+      // Set the new business name
       setBusinessName(data.businessName);
     } catch (error) {
       console.error('Error generating business name:', error);
