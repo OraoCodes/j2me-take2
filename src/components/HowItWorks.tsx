@@ -2,10 +2,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 export const HowItWorks = () => {
   const navigate = useNavigate();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const screenshots = [
     "/lovable-uploads/371bb96a-f75e-48b4-bca5-201f4647996e.png",
@@ -14,16 +18,6 @@ export const HowItWorks = () => {
     "/lovable-uploads/8c76a791-20cf-43fc-a440-29b2f3314fb0.png",
     "/lovable-uploads/12b4fdd4-733d-44de-b0da-2aa30f5c1e1a.png"
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === screenshots.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <section className="py-24 bg-gradient-to-b from-white to-pink-50">
@@ -88,28 +82,22 @@ export const HowItWorks = () => {
                 {/* Phone notch */}
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-b-3xl z-10"></div>
                 
-                {/* Screenshots container */}
-                <div className="absolute inset-0 overflow-hidden">
-                  <div className="flex transition-transform duration-500 ease-in-out h-full" 
-                       style={{ 
-                         transform: `translateX(-${currentImageIndex * 100}%)`,
-                         width: `${screenshots.length * 100}%`
-                       }}>
-                    {screenshots.map((src, index) => (
-                      <div 
-                        key={src}
-                        className="flex-shrink-0"
-                        style={{ width: `${100 / screenshots.length}%` }}
-                      >
-                        <img
-                          src={src}
-                          alt={`App screenshot ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          loading="eager"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                {/* Screenshots container using Carousel */}
+                <div className="absolute inset-0">
+                  <Carousel className="w-full h-full" opts={{ align: "start", loop: true }}>
+                    <CarouselContent>
+                      {screenshots.map((src, index) => (
+                        <CarouselItem key={src} className="w-full h-full">
+                          <img
+                            src={src}
+                            alt={`App screenshot ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="eager"
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                  </Carousel>
                 </div>
               </div>
               {/* Decorative elements */}
