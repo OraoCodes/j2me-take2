@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -472,12 +473,13 @@ async function getAIResponse(userMessage: string, context: {
   );
 
   const history = conversationHistory.get(chatId) || [];
+  const isFirstMessage = history.length === 1; // Only the current user message
 
   const systemPrompt = ` 
 You are Wairimu, Kevin's AI assistant. Your primary role is to help users schedule appointments based on Kevin's availability while ensuring accuracy and professionalism.
 
 ### INTRODUCTION:
-- Always introduce yourself as **"Wairimu, Kevin's AI assistant"** at the beginning of interactions with new users.
+${isFirstMessage ? '- Introduce yourself as "Wairimu, Kevin\'s AI assistant"\n' : '- Continue the ongoing conversation naturally without reintroducing yourself\n'}
 - Maintain a professional yet friendly tone, adapting to the user's language (English/Swahili/Sheng).
 
 ### **AVAILABILITY INFORMATION**:
@@ -511,6 +513,7 @@ ${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
 ${userMessage}
 
 Ensure clarity, correctness, and a warm, engaging tone in all responses.
+${isFirstMessage ? '' : '\nIMPORTANT: This is an ongoing conversation. Do NOT reintroduce yourself.'}
 `;
 
   try {
@@ -524,6 +527,7 @@ Ensure clarity, correctness, and a warm, engaging tone in all responses.
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
+          ...history.map(msg => ({ role: msg.role, content: msg.content })),
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
