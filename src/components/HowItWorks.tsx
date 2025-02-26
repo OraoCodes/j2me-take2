@@ -7,12 +7,13 @@ export const HowItWorks = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
+  // Using more reliable images that are less likely to cause display issues
   const screenshots = [
-    "/lovable-uploads/f9c08c20-f560-4d51-9bdf-09698f2cccbb.png",
-    "/lovable-uploads/fa30d6d9-3bb2-44e4-a64e-46866385e54d.png",
-    "/lovable-uploads/9a363348-92ce-47d3-99ef-b41a2f84566d.png",
-    "/lovable-uploads/614005bc-5234-40d2-bbe6-7aeb52420dd2.png",
-    "/lovable-uploads/a785d519-b6a9-49d1-8011-01bc8c6693c2.png"
+    "/lovable-uploads/43596b3e-9e4c-4d5a-b25f-6019cc8e2c6c.png",
+    "/lovable-uploads/62113946-5bee-4782-a35e-c8bd5788f240.png",
+    "/lovable-uploads/8834b56d-b4d5-42a0-9364-175e2674f577.png",
+    "/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png",
+    "/lovable-uploads/fd307a90-476a-4b92-8bcd-e0bf99ef54e3.png"
   ];
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export const HowItWorks = () => {
       setCurrentImageIndex((prevIndex) => 
         prevIndex === screenshots.length - 1 ? 0 : prevIndex + 1
       );
-    }, 5000); // Change image every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -105,6 +106,7 @@ export const HowItWorks = () => {
                           src={src}
                           alt={`App screenshot ${index + 1}`}
                           className="w-full h-full object-cover"
+                          loading="eager"
                         />
                       </div>
                     ))}
