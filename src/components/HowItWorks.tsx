@@ -20,7 +20,7 @@ export const HowItWorks = () => {
       setCurrentImageIndex((prevIndex) => 
         prevIndex === screenshots.length - 1 ? 0 : prevIndex + 1
       );
-    }, 3000); // Change image every 3 seconds
+    }, 5000); // Change image every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -84,17 +84,32 @@ export const HowItWorks = () => {
           
           <div className="relative">
             <div className="relative mx-auto max-w-[300px]">
-              <div className="w-full aspect-[9/19] bg-black rounded-[3rem] border-[8px] border-gray-800 shadow-xl overflow-hidden">
-                {screenshots.map((src, index) => (
-                  <img
-                    key={src}
-                    src={src}
-                    alt={`App screenshot ${index + 1}`}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-                      currentImageIndex === index ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                ))}
+              <div className="w-full aspect-[9/19] bg-black rounded-[3rem] border-[8px] border-gray-800 shadow-xl overflow-hidden relative">
+                {/* Phone notch */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-b-3xl z-10"></div>
+                
+                {/* Screenshots container */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="flex transition-transform duration-500 ease-in-out h-full" 
+                       style={{ 
+                         transform: `translateX(-${currentImageIndex * 100}%)`,
+                         width: `${screenshots.length * 100}%`
+                       }}>
+                    {screenshots.map((src, index) => (
+                      <div 
+                        key={src}
+                        className="flex-shrink-0"
+                        style={{ width: `${100 / screenshots.length}%` }}
+                      >
+                        <img
+                          src={src}
+                          alt={`App screenshot ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               {/* Decorative elements */}
               <div className="absolute -z-10 -top-4 -right-4 w-full h-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-[3rem] opacity-20"></div>
