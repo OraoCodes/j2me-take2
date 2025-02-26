@@ -1,9 +1,29 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export const HowItWorks = () => {
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const screenshots = [
+    "/lovable-uploads/f9c08c20-f560-4d51-9bdf-09698f2cccbb.png",
+    "/lovable-uploads/fa30d6d9-3bb2-44e4-a64e-46866385e54d.png",
+    "/lovable-uploads/9a363348-92ce-47d3-99ef-b41a2f84566d.png",
+    "/lovable-uploads/614005bc-5234-40d2-bbe6-7aeb52420dd2.png",
+    "/lovable-uploads/a785d519-b6a9-49d1-8011-01bc8c6693c2.png"
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === screenshots.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <section className="py-24 bg-gradient-to-b from-white to-pink-50">
@@ -64,13 +84,17 @@ export const HowItWorks = () => {
           
           <div className="relative">
             <div className="relative mx-auto max-w-[300px]">
-              {/* This is a placeholder - you'll replace this with the actual mockup */}
-              <div className="w-full aspect-[9/19] bg-gray-100 rounded-[3rem] border-[8px] border-gray-800 shadow-xl overflow-hidden">
-                <div className="w-full h-full bg-white">
-                  <p className="text-center text-gray-400 mt-8">
-                    Placeholder for phone mockup
-                  </p>
-                </div>
+              <div className="w-full aspect-[9/19] bg-black rounded-[3rem] border-[8px] border-gray-800 shadow-xl overflow-hidden">
+                {screenshots.map((src, index) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`App screenshot ${index + 1}`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                      currentImageIndex === index ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                ))}
               </div>
               {/* Decorative elements */}
               <div className="absolute -z-10 -top-4 -right-4 w-full h-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-[3rem] opacity-20"></div>
