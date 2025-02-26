@@ -7,6 +7,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 export const HowItWorks = () => {
   const navigate = useNavigate();
@@ -18,6 +19,10 @@ export const HowItWorks = () => {
     "/lovable-uploads/8c76a791-20cf-43fc-a440-29b2f3314fb0.png",
     "/lovable-uploads/12b4fdd4-733d-44de-b0da-2aa30f5c1e1a.png"
   ];
+
+  const plugin = React.useRef(
+    Autoplay({ delay: 5000, stopOnInteraction: false })
+  );
 
   return (
     <section className="py-24 bg-gradient-to-b from-white to-pink-50">
@@ -84,7 +89,14 @@ export const HowItWorks = () => {
                 
                 {/* Screenshots container using Carousel */}
                 <div className="absolute inset-0">
-                  <Carousel className="w-full h-full" opts={{ align: "start", loop: true }}>
+                  <Carousel 
+                    className="w-full h-full" 
+                    opts={{ 
+                      align: "start", 
+                      loop: true 
+                    }}
+                    plugins={[plugin.current]}
+                  >
                     <CarouselContent>
                       {screenshots.map((src, index) => (
                         <CarouselItem key={src} className="w-full h-full">
