@@ -1,3 +1,4 @@
+
 import {
   Carousel,
   CarouselContent,
@@ -20,7 +21,7 @@ export const Hero = () => {
         <div className="flex flex-col lg:flex-row items-center gap-12">
           <div className="text-left lg:w-1/2 max-w-2xl">
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight animate-fade-up" style={{ lineHeight: 1.1 }}>
-              Grow Your Service Business with <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">Jitume</span>
+              Spend more time serving clients. <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">Let Jitume handle the rest.</span>
             </h1>
             <p className="mt-6 text-xl text-gray-600 animate-fade-up [animation-delay:200ms]">
               The ultimate platform for freelancers and service providers to showcase, manage, and grow their business online.
