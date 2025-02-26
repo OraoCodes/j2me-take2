@@ -7,13 +7,12 @@ export const HowItWorks = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Using more reliable images that are less likely to cause display issues
   const screenshots = [
-    "/lovable-uploads/43596b3e-9e4c-4d5a-b25f-6019cc8e2c6c.png",
-    "/lovable-uploads/62113946-5bee-4782-a35e-c8bd5788f240.png",
-    "/lovable-uploads/8834b56d-b4d5-42a0-9364-175e2674f577.png",
-    "/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png",
-    "/lovable-uploads/fd307a90-476a-4b92-8bcd-e0bf99ef54e3.png"
+    "/lovable-uploads/371bb96a-f75e-48b4-bca5-201f4647996e.png",
+    "/lovable-uploads/71a20586-99f1-45ca-a19a-6d3e3ed46d7b.png",
+    "/lovable-uploads/1f4fa49a-ba7d-46ea-bc89-e40162878dc3.png",
+    "/lovable-uploads/8c76a791-20cf-43fc-a440-29b2f3314fb0.png",
+    "/lovable-uploads/12b4fdd4-733d-44de-b0da-2aa30f5c1e1a.png"
   ];
 
   useEffect(() => {
