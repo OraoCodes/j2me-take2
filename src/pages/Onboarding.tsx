@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Header } from "@/components/Header";
+
+const PROFESSIONS = [
+  "Hairdresser / Hairstylist",
+  "Nail Technician",
+  "Makeup Artist",
+  "Personal Trainer",
+  "Massage Therapist",
+  "Photographer",
+  "Graphic Designer",
+  "Social Media Manager",
+  "Barber",
+  "Videographer"
+] as const;
 
 const SERVICE_TYPES = [
   "Beauty & Wellness",
@@ -57,7 +69,7 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
   const [businessDetails, setBusinessDetails] = useState({
-    businessName: '',
+    profession: '',
     serviceType: '',
     referralSource: '',
   });
@@ -74,7 +86,7 @@ const Onboarding = () => {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const businessName = formData.get("businessName") as string;
+    const profession = formData.get("profession") as string;
     const serviceType = formData.get("serviceType") as string;
     const referralSource = formData.get("referralSource") as string;
 
@@ -94,7 +106,7 @@ const Onboarding = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          company_name: businessName,
+          company_name: profession,
           service_type: serviceType,
           referral_source: referralSource,
         })
@@ -102,7 +114,7 @@ const Onboarding = () => {
 
       if (error) throw error;
 
-      setBusinessDetails({ businessName, serviceType, referralSource });
+      setBusinessDetails({ profession, serviceType, referralSource });
       setCurrentStep('settings');
     } catch (error) {
       toast({
@@ -179,22 +191,31 @@ const Onboarding = () => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            Enter your service details
+            Tell us about yourself
           </DialogTitle>
           <DialogDescription>
-            Provide information about your service business
+            Select your profession and service details
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleBusinessDetailsSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="businessName">Business Name</Label>
-            <Input
-              id="businessName"
-              name="businessName"
-              required
-              placeholder="Enter your business name"
-            />
+            <Label htmlFor="profession">What's your profession?</Label>
+            <Select name="profession" required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your profession" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Available Professions</SelectLabel>
+                  {PROFESSIONS.map((profession) => (
+                    <SelectItem key={profession} value={profession}>
+                      {profession}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
