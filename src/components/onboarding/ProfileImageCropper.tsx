@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import ReactCrop, { type Crop } from 'react-image-crop';
+import { useState, useCallback } from "react";
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import {
   Dialog,
   DialogContent,
@@ -18,51 +18,77 @@ interface ProfileImageCropperProps {
   onCropComplete: (croppedImageUrl: string) => void;
 }
 
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number,
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  )
+}
+
 export const ProfileImageCropper = ({ 
   open, 
   onClose, 
   imageUrl, 
   onCropComplete 
 }: ProfileImageCropperProps) => {
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 100,
-    height: 100,
-    x: 0,
-    y: 0
-  });
+  const [crop, setCrop] = useState<Crop>();
+  const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
+
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    const imageElement = e.currentTarget;
+    setImageRef(imageElement);
+    
+    // Create a square crop
+    const crop = centerAspectCrop(width, height, 1);
+    setCrop(crop);
+  }, []);
 
   const handleCropComplete = async () => {
-    const image = new Image();
-    image.src = imageUrl;
-    
-    await new Promise((resolve) => {
-      image.onload = resolve;
-    });
+    if (!imageRef || !crop) return;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    // Calculate the pixel values from percentages
+    const scaleX = imageRef.naturalWidth / 100;
+    const scaleY = imageRef.naturalHeight / 100;
 
-    canvas.width = crop.width;
-    canvas.height = crop.height;
+    // Set the canvas size to be square based on the smaller dimension
+    const size = Math.min(
+      (crop.width * scaleX),
+      (crop.height * scaleY)
+    );
+    canvas.width = size;
+    canvas.height = size;
 
     ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
+      imageRef,
+      (crop.x * scaleX),
+      (crop.y * scaleY),
+      (crop.width * scaleX),
+      (crop.height * scaleY),
       0,
       0,
-      crop.width,
-      crop.height
+      size,
+      size
     );
 
-    const croppedImageUrl = canvas.toDataURL('image/jpeg');
+    const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
     onCropComplete(croppedImageUrl);
     onClose();
   };
@@ -73,21 +99,34 @@ export const ProfileImageCropper = ({
         <DialogHeader>
           <DialogTitle>Crop Profile Image</DialogTitle>
           <DialogDescription>
-            Adjust the crop area to create a square profile image
+            Adjust your profile picture. The image will be cropped to a square.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4">
           <ReactCrop
             crop={crop}
-            onChange={setCrop}
+            onChange={(_, percentCrop) => setCrop(percentCrop)}
+            aspect={1}
             circularCrop
             keepSelection
             className="max-h-[500px] object-contain"
           >
-            <img src={imageUrl} alt="Crop preview" />
+            <img 
+              src={imageUrl} 
+              alt="Crop preview" 
+              onLoad={onImageLoad}
+              style={{ maxHeight: '500px', width: 'auto' }}
+            />
           </ReactCrop>
         </div>
-        <Button onClick={handleCropComplete}>Save Crop</Button>
+        <div className="flex justify-end gap-4 mt-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleCropComplete}>
+            Save
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

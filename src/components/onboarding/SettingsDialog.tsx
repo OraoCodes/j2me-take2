@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, Wand2 } from "lucide-react";
+import { ProfileImageCropper } from "./ProfileImageCropper";
 
 const PHONE_PREFIXES = [
   { value: "+254", label: "🇰🇪 +254" },
@@ -54,6 +55,37 @@ export const SettingsDialog = ({
   onImageUpload,
 }: SettingsDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setTempImageUrl(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    // Convert base64 to file and trigger the upload
+    fetch(croppedImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        const event = {
+          target: {
+            files: [file]
+          }
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        onImageUpload(event);
+      });
+    setShowCropper(false);
+    setTempImageUrl(null);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -95,7 +127,7 @@ export const SettingsDialog = ({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={onImageUpload}
+                onChange={handleFileChange}
               />
             </div>
 
@@ -161,6 +193,18 @@ export const SettingsDialog = ({
             {isLoading ? "Saving..." : "Continue"}
           </Button>
         </form>
+
+        {showCropper && tempImageUrl && (
+          <ProfileImageCropper
+            open={showCropper}
+            onClose={() => {
+              setShowCropper(false);
+              setTempImageUrl(null);
+            }}
+            imageUrl={tempImageUrl}
+            onCropComplete={handleCropComplete}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
