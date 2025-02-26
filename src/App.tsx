@@ -12,7 +12,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import Onboarding from "@/pages/Onboarding";
 import PricingPage from "@/pages/Pricing";
 import ServiceShare from "@/pages/ServiceShare";
-import CreateServicePage from "@/pages/CreateServicePage";
+import Settings from "@/pages/Settings";
 import PaymentMethods from "@/pages/PaymentMethods";
 import SocialLinks from "@/pages/SocialLinks";
 import StoreOptimization from "@/pages/StoreOptimization";
@@ -25,6 +25,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/service-page" element={<ServicePage />} />
         <Route path="/services/:userId" element={<ServicePage />} />
@@ -33,7 +34,6 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/service-share" element={<ServiceShare />} />
-        <Route path="/settings" element={<CreateServicePage />} />
         <Route path="/payment-methods" element={<PaymentMethods />} />
         <Route path="/social-links" element={<SocialLinks />} />
         <Route path="/store-optimization" element={<StoreOptimization />} />

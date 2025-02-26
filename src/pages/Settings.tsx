@@ -106,7 +106,7 @@ const Settings = () => {
         description: "Your service page settings have been updated.",
       });
 
-      navigate('/service-share');
+      navigate('/service-created');
     } catch (err) {
       console.error('Error updating profile:', err);
       toast({
