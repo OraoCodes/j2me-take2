@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Service } from '@/types/dashboard';
 import { ServiceImage } from '@/types/dashboard';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -79,14 +79,16 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         className="hidden sm:block overflow-hidden hover:shadow-lg transition-shadow cursor-pointer max-w-sm"
         onClick={onServiceSelect}
       >
-        <div className="aspect-[16/9] relative group">
+        <div className="relative group">
           {(service.image_url || serviceImages.length > 0) && (
             <>
-              <img
-                src={serviceImages[selectedImageIndex]?.image_url || service.image_url}
-                alt={service.name}
-                className="w-full h-full object-cover"
-              />
+              <div className="aspect-square w-full">
+                <img
+                  src={serviceImages[selectedImageIndex]?.image_url || service.image_url}
+                  alt={service.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               {serviceImages.length > 1 && (
                 <div className="absolute bottom-1 right-1 flex gap-0.5">
                   <button
