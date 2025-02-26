@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,7 @@ import { ServiceBanner } from '@/components/service-page/ServiceBanner';
 import { BusinessProfile } from '@/components/service-page/BusinessProfile';
 import { SearchAndCategories } from '@/components/service-page/SearchAndCategories';
 import { ServiceCard } from '@/components/service-page/ServiceCard';
+import ServiceChat from '@/components/service-chat/ServiceChat';
 
 interface ServiceImage {
   id: string;
@@ -31,6 +31,7 @@ const ServicePage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<{ [key: string]: number }>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const incrementPageViews = async () => {
@@ -140,6 +141,10 @@ const ServicePage = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleChatMessage = async (message: string) => {
+    console.log('Message received:', message);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -212,6 +217,13 @@ const ServicePage = () => {
               ...selectedService,
               instant_booking: selectedService.instant_booking || false
             }}
+          />
+        )}
+
+        {showChat && (
+          <ServiceChat
+            businessName={businessName}
+            onSendMessage={handleChatMessage}
           />
         )}
       </div>
