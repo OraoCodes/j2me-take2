@@ -34,47 +34,36 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      console.log('Sending message to telegram-bot:', { text: userMessage, chat: { id: 'web' } });
+      // Log the request being sent
+      console.log('Sending request to telegram-bot function');
 
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
-        body: {
-          message: {
-            text: userMessage,
-            chat: { id: 'web' },
-            from: { is_bot: false }
-          }
-        }
+        body: { message: { text: userMessage } }
       });
 
       console.log('Response from telegram-bot:', { data, error });
 
       if (error) {
-        throw new Error(`Supabase function error: ${error.message}`);
+        throw new Error(`Error calling telegram-bot: ${error.message}`);
       }
 
       if (data && data.text) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
       } else {
-        throw new Error('Invalid response from telegram-bot');
+        throw new Error('Invalid response format from telegram-bot');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error in handleSubmit:', error);
       
       toast({
         variant: "destructive",
         title: "Error sending message",
         description: error instanceof Error ? error.message : "An unexpected error occurred"
       });
-
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error processing your message. Please try again.' 
-      }]);
     } finally {
       setIsLoading(false);
     }
 
-    // Call the parent's onSendMessage for any additional handling
     onSendMessage(userMessage);
   };
 
