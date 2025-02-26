@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { Link2, Instagram, Facebook, MessageCircle, ArrowLeft, Copy, CheckCheck } from "lucide-react";
+import { Link2, Instagram, Facebook, MessageCircle, ArrowRight, Copy, CheckCheck } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -157,8 +158,8 @@ const ServiceShare = () => {
             variant="ghost"
             className="w-full flex gap-2 items-center justify-center h-12 text-gray-600 hover:bg-gray-50"
           >
-            <ArrowLeft className="w-5 h-5" />
             Proceed to Dashboard
+            <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
       </div>
