@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,6 +20,7 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,17 +34,38 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
+      console.log('Sending message to telegram-bot:', { text: userMessage, chat: { id: 'web' } });
+
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
-        body: { message: { text: userMessage, chat: { id: 'web' } } }
+        body: {
+          message: {
+            text: userMessage,
+            chat: { id: 'web' },
+            from: { is_bot: false }
+          }
+        }
       });
 
-      if (error) throw error;
+      console.log('Response from telegram-bot:', { data, error });
 
-      if (data) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.text || 'Sorry, I could not process your request.' }]);
+      if (error) {
+        throw new Error(`Supabase function error: ${error.message}`);
+      }
+
+      if (data && data.text) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
+      } else {
+        throw new Error('Invalid response from telegram-bot');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      toast({
+        variant: "destructive",
+        title: "Error sending message",
+        description: error instanceof Error ? error.message : "An unexpected error occurred"
+      });
+
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: 'Sorry, I encountered an error processing your message. Please try again.' 
