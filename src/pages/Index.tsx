@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
+import { HowItWorks } from "@/components/HowItWorks";
 import { Features } from "@/components/Features";
 import { Cta } from "@/components/Cta";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +71,7 @@ const Index = () => {
       </header>
       <main>
         <Hero />
+        <HowItWorks />
         <Features />
         <Cta />
       </main>
