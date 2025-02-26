@@ -45,6 +45,14 @@ const REFERRAL_SOURCES = [
 
 type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
 
+const PHONE_PREFIXES = [
+  { value: "+254", label: "🇰🇪 +254" },
+  { value: "+256", label: "🇺🇬 +256" },
+  { value: "+255", label: "🇹🇿 +255" },
+  { value: "+251", label: "🇪🇹 +251" },
+  { value: "+250", label: "🇷🇼 +250" },
+] as const;
+
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
@@ -56,6 +64,7 @@ const Onboarding = () => {
   const [settingsDetails, setSettingsDetails] = useState({
     whatsappNumber: '',
     customLink: '',
+    phonePrefix: "+254",
   });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -113,12 +122,14 @@ const Onboarding = () => {
     const formData = new FormData(e.currentTarget);
     const whatsappNumber = formData.get("whatsappNumber") as string;
     const customLink = formData.get("customLink") as string;
+    const phonePrefix = formData.get("phonePrefix") as string;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       const cleanCustomLink = customLink.trim() || null;
+      const fullWhatsappNumber = `${phonePrefix}${whatsappNumber.replace(/^0+/, '')}`;
 
       if (cleanCustomLink) {
         const { data: existingProfile, error: searchError } = await supabase
@@ -144,14 +155,14 @@ const Onboarding = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          whatsapp_number: whatsappNumber.trim() || null,
+          whatsapp_number: fullWhatsappNumber,
           service_page_link: cleanCustomLink,
         })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
 
-      setSettingsDetails({ whatsappNumber, customLink });
+      setSettingsDetails({ whatsappNumber, customLink, phonePrefix });
       setCurrentStep('serviceCreated');
     } catch (error) {
       toast({
@@ -251,12 +262,33 @@ const Onboarding = () => {
         <form onSubmit={handleSettingsSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
-            <Input
-              id="whatsappNumber"
-              name="whatsappNumber"
-              type="tel"
-              placeholder="Enter your WhatsApp number"
-            />
+            <div className="flex gap-2">
+              <Select 
+                name="phonePrefix" 
+                defaultValue="+254"
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Select prefix" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Phone Prefixes</SelectLabel>
+                    {PHONE_PREFIXES.map((prefix) => (
+                      <SelectItem key={prefix.value} value={prefix.value}>
+                        {prefix.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input
+                id="whatsappNumber"
+                name="whatsappNumber"
+                type="tel"
+                placeholder="712345678"
+                className="flex-1"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
