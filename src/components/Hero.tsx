@@ -24,7 +24,7 @@ export const Hero = () => {
               Spend more time serving clients. Let <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">Jitume</span> handle the rest.
             </h1>
             <p className="mt-6 text-xl text-gray-600 animate-fade-up [animation-delay:200ms]">
-              The ultimate platform for freelancers and service providers to showcase, manage, and grow their business online.
+              Jitume automates client inquiries, bookings, and payments so you never lose a client to delayed responses or waste time on repetitive messages.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 items-start animate-fade-up [animation-delay:400ms]">
               <Button 
