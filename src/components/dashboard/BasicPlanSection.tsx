@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar, Eye, ShoppingBag } from "lucide-react";
+import { Calendar, Eye, ShoppingBag, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, startOfWeek, startOfMonth, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -103,9 +103,9 @@ export const BasicPlanSection = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex gap-2 mb-4">
+    <div className="space-y-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex flex-wrap gap-3 mb-6">
           <Button
             variant="outline"
             onClick={() => handlePeriodChange('today')}
@@ -141,28 +141,45 @@ export const BasicPlanSection = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="space-y-1">
-              <div className="text-sm text-gray-600">Views</div>
-              <div className="text-2xl font-semibold">
-                {loading ? "-" : viewCount}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#F1F0FB] rounded-xl p-6 transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-3 rounded-lg">
+                <Eye className="w-6 h-6 text-[#9b87f5]" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">Total Views</div>
+                <div className="text-2xl font-semibold text-gray-900">
+                  {loading ? "-" : viewCount}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="space-y-1">
-              <div className="text-sm text-gray-600">Service requests</div>
-              <div className="text-2xl font-semibold">{loading ? "-" : requestCount}</div>
+          <div className="bg-[#FEF7CD] rounded-xl p-6 transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-3 rounded-lg">
+                <ShoppingBag className="w-6 h-6 text-[#f5c054]" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">Service Requests</div>
+                <div className="text-2xl font-semibold text-gray-900">
+                  {loading ? "-" : requestCount}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="space-y-1">
-              <div className="text-sm text-gray-600">Sales</div>
-              <div className="text-2xl font-semibold">
-                {loading ? "-" : `Ksh ${salesAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          <div className="bg-[#F2FCE2] rounded-xl p-6 transition-all hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-3 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-[#6ab04c]" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500 mb-1">Total Sales</div>
+                <div className="text-2xl font-semibold text-gray-900">
+                  {loading ? "-" : `Ksh ${salesAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </div>
               </div>
             </div>
           </div>
@@ -174,11 +191,11 @@ export const BasicPlanSection = () => {
           <h3 className="text-lg font-semibold">Service requests</h3>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
             <Calendar className="w-5 h-5 text-gray-400" />
             <span className="text-gray-900">{loading ? "-" : requestCount} pending requests</span>
           </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100">
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
             <ShoppingBag className="w-5 h-5 text-gray-400" />
             <span className="text-gray-900">{loading ? "-" : requestCount} unpaid requests</span>
           </div>
