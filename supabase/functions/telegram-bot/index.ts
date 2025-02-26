@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -528,6 +527,7 @@ Ensure clarity, correctness, and a warm, engaging tone in all responses.
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
+        max_tokens: 2048,
       }),
     });
 
