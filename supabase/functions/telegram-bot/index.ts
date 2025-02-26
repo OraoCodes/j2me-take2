@@ -40,12 +40,12 @@ function generateBookingResponse(message: string): string {
   }
 
   // Default response for other queries
-  return "Thank you for your message. I'm here to help with bookings and service information. " +
-         "Feel free to ask about:\n" +
+  return "Hi! I'm your booking assistant. I can help you with:\n" +
          "• Scheduling appointments\n" +
-         "• Service pricing\n" +
-         "• Availability\n" +
-         "• Cancellations or rescheduling";
+         "• Checking service pricing\n" +
+         "• Checking availability\n" +
+         "• Managing your bookings\n\n" +
+         "Just let me know what you'd like to do!";
 }
 
 serve(async (req) => {
@@ -66,7 +66,19 @@ serve(async (req) => {
     // Generate appropriate response based on message content
     const botResponse = generateBookingResponse(message.text);
 
-    // Send message to Telegram
+    // First, send the customer message to Telegram
+    await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: `💬 Customer: ${message.text}`,
+      }),
+    });
+
+    // Then, send the bot's response to Telegram
     const telegramResponse = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -74,7 +86,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         chat_id: CHAT_ID,
-        text: `New web message: ${message.text}\n\nAutomatic response:\n${botResponse}`,
+        text: `🤖 Bot Response: ${botResponse}`,
       }),
     });
 
