@@ -63,6 +63,7 @@ export const SettingsDialog = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [selectedPrefix, setSelectedPrefix] = useState("+254");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,7 +77,7 @@ export const SettingsDialog = ({
     }
   };
 
-  const handleCropComplete = (croppedImageUrl: string) => {
+  const handleCropComplete = async (croppedImageUrl: string) => {
     fetch(croppedImageUrl)
       .then(res => res.blob())
       .then(blob => {
@@ -173,7 +174,15 @@ export const SettingsDialog = ({
             <div className="space-y-2">
               <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
               <div className="flex gap-2">
-                <Select name="phonePrefix" defaultValue="+254">
+                <input
+                  type="hidden"
+                  name="phonePrefix"
+                  value={selectedPrefix}
+                />
+                <Select 
+                  value={selectedPrefix}
+                  onValueChange={setSelectedPrefix}
+                >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Select prefix" />
                   </SelectTrigger>
