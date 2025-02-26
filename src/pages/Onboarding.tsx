@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,20 @@ const SERVICE_TYPES = [
   "Other"
 ] as const;
 
+const PROFESSION_TO_SERVICE_TYPE: Record<string, typeof SERVICE_TYPES[number]> = {
+  "Hairdresser / Hairstylist": "Beauty & Wellness",
+  "Nail Technician": "Beauty & Wellness",
+  "Makeup Artist": "Beauty & Wellness",
+  "Personal Trainer": "Health & Fitness",
+  "Massage Therapist": "Health & Fitness",
+  "Photographer": "Professional Services",
+  "Graphic Designer": "Professional Services",
+  "Social Media Manager": "Professional Services",
+  "Barber": "Beauty & Wellness",
+  "Videographer": "Professional Services",
+  "Coach": "Education & Tutoring",
+};
+
 const REFERRAL_SOURCES = [
   "Search Engine",
   "Social Media",
@@ -57,8 +71,6 @@ const REFERRAL_SOURCES = [
   "Other"
 ] as const;
 
-type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
-
 const PHONE_PREFIXES = [
   { value: "+254", label: "🇰🇪 +254" },
   { value: "+256", label: "🇺🇬 +256" },
@@ -67,10 +79,13 @@ const PHONE_PREFIXES = [
   { value: "+250", label: "🇷🇼 +250" },
 ] as const;
 
+type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
+
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
   const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
+  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [businessDetails, setBusinessDetails] = useState({
     profession: '',
     serviceType: '',
@@ -83,6 +98,13 @@ const Onboarding = () => {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (selectedProfession && selectedProfession !== "Other") {
+      const mappedServiceType = PROFESSION_TO_SERVICE_TYPE[selectedProfession];
+      setSelectedServiceType(mappedServiceType);
+    }
+  }, [selectedProfession]);
 
   const handleBusinessDetailsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -240,7 +262,13 @@ const Onboarding = () => {
 
           <div className="space-y-2">
             <Label htmlFor="serviceType">Type of Service</Label>
-            <Select name="serviceType" required>
+            <Select 
+              name="serviceType" 
+              required
+              value={selectedServiceType || undefined}
+              onValueChange={setSelectedServiceType}
+              disabled={selectedProfession !== "Other" && selectedProfession !== null}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select your service type" />
               </SelectTrigger>
