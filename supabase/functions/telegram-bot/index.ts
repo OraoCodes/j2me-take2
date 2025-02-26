@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { format, parse, isWithinInterval, set, parseISO, addHours, isSameDay, startOfDay, endOfDay } from 'https://esm.sh/date-fns@2';
+import { format, parse, isWithinInterval, set, parseISO, addHours, isSameDay, startOfDay, endOfDay, addDays } from 'https://esm.sh/date-fns@2';
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
@@ -322,171 +322,41 @@ async function handleBookingStep(chatId: number, userMessage: string) {
   return response;
 }
 
-async function getAIResponse(userMessage: string, context: { 
-  services: any[], 
+function formatAvailabilityForDisplay(
   availability: any[],
   serviceRequests: any[],
-  blockedDates: any[]
-}, chatId: number) {
-  addToHistory(chatId, {
-    role: 'user',
-    content: userMessage,
-    timestamp: Date.now()
-  });
-
-  const bookingSession = bookingSessions.get(chatId);
-  if (bookingSession) {
-    const response = await handleBookingStep(chatId, userMessage);
-    addToHistory(chatId, {
-      role: 'assistant',
-      content: response,
-      timestamp: Date.now()
-    });
-    return response;
-  }
-
-  if (userMessage.toLowerCase().includes('book') || 
-      userMessage.toLowerCase().includes('schedule') ||
-      userMessage.toLowerCase().includes('appointment')) {
-    bookingSessions.set(chatId, { step: 'service' });
-    const servicesInfo = context.services
-      .map(service => `- ${service.name}`)
-      .join('\n');
-    const response = `I'll help you book an appointment. Which service would you like to book?\n\nAvailable services:\n${servicesInfo}`;
+  blockedDates: any[],
+  daysToShow: number = 7
+): string {
+  const days = Array.from({ length: daysToShow }, (_, i) => {
+    const date = addDays(new Date(), i);
+    const dayOfWeek = date.getDay();
+    const daySetting = availability.find(s => s.day_of_week === dayOfWeek);
     
-    addToHistory(chatId, {
-      role: 'assistant',
-      content: response,
-      timestamp: Date.now()
-    });
-    return response;
-  }
+    const isBlocked = blockedDates.some(blocked => 
+      isSameDay(parseISO(blocked.blocked_date), date)
+    );
 
-  const history = conversationHistory.get(chatId) || [];
-  
-  const availabilityInfo = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    return formatAvailabilityForDate(date, context.availability, context.serviceRequests, context.blockedDates);
-  }).join('\n\n');
-
-  const servicesInfo = context.services.map(service => 
-    `${service.name} - ${service.price} KES${service.description ? ` (${service.description})` : ''}`
-  ).join('\n');
-
-  const systemPrompt = `
-    You are Wairimu, Kevin's AI assistant who helps manage appointments and answer questions about his services. Your personality is:
-    - Professional yet friendly and approachable
-    - Helpful and efficient
-    - Can communicate in English, Swahili, and Sheng (respond in the same language the user uses)
-    - Always introduces yourself as "Wairimu, Kevin's AI assistant" when meeting someone new
-    - When asked about services, you MUST list all available services with their complete details
-    - When discussing availability, be very precise about available time slots
-    
-    Available services:
-    ${servicesInfo || 'No services available at the moment.'}
-    
-    Availability for the next 7 days:
-    ${availabilityInfo}
-    
-    Previous conversation context:
-    ${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
-    
-    Current user message: ${userMessage}
-    
-    Important guidelines:
-    1. If the user asks for services, list ALL available services with complete details
-    2. When suggesting appointments, ONLY suggest times that are listed as available above
-    3. Match the user's language (English/Swahili/Sheng)
-    4. Maintain a helpful, professional, yet friendly tone
-    5. If all slots are booked for a requested time, clearly communicate this and suggest alternative times
-    6. If services are not available, politely inform the user and ask what type of services they're looking for
-    7. Use the conversation history to maintain context and provide more personalized responses
-    8. Reference previous interactions when relevant
-  `;
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+    if (isBlocked) {
+      return `${format(date, 'EEEE')}: Blocked`;
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    if (!daySetting?.is_available) {
+      return `${format(date, 'EEEE')}: Closed`;
+    }
+
+    const dayBookings = serviceRequests.filter(req => 
+      isSameDay(parseISO(req.scheduled_at), date) &&
+      ['pending', 'accepted'].includes(req.status)
+    ).map(req => format(parseISO(req.scheduled_at), 'HH:mm'));
+
+    const workingHours = `${daySetting.start_time.slice(0, 5)} - ${daySetting.end_time.slice(0, 5)}`;
+    const bookedSlots = dayBookings.length > 0 ? ` (Booked: ${dayBookings.join(', ')})` : '';
     
-    addToHistory(chatId, {
-      role: 'assistant',
-      content: aiResponse,
-      timestamp: Date.now()
-    });
+    return `${format(date, 'EEEE')}: Open ${workingHours}${bookedSlots}`;
+  });
 
-    return aiResponse;
-  } catch (error) {
-    console.error('Error getting AI response:', error);
-    return "Samahani, nina shida kidogo kwa sasa. Tafadhali jaribu tena baadaye. (I apologize, but I'm having trouble at the moment. Please try again later.)";
-  }
-}
-
-function formatAvailabilityForDate(
-  date: Date,
-  availabilitySettings: any[],
-  serviceRequests: any[],
-  blockedDates: any[]
-) {
-  const isDateBlocked = blockedDates.some(blocked => 
-    isSameDay(parseISO(blocked.blocked_date), date)
-  );
-
-  if (isDateBlocked) {
-    return `${format(date, 'EEEE, MMMM d, yyyy')}: BLOCKED FOR THE ENTIRE DAY`;
-  }
-
-  const dayOfWeek = date.getDay();
-  const daySetting = availabilitySettings.find(s => s.day_of_week === dayOfWeek);
-
-  if (!daySetting?.is_available) {
-    return `${format(date, 'EEEE, MMMM d, yyyy')}: NOT AVAILABLE (Not a working day)`;
-  }
-
-  const dayStart = startOfDay(date);
-  const dayEnd = endOfDay(date);
-  
-  const bookedSlots = serviceRequests
-    .filter(request => {
-      const requestDate = parseISO(request.scheduled_at);
-      return isWithinInterval(requestDate, { start: dayStart, end: dayEnd }) &&
-             ['pending', 'accepted'].includes(request.status);
-    })
-    .map(request => format(parseISO(request.scheduled_at), 'HH:mm'));
-
-  const timeSlots = [];
-  const startTime = parse(daySetting.start_time, 'HH:mm:ss', date);
-  const endTime = parse(daySetting.end_time, 'HH:mm:ss', date);
-
-  let currentSlot = startTime;
-  while (currentSlot < endTime) {
-    const timeStr = format(currentSlot, 'HH:mm');
-    const status = bookedSlots.includes(timeStr) ? 'BOOKED' : 'AVAILABLE';
-    timeSlots.push(`${timeStr} - ${status}`);
-    currentSlot = addHours(currentSlot, 1);
-  }
-
-  return `${format(date, 'EEEE, MMMM d, yyyy')}:\n${timeSlots.join('\n')}`;
+  return days.join('\n');
 }
 
 async function isTimeSlotAvailable(date: Date, time: string, context: {
@@ -547,6 +417,108 @@ async function isTimeSlotAvailable(date: Date, time: string, context: {
     available: true,
     reason: 'Time slot is available.'
   };
+}
+
+async function getAIResponse(userMessage: string, context: { 
+  services: any[], 
+  availability: any[],
+  serviceRequests: any[],
+  blockedDates: any[]
+}, chatId: number) {
+  addToHistory(chatId, {
+    role: 'user',
+    content: userMessage,
+    timestamp: Date.now()
+  });
+
+  const bookingSession = bookingSessions.get(chatId);
+  if (bookingSession) {
+    const response = await handleBookingStep(chatId, userMessage);
+    addToHistory(chatId, {
+      role: 'assistant',
+      content: response,
+      timestamp: Date.now()
+    });
+    return response;
+  }
+
+  const servicesInfo = context.services
+    .map(service => `${service.name}: KES ${service.price}${service.description ? ` - ${service.description}` : ''}`)
+    .join('\n');
+
+  const availabilityInfo = formatAvailabilityForDisplay(
+    context.availability,
+    context.serviceRequests,
+    context.blockedDates
+  );
+
+  const history = conversationHistory.get(chatId) || [];
+
+  const systemPrompt = `
+    You are Wairimu, Kevin's AI assistant. Here's your core configuration:
+
+    WORKING HOURS AND AVAILABILITY:
+    ${availabilityInfo}
+
+    IMPORTANT RULES:
+    1. NEVER suggest times that are marked as "Booked"
+    2. NEVER suggest times outside the listed working hours
+    3. NEVER say Kevin is unavailable on days marked as "Open"
+    4. ONLY suggest booking times that are within working hours AND not already booked
+    5. If someone asks about a specific time:
+       - Check if it's during working hours
+       - Check if it's already booked
+       - Only confirm availability if BOTH checks pass
+    6. Always verify availability before suggesting any time slots
+    7. If a day is marked as "Closed", indicate that no appointments are available that day
+    8. If a day is marked as "Blocked", indicate that Kevin is unavailable that day
+
+    SERVICES OFFERED:
+    ${servicesInfo}
+
+    Previous conversation context:
+    ${history.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
+
+    Current user message: ${userMessage}
+
+    Remember to match the user's language (English/Swahili/Sheng) and maintain a professional yet friendly tone.
+  `;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
+    
+    addToHistory(chatId, {
+      role: 'assistant',
+      content: aiResponse,
+      timestamp: Date.now()
+    });
+
+    return aiResponse;
+  } catch (error) {
+    console.error('Error getting AI response:', error);
+    return "I'm having trouble processing your request right now. Please try again in a moment.";
+  }
 }
 
 serve(async (req) => {
