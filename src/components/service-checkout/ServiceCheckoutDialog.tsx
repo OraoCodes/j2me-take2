@@ -267,7 +267,7 @@ export const ServiceCheckoutDialog = ({
 
       const fullPhoneNumber = `${formData.countryCode}${formData.phone.startsWith("0") ? formData.phone.slice(1) : formData.phone}`;
       
-      const requestData = {
+      console.log('Submitting service request with data:', {
         service_id: service.id,
         user_id: service.user_id,
         customer_name: formData.name,
@@ -277,23 +277,43 @@ export const ServiceCheckoutDialog = ({
         scheduled_at: scheduledAt.toISOString(),
         status: service.instant_booking === true ? 'accepted' : 'pending',
         location: service.serviceMode === 'client-location' ? formData.location : null,
-      };
+      });
 
       let error;
       if (isEditing && requestId) {
         const { error: updateError } = await supabase
           .from("service_requests")
-          .update(requestData)
+          .update({
+            customer_name: formData.name,
+            customer_email: formData.email,
+            customer_phone: fullPhoneNumber,
+            notes: formData.notes,
+            scheduled_at: scheduledAt.toISOString(),
+            location: service.serviceMode === 'client-location' ? formData.location : null,
+          })
           .eq('id', requestId);
         error = updateError;
       } else {
         const { error: insertError } = await supabase
           .from("service_requests")
-          .insert(requestData);
+          .insert({
+            service_id: service.id,
+            user_id: service.user_id,
+            customer_name: formData.name,
+            customer_email: formData.email,
+            customer_phone: fullPhoneNumber,
+            notes: formData.notes,
+            scheduled_at: scheduledAt.toISOString(),
+            status: service.instant_booking === true ? 'accepted' : 'pending',
+            location: service.serviceMode === 'client-location' ? formData.location : null,
+          });
         error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('Service request error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success!",
@@ -308,7 +328,9 @@ export const ServiceCheckoutDialog = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: isEditing ? "Failed to update service request." : "Failed to submit service request. Please try again.",
+        description: isEditing 
+          ? "Failed to update service request. Please try again." 
+          : "Failed to submit service request. Please try again.",
       });
     } finally {
       setLoading(false);
