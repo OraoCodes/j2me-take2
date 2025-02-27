@@ -95,6 +95,41 @@ export const toggleCategoryVisibility = async (category: Category) => {
   return true;
 };
 
+export const updateCategoriesSequence = async (categories: Category[]) => {
+  try {
+    // Prepare updates - only send id and new sequence to minimize payload
+    const updates = categories.map(category => ({
+      id: category.id,
+      sequence: category.sequence
+    }));
+    
+    // Use UPSERT to update multiple records
+    const { error } = await supabase.rpc('update_category_sequences', {
+      category_updates: updates
+    }).single();
+    
+    if (error) {
+      // Fallback to individual updates if the RPC function doesn't exist
+      for (const category of categories) {
+        const { error: updateError } = await supabase
+          .from('service_categories')
+          .update({ sequence: category.sequence })
+          .eq('id', category.id);
+          
+        if (updateError) {
+          console.error("Error updating category sequence:", updateError);
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating category sequences:", error);
+    return false;
+  }
+};
+
 export const deleteCategory = async (id: string) => {
   const { error } = await supabase
     .from('service_categories')

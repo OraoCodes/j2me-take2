@@ -5,10 +5,18 @@ import { Header } from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Info } from "lucide-react";
+import { Info, GripVertical } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { CategoryItem } from "@/components/categories/CategoryItem";
 import { CreateCategoryDialog } from "@/components/categories/CreateCategoryDialog";
+import { 
+  fetchCategories, 
+  createCategory, 
+  updateCategory, 
+  toggleCategoryVisibility,
+  updateCategoriesSequence
+} from "@/utils/categoryUtils";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 interface Category {
   id: string;
@@ -27,66 +35,27 @@ const ServiceCategories = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCategories();
+    fetchCategoriesData();
   }, []);
 
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('service_categories')
-      .select('*')
-      .order('sequence', { ascending: true });
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch categories. Please try again.",
-      });
-    } else {
-      setCategories(data as Category[]);
-    }
+  const fetchCategoriesData = async () => {
+    const data = await fetchCategories();
+    setCategories(data);
   };
 
-  const createCategory = async () => {
-    if (!newCategoryName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Category name cannot be empty.",
-      });
-      return;
-    }
-
+  const handleCreateCategory = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('service_categories')
-      .insert([
-        {
-          name: newCategoryName.trim(),
-          sequence: categories.length,
-          user_id: user.id
-        }
-      ]);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create category. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category created successfully.",
-      });
+    const success = await createCategory(newCategoryName, user.id, categories);
+    if (success) {
       setNewCategoryName("");
       setIsDialogOpen(false);
-      fetchCategories();
+      fetchCategoriesData();
     }
   };
 
@@ -103,43 +72,64 @@ const ServiceCategories = () => {
   const saveEditing = async () => {
     if (!editingId || !editingName.trim()) return;
 
-    const { error } = await supabase
-      .from('service_categories')
-      .update({ name: editingName.trim() })
-      .eq('id', editingId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update category name. Please try again.",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Category updated successfully.",
-      });
+    const success = await updateCategory(editingId, editingName);
+    if (success) {
       setEditingId(null);
       setEditingName("");
-      fetchCategories();
+      fetchCategoriesData();
     }
   };
 
   const toggleVisibility = async (category: Category) => {
-    const { error } = await supabase
-      .from('service_categories')
-      .update({ is_visible: !category.is_visible })
-      .eq('id', category.id);
+    const success = await toggleCategoryVisibility(category);
+    if (success) {
+      fetchCategoriesData();
+    }
+  };
 
-    if (error) {
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return;
+    
+    const reorderedCategories = Array.from(filteredCategories);
+    const [movedItem] = reorderedCategories.splice(result.source.index, 1);
+    reorderedCategories.splice(result.destination.index, 0, movedItem);
+    
+    // Update sequence numbers for all categories based on their new positions
+    const updatedCategories = reorderedCategories.map((category, index) => ({
+      ...category,
+      sequence: index
+    }));
+    
+    // Optimistically update the UI
+    const newCategories = [...categories];
+    updatedCategories.forEach(updatedCat => {
+      const index = newCategories.findIndex(cat => cat.id === updatedCat.id);
+      if (index !== -1) {
+        newCategories[index] = updatedCat;
+      }
+    });
+    setCategories(newCategories);
+    
+    // Update in the database
+    const success = await updateCategoriesSequence(updatedCategories);
+    if (!success) {
+      // Revert to original data if update fails
+      fetchCategoriesData();
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update category visibility. Please try again.",
+        description: "Failed to update category sequence. Please try again.",
       });
     } else {
-      fetchCategories();
+      toast({
+        title: "Success",
+        description: "Category sequence updated successfully.",
+      });
     }
+  };
+
+  const toggleReordering = () => {
+    setIsReordering(!isReordering);
   };
 
   const filteredCategories = categories.filter(category => 
@@ -167,16 +157,17 @@ const ServiceCategories = () => {
           <div className="flex items-center gap-4">
             <Button 
               variant="outline" 
-              className="border-gebeya-purple text-gebeya-purple hover:bg-gebeya-purple/10"
+              className={`border-gebeya-purple text-gebeya-purple hover:bg-gebeya-purple/10 ${isReordering ? 'bg-gebeya-purple/10' : ''}`}
+              onClick={toggleReordering}
             >
-              Change sequence
+              {isReordering ? "Done reordering" : "Change sequence"}
             </Button>
             <CreateCategoryDialog
               isOpen={isDialogOpen}
               onOpenChange={setIsDialogOpen}
               categoryName={newCategoryName}
               onCategoryNameChange={setNewCategoryName}
-              onCreateCategory={createCategory}
+              onCreateCategory={handleCreateCategory}
             />
           </div>
         </div>
@@ -203,48 +194,124 @@ const ServiceCategories = () => {
 
           <TabsContent value="visible" className="mt-6">
             <div className="bg-white rounded-lg shadow-lg border border-gebeya-purple/10">
-              {filteredCategories.map((category) => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  editingId={editingId}
-                  editingName={editingName}
-                  onStartEditing={startEditing}
-                  onSaveEditing={saveEditing}
-                  onCancelEditing={cancelEditing}
-                  onEditingNameChange={setEditingName}
-                  onToggleVisibility={toggleVisibility}
-                  onEditCategory={setSelectedCategory}
-                />
-              ))}
-              {filteredCategories.length === 0 && (
-                <div className="p-8 text-center text-gebeya-purple/60">
-                  No visible categories found
-                </div>
+              {isReordering ? (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="categories">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                      >
+                        {filteredCategories.map((category, index) => (
+                          <Draggable key={category.id} draggableId={category.id} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50"
+                              >
+                                <div className="flex items-center gap-3 flex-1">
+                                  <div {...provided.dragHandleProps}>
+                                    <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
+                                  </div>
+                                  <span>{category.name}</span>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Sequence: {category.sequence}
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              ) : (
+                <>
+                  {filteredCategories.map((category) => (
+                    <CategoryItem
+                      key={category.id}
+                      category={category}
+                      editingId={editingId}
+                      editingName={editingName}
+                      onStartEditing={startEditing}
+                      onSaveEditing={saveEditing}
+                      onCancelEditing={cancelEditing}
+                      onEditingNameChange={setEditingName}
+                      onToggleVisibility={toggleVisibility}
+                      onEditCategory={setSelectedCategory}
+                    />
+                  ))}
+                  {filteredCategories.length === 0 && (
+                    <div className="p-8 text-center text-gebeya-purple/60">
+                      No visible categories found
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
 
           <TabsContent value="hidden" className="mt-6">
             <div className="bg-white rounded-lg shadow-lg border border-gebeya-purple/10">
-              {filteredCategories.map((category) => (
-                <CategoryItem
-                  key={category.id}
-                  category={category}
-                  editingId={editingId}
-                  editingName={editingName}
-                  onStartEditing={startEditing}
-                  onSaveEditing={saveEditing}
-                  onCancelEditing={cancelEditing}
-                  onEditingNameChange={setEditingName}
-                  onToggleVisibility={toggleVisibility}
-                  onEditCategory={setSelectedCategory}
-                />
-              ))}
-              {filteredCategories.length === 0 && (
-                <div className="p-8 text-center text-gebeya-purple/60">
-                  No hidden categories found
-                </div>
+              {isReordering ? (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="hidden-categories">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                      >
+                        {filteredCategories.map((category, index) => (
+                          <Draggable key={category.id} draggableId={category.id} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50"
+                              >
+                                <div className="flex items-center gap-3 flex-1">
+                                  <div {...provided.dragHandleProps}>
+                                    <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
+                                  </div>
+                                  <span>{category.name}</span>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Sequence: {category.sequence}
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              ) : (
+                <>
+                  {filteredCategories.map((category) => (
+                    <CategoryItem
+                      key={category.id}
+                      category={category}
+                      editingId={editingId}
+                      editingName={editingName}
+                      onStartEditing={startEditing}
+                      onSaveEditing={saveEditing}
+                      onCancelEditing={cancelEditing}
+                      onEditingNameChange={setEditingName}
+                      onToggleVisibility={toggleVisibility}
+                      onEditCategory={setSelectedCategory}
+                    />
+                  ))}
+                  {filteredCategories.length === 0 && (
+                    <div className="p-8 text-center text-gebeya-purple/60">
+                      No hidden categories found
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
