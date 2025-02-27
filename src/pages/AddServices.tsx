@@ -8,7 +8,6 @@ import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy, Wand2 } from "lucide-
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Product {
@@ -26,29 +25,6 @@ interface ServiceSuggestion {
   description: string;
 }
 
-const professions = [
-  "Graphic Designer",
-  "Personal Trainer",
-  "Makeup Artist",
-  "Photographer",
-  "Hair Stylist",
-  "Massage Therapist",
-  "Web Developer",
-  "Content Creator",
-  "Tutor",
-  "Wedding Planner",
-  "Interior Designer",
-  "Accountant",
-  "Personal Chef",
-  "Tour Guide",
-  "DJ",
-  "Yoga Instructor",
-  "Event Planner",
-  "Handyman",
-  "Business Consultant",
-  "Translator"
-];
-
 const AddServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,15 +32,43 @@ const AddServices = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
-  const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<ServiceSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [userProfession, setUserProfession] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedProfession) {
-      fetchServiceSuggestions(selectedProfession);
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userProfession) {
+      fetchServiceSuggestions(userProfession);
     }
-  }, [selectedProfession]);
+  }, [userProfession]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('service_type')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      if (profile?.service_type) {
+        setUserProfession(profile.service_type);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const fetchServiceSuggestions = async (profession: string) => {
     setLoadingSuggestions(true);
@@ -339,26 +343,8 @@ const AddServices = () => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Select your profession for suggestions:</h2>
+          <h2 className="text-xl font-semibold mb-4">Suggested services for {userProfession || 'your profession'}</h2>
           <div className="space-y-6">
-            <div>
-              <Select
-                value={selectedProfession || ""}
-                onValueChange={(value) => setSelectedProfession(value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select your profession" />
-                </SelectTrigger>
-                <SelectContent>
-                  {professions.map((profession) => (
-                    <SelectItem key={profession} value={profession}>
-                      {profession}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
             {loadingSuggestions ? (
               <div className="space-y-4">
                 <Skeleton className="h-24 w-full rounded-lg" />
@@ -384,11 +370,15 @@ const AddServices = () => {
                   </div>
                 ))}
               </div>
-            ) : selectedProfession ? (
+            ) : userProfession ? (
               <div className="text-center py-6">
-                <p className="text-gray-500">No suggestions available. Please try a different profession.</p>
+                <p className="text-gray-500">Loading suggestions for your profession...</p>
               </div>
-            ) : null}
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-gray-500">No profession information found. You can still add services manually below.</p>
+              </div>
+            )}
           </div>
         </div>
 
