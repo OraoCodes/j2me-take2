@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { BackButton } from "@/components/onboarding/BackButton";
 
 const ServiceCreated = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const ServiceCreated = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
+      <BackButton previousRoute="/payment-methods" className="md:fixed" />
       <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center text-center relative z-10">
         <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
           🎉 Your Service Page is Live!

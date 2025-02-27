@@ -9,6 +9,7 @@ import { SettingsDialog } from "@/components/onboarding/SettingsDialog";
 import { ServiceCreatedDialog } from "@/components/onboarding/ServiceCreatedDialog";
 import { AddServicesDialog } from "@/components/onboarding/AddServicesDialog";
 import { ProfileImageCropper } from "@/components/onboarding/ProfileImageCropper";
+import { BackButton } from "@/components/onboarding/BackButton";
 
 type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
 
@@ -202,9 +203,22 @@ const Onboarding = () => {
     }
   };
 
+  const handleBackStep = () => {
+    if (currentStep === 'settings') {
+      setCurrentStep('businessDetails');
+    } else if (currentStep === 'serviceCreated') {
+      setCurrentStep('settings');
+    } else if (currentStep === 'addServices') {
+      setCurrentStep('serviceCreated');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
+      {currentStep !== 'businessDetails' && (
+        <BackButton className="md:fixed" onClick={handleBackStep} />
+      )}
       <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center">
         <img 
           src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" 

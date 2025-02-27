@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BackButton } from "@/components/onboarding/BackButton";
 
 interface Product {
   name: string;
@@ -338,6 +340,7 @@ const AddServices = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
+      <BackButton previousRoute="/onboarding" className="md:fixed" />
       <div className="container mx-auto px-4 py-24 max-w-3xl">
         <div className="flex justify-center mb-12">
           <div className="flex items-center gap-3">

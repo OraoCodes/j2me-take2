@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { BackButton } from "@/components/onboarding/BackButton";
 
 interface PaymentMethod {
   id: string;
@@ -168,6 +169,7 @@ const PaymentMethods = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
+      <BackButton previousRoute="/add-services" className="md:fixed" />
       <div className="container mx-auto px-4 py-24 max-w-2xl">
         {/* Progress Steps */}
         <div className="flex justify-center mb-12">
