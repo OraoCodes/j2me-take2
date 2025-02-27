@@ -78,6 +78,27 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
   const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
 
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // If "Other" is selected and customProfession is provided, 
+    // add it to a hidden field to be stored in the database
+    if (selectedProfession === "Other") {
+      const form = e.currentTarget;
+      const customProfessionInput = form.querySelector('#customProfession') as HTMLInputElement;
+      
+      if (customProfessionInput && customProfessionInput.value) {
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'customProfession';
+        hiddenField.value = customProfessionInput.value;
+        form.appendChild(hiddenField);
+      }
+    }
+    
+    await onSubmit(e);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="max-w-md">
@@ -90,7 +111,7 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="profession">What's your profession?</Label>
             <Select 

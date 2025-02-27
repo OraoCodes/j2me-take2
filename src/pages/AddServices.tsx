@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,12 +62,10 @@ const AddServices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // First, let's try to get the profession directly from the profiles table metadata
-      let profession = null;
-      
+      // Fetch profile data, including the custom profession if it exists
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('service_type, company_name, referral_source')
+        .select('service_type, company_name, referral_source, custom_profession')
         .eq('id', user.id)
         .single();
 
@@ -78,14 +75,20 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // Try to determine the actual profession
-        // For display purposes, we'll use company_name if available
-        setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
-        
-        // For the actual suggestion generation, use a profession term
-        // that would give better results with the AI
-        const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
-        setUserProfession(suggestionProfession);
+        // Check if we have a custom profession stored (for "Other" selection)
+        if (profile.custom_profession) {
+          // If we have a custom profession, use it for both display and suggestion generation
+          setDisplayProfession(profile.custom_profession);
+          setUserProfession(profile.custom_profession);
+        } else {
+          // Otherwise, fallback to company name or service type mapping
+          setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
+          
+          // For the actual suggestion generation, use a profession term
+          // that would give better results with the AI
+          const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
+          setUserProfession(suggestionProfession);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -95,6 +98,8 @@ const AddServices = () => {
   const fetchServiceSuggestions = async (profession: string) => {
     setLoadingSuggestions(true);
     try {
+      console.log('Fetching suggestions for profession:', profession);
+      
       const { data, error } = await supabase.functions.invoke('generate-service-suggestions', {
         body: { profession }
       });
