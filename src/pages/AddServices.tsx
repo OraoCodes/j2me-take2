@@ -25,6 +25,17 @@ interface ServiceSuggestion {
   description: string;
 }
 
+// Map of service_type to sample professions for better suggestions
+const SERVICE_TYPE_TO_PROFESSION: Record<string, string> = {
+  "Beauty & Wellness": "Beauty Professional",
+  "Home Services": "Home Service Provider",
+  "Professional Services": "Professional Consultant",
+  "Health & Fitness": "Fitness Trainer",
+  "Education & Tutoring": "Education Specialist",
+  "Tech Services": "Technology Expert",
+  "Other": "Service Provider"
+};
+
 const AddServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,6 +46,7 @@ const AddServices = () => {
   const [suggestions, setSuggestions] = useState<ServiceSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [userProfession, setUserProfession] = useState<string | null>(null);
+  const [displayProfession, setDisplayProfession] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserProfile();
@@ -51,6 +63,9 @@ const AddServices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // First, let's try to get the profession directly from the profiles table metadata
+      let profession = null;
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('service_type, company_name, referral_source')
@@ -63,8 +78,14 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // Use service_type as the primary profession identifier
-        setUserProfession(profile.service_type || profile.company_name || "Professional Service");
+        // Try to determine the actual profession
+        // For display purposes, we'll use company_name if available
+        setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
+        
+        // For the actual suggestion generation, use a profession term
+        // that would give better results with the AI
+        const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
+        setUserProfession(suggestionProfession);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -344,7 +365,7 @@ const AddServices = () => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Suggested services for {userProfession || 'your profession'}</h2>
+          <h2 className="text-xl font-semibold mb-4">Suggested services for {displayProfession || 'your profession'}</h2>
           <div className="space-y-6">
             {loadingSuggestions ? (
               <div className="space-y-4">
