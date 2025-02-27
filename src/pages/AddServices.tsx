@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -358,9 +359,12 @@ const AddServices = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white relative">
       <Header />
-      <BackButton previousRoute="/onboarding" className="md:fixed" />
+      <BackButton 
+        previousRoute="/onboarding" 
+        className="fixed left-4 top-4 md:left-6 md:top-6 z-50 bg-white/50 backdrop-blur-sm hover:bg-white/75"
+      />
       <div className="container mx-auto px-4 py-24 max-w-3xl">
         <div className="flex justify-center mb-12">
           <div className="flex items-center gap-3">
