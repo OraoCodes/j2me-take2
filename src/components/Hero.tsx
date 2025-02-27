@@ -69,7 +69,7 @@ export const Hero = () => {
                     <div className="absolute bottom-6 left-6 right-6">
                       <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
                         <p className="text-white text-lg font-medium">
-                          Kevin uses SoloServe to send automated reminders and follow-ups to his clients.
+                          Kevin uses Jitume to send automated reminders and follow-ups to his clients.
                         </p>
                       </div>
                     </div>
@@ -79,7 +79,7 @@ export const Hero = () => {
                   <div className="w-full rounded-2xl shadow-2xl overflow-hidden relative">
                     <img
                       src="/lovable-uploads/03acda6a-09af-4789-985c-0642df7b4b14.png"
-                      alt="Professional using SoloServe app"
+                      alt="Professional using Jitume app"
                       className="w-full h-auto"
                       style={{
                         transform: "perspective(1000px) rotateY(-5deg) rotateX(5deg)",
@@ -88,7 +88,7 @@ export const Hero = () => {
                     <div className="absolute bottom-6 left-6 right-6">
                       <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
                         <p className="text-white text-lg font-medium">
-                          Brian uses SoloServe to schedule shoots and receive secure online payments from clients.
+                          Brian uses Jitume to schedule shoots and receive secure online payments from clients.
                         </p>
                       </div>
                     </div>
@@ -107,7 +107,7 @@ export const Hero = () => {
                     <div className="absolute bottom-6 left-6 right-6">
                       <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/10">
                         <p className="text-white text-lg font-medium">
-                          Wairimu uses SoloServe to organize appointments and keep her clients coming back.
+                          Wairimu uses Jitume to organize appointments and keep her clients coming back.
                         </p>
                       </div>
                     </div>
