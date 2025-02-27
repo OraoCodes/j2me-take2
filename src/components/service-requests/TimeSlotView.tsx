@@ -59,20 +59,22 @@ const TimeSlotView = ({ date, requests }: TimeSlotViewProps) => {
               <div className="w-16 flex-shrink-0 text-sm text-gray-500">
                 {format(hour, 'h:mm a')}
               </div>
-              <div className="flex-1 space-y-1">
-                {hourRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className={cn(
-                      "rounded px-2 py-1 text-white text-sm mb-1 transition-opacity",
-                      getStatusColor(request.status)
-                    )}
-                  >
-                    <div className="font-medium">{request.services.name}</div>
-                    <div className="text-xs opacity-90">{request.customer_name}</div>
-                    <div className="text-xs">{format(parseISO(request.scheduled_at), 'h:mm a')}</div>
-                  </div>
-                ))}
+              <div className="flex-1 min-w-0 overflow-x-auto">
+                <div className="flex flex-wrap gap-2">
+                  {hourRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className={cn(
+                        "rounded px-2 py-1 text-white text-sm mb-1 max-w-full break-words",
+                        getStatusColor(request.status)
+                      )}
+                    >
+                      <div className="font-medium">{request.services.name}</div>
+                      <div className="text-xs opacity-90">{request.customer_name}</div>
+                      <div className="text-xs">{format(parseISO(request.scheduled_at), 'h:mm a')}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           );
