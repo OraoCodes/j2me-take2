@@ -82,15 +82,16 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
     e.preventDefault();
     
     // If "Other" is selected and customProfession is provided, 
-    // add it to a hidden field to be stored in the database
+    // use it to set the company_name which will be used as profession display
     if (selectedProfession === "Other") {
       const form = e.currentTarget;
       const customProfessionInput = form.querySelector('#customProfession') as HTMLInputElement;
       
       if (customProfessionInput && customProfessionInput.value) {
+        // Create a hidden field for company_name to store the custom profession
         const hiddenField = document.createElement('input');
         hiddenField.type = 'hidden';
-        hiddenField.name = 'customProfession';
+        hiddenField.name = 'company_name';
         hiddenField.value = customProfessionInput.value;
         form.appendChild(hiddenField);
       }

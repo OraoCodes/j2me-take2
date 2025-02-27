@@ -62,10 +62,10 @@ const AddServices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch profile data, including the custom profession if it exists
+      // Fetch profile data
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('service_type, company_name, referral_source, custom_profession')
+        .select('service_type, company_name, referral_source')
         .eq('id', user.id)
         .single();
 
@@ -75,20 +75,14 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // Check if we have a custom profession stored (for "Other" selection)
-        if (profile.custom_profession) {
-          // If we have a custom profession, use it for both display and suggestion generation
-          setDisplayProfession(profile.custom_profession);
-          setUserProfession(profile.custom_profession);
-        } else {
-          // Otherwise, fallback to company name or service type mapping
-          setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
-          
-          // For the actual suggestion generation, use a profession term
-          // that would give better results with the AI
-          const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
-          setUserProfession(suggestionProfession);
-        }
+        // Use company_name as the display profession if available
+        // Otherwise fallback to the service type mapping
+        setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
+        
+        // For the actual suggestion generation, use a profession term
+        // that would give better results with the AI
+        const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
+        setUserProfession(suggestionProfession);
       }
     } catch (error) {
       console.error('Error:', error);
