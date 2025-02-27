@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,8 @@ import { Image, Plus, Trash, ChevronUp, ChevronDown, Copy, Wand2 } from "lucide-
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Product {
   name: string;
@@ -18,86 +20,83 @@ interface Product {
   }>;
 }
 
-interface ServiceTemplate {
-  category: string;
-  services: {
-    name: string;
-    price: number;
-    description: string;
-  }[];
+interface ServiceSuggestion {
+  name: string;
+  price: number;
+  description: string;
 }
 
-const serviceTemplates: ServiceTemplate[] = [
-  {
-    category: "Freelance Graphic Designer",
-    services: [
-      {
-        name: "Logo Design",
-        price: 7500,
-        description: "Professional logo design with multiple revisions",
-      },
-      {
-        name: "Social Media Post Design",
-        price: 1500,
-        description: "Eye-catching social media post designs",
-      }
-    ]
-  },
-  {
-    category: "Personal Trainer",
-    services: [
-      {
-        name: "1-on-1 Virtual Workout Session",
-        price: 3000,
-        description: "Personalized virtual training session",
-      },
-      {
-        name: "4-Week Custom Workout Plan",
-        price: 12000,
-        description: "Comprehensive month-long workout program",
-      }
-    ]
-  },
-  {
-    category: "Makeup Artist",
-    services: [
-      {
-        name: "Bridal Makeup",
-        price: 15000,
-        description: "Complete bridal makeup service",
-      },
-      {
-        name: "Casual Event Makeup",
-        price: 7500,
-        description: "Professional makeup for any occasion",
-      }
-    ]
-  },
-  {
-    category: "Photographer",
-    services: [
-      {
-        name: "Professional Headshots",
-        price: 11250,
-        description: "High-quality professional headshot session",
-      },
-      {
-        name: "Event Photography (3 Hours)",
-        price: 30000,
-        description: "Event coverage with edited photos",
-      }
-    ]
-  }
+const professions = [
+  "Graphic Designer",
+  "Personal Trainer",
+  "Makeup Artist",
+  "Photographer",
+  "Hair Stylist",
+  "Massage Therapist",
+  "Web Developer",
+  "Content Creator",
+  "Tutor",
+  "Wedding Planner",
+  "Interior Designer",
+  "Accountant",
+  "Personal Chef",
+  "Tour Guide",
+  "DJ",
+  "Yoga Instructor",
+  "Event Planner",
+  "Handyman",
+  "Business Consultant",
+  "Translator"
 ];
 
 const AddServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([{ name: "", price: 0, images: [] }]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
+  const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<ServiceSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (selectedProfession) {
+      fetchServiceSuggestions(selectedProfession);
+    }
+  }, [selectedProfession]);
+
+  const fetchServiceSuggestions = async (profession: string) => {
+    setLoadingSuggestions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-service-suggestions', {
+        body: { profession }
+      });
+
+      if (error) {
+        console.error('Error fetching service suggestions:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to get service suggestions. Please try again.",
+        });
+        return;
+      }
+
+      if (data && data.services) {
+        setSuggestions(data.services);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to get service suggestions. Please try again.",
+      });
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   const handleImageUpload = (productIndex: number, files: FileList) => {
     const newProducts = [...products];
@@ -135,14 +134,32 @@ const AddServices = () => {
     setProducts(newProducts);
   };
 
-  const useTemplate = (template: ServiceTemplate) => {
-    setSelectedCategory(template.category);
-    const newProducts = template.services.map(service => ({
-      name: service.name,
-      price: service.price,
-      images: []
-    }));
+  const useSuggestion = (suggestion: ServiceSuggestion) => {
+    const newProducts = [...products];
+    
+    // Find an empty product slot or add a new one
+    let emptyIndex = newProducts.findIndex(p => p.name === "" && p.price === 0 && p.images.length === 0);
+    
+    if (emptyIndex === -1) {
+      newProducts.push({
+        name: suggestion.name,
+        price: suggestion.price,
+        images: []
+      });
+    } else {
+      newProducts[emptyIndex] = {
+        ...newProducts[emptyIndex],
+        name: suggestion.name,
+        price: suggestion.price
+      };
+    }
+    
     setProducts(newProducts);
+    
+    toast({
+      title: "Service Added",
+      description: `${suggestion.name} has been added to your services.`
+    });
   };
 
   const saveServices = async () => {
@@ -322,31 +339,56 @@ const AddServices = () => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Choose from example templates:</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {serviceTemplates.map((template) => (
-              <button
-                key={template.category}
-                onClick={() => useTemplate(template)}
-                className={`p-4 text-left rounded-lg border transition-all ${
-                  selectedCategory === template.category
-                    ? "border-gebeya-pink bg-pink-50"
-                    : "border-gray-200 hover:border-gebeya-pink"
-                }`}
+          <h2 className="text-xl font-semibold mb-4">Select your profession for suggestions:</h2>
+          <div className="space-y-6">
+            <div>
+              <Select
+                value={selectedProfession || ""}
+                onValueChange={(value) => setSelectedProfession(value)}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium">{template.category}</h3>
-                  <Copy className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="mt-2 text-sm text-gray-500">
-                  {template.services.map(service => (
-                    <div key={service.name} className="mt-1">
-                      • {service.name} - KES {service.price.toLocaleString()}
-                    </div>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your profession" />
+                </SelectTrigger>
+                <SelectContent>
+                  {professions.map((profession) => (
+                    <SelectItem key={profession} value={profession}>
+                      {profession}
+                    </SelectItem>
                   ))}
-                </div>
-              </button>
-            ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {loadingSuggestions ? (
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+              </div>
+            ) : suggestions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {suggestions.map((suggestion, index) => (
+                  <div 
+                    key={index}
+                    className="p-4 text-left rounded-lg border hover:border-gebeya-pink transition-all cursor-pointer"
+                    onClick={() => useSuggestion(suggestion)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{suggestion.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gebeya-pink font-medium">KES {suggestion.price.toLocaleString()}</span>
+                        <Copy className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500">{suggestion.description}</p>
+                  </div>
+                ))}
+              </div>
+            ) : selectedProfession ? (
+              <div className="text-center py-6">
+                <p className="text-gray-500">No suggestions available. Please try a different profession.</p>
+              </div>
+            ) : null}
           </div>
         </div>
 
