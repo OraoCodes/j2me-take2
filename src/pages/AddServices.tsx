@@ -25,7 +25,6 @@ interface ServiceSuggestion {
   description: string;
 }
 
-// Map of service_type to sample professions for better suggestions
 const SERVICE_TYPE_TO_PROFESSION: Record<string, string> = {
   "Beauty & Wellness": "Beauty Professional",
   "Home Services": "Home Service Provider",
@@ -36,7 +35,6 @@ const SERVICE_TYPE_TO_PROFESSION: Record<string, string> = {
   "Other": "Service Provider"
 };
 
-// Map of specific professions that should override the generic service type mapping
 const SPECIFIC_PROFESSION_MAPPING: Record<string, string> = {
   "Photographer": "Photographer",
   "Hairdresser / Hairstylist": "Hairstylist",
@@ -80,7 +78,6 @@ const AddServices = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch profile data
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('service_type, company_name, referral_source')
@@ -93,19 +90,15 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // Store the raw company_name for display purposes
         setRawProfession(profile.company_name);
         setDisplayProfession(profile.company_name);
         
-        // First, check if we have the profession in our specific mapping
         let suggestionProfession = SPECIFIC_PROFESSION_MAPPING[profile.company_name || ""] || null;
         
-        // If not found in specific mapping, try the service type mapping
         if (!suggestionProfession && profile.service_type) {
           suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type] || null;
         }
         
-        // If still no match, just use the raw company_name
         if (!suggestionProfession) {
           suggestionProfession = profile.company_name || "Service Provider";
         }
@@ -174,7 +167,6 @@ const AddServices = () => {
     const newProducts = [...products];
     const product = newProducts[productIndex];
     
-    // Revoke the object URL to prevent memory leaks
     URL.revokeObjectURL(product.images[imageIndex].preview);
     
     product.images = product.images.filter((_, index) => index !== imageIndex);
@@ -186,7 +178,6 @@ const AddServices = () => {
   };
 
   const removeProduct = (index: number) => {
-    // Cleanup object URLs before removing the product
     products[index].images.forEach(image => URL.revokeObjectURL(image.preview));
     const newProducts = products.filter((_, i) => i !== index);
     setProducts(newProducts);
@@ -195,7 +186,6 @@ const AddServices = () => {
   const useSuggestion = (suggestion: ServiceSuggestion) => {
     const newProducts = [...products];
     
-    // Find an empty product slot or add a new one
     let emptyIndex = newProducts.findIndex(p => p.name === "" && p.price === 0 && p.images.length === 0);
     
     if (emptyIndex === -1) {
@@ -259,7 +249,7 @@ const AddServices = () => {
               name: product.name,
               price: product.price,
               user_id: user.id,
-              image_url: imageUrls[0], // Set the first image as the main image
+              image_url: imageUrls[0],
               is_active: true
             })
             .select()
@@ -267,7 +257,6 @@ const AddServices = () => {
 
           if (serviceError) throw serviceError;
 
-          // Insert additional images into service_images table
           if (imageUrls.length > 1) {
             const additionalImages = imageUrls.slice(1).map((url, index) => ({
               service_id: service.id,
