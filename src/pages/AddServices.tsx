@@ -53,7 +53,7 @@ const AddServices = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('profession, customProfession')
+        .select('service_type, company_name, referral_source')
         .eq('id', user.id)
         .single();
 
@@ -63,12 +63,8 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // If the user selected "Other", use their custom profession input
-        if (profile.profession === "Other" && profile.customProfession) {
-          setUserProfession(profile.customProfession);
-        } else if (profile.profession) {
-          setUserProfession(profile.profession);
-        }
+        // Use service_type as the primary profession identifier
+        setUserProfession(profile.service_type || profile.company_name || "Professional Service");
       }
     } catch (error) {
       console.error('Error:', error);
