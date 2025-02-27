@@ -42,35 +42,36 @@ const TimeSlotView = ({ date, requests }: TimeSlotViewProps) => {
   };
 
   return (
-    <div className="border rounded-lg shadow bg-white">
+    <div className="border rounded-lg shadow bg-white overflow-hidden">
       <div className="p-4 border-b">
         <h3 className="text-lg font-semibold text-gebeya-purple">
           {format(date, 'MMMM d, yyyy')}
         </h3>
       </div>
-      <div className="divide-y">
+      <div className="divide-y max-w-full">
         {hours.map((hour) => {
           const hourRequests = getRequestsForHour(hour);
           return (
             <div
               key={hour.toISOString()}
-              className="flex items-start p-2 hover:bg-gray-50 min-h-[60px] relative group"
+              className="flex items-start p-2 hover:bg-gray-50 min-h-[60px] relative group w-full"
             >
-              <div className="w-12 flex-shrink-0 text-xs text-gray-500">
+              <div className="w-12 flex-shrink-0 text-[11px] text-gray-500">
                 {format(hour, 'h:mm a')}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-1">
                 <div className="flex flex-wrap gap-1">
                   {hourRequests.map((request) => (
                     <div
                       key={request.id}
                       className={cn(
-                        "rounded px-1.5 py-0.5 text-white text-xs mb-1 max-w-[calc(100%-4px)] break-words",
+                        "rounded px-1.5 py-0.5 text-white text-xs mb-1 max-w-[calc(100%-8px)] break-words",
                         getStatusColor(request.status)
                       )}
+                      style={{ minWidth: 'min-content' }}
                     >
-                      <div className="font-medium text-[11px] leading-tight">{request.services.name}</div>
-                      <div className="text-[10px] leading-tight opacity-90">{request.customer_name}</div>
+                      <div className="font-medium text-[11px] leading-tight whitespace-normal">{request.services.name}</div>
+                      <div className="text-[10px] leading-tight opacity-90 whitespace-normal">{request.customer_name}</div>
                       <div className="text-[10px] leading-tight">{format(parseISO(request.scheduled_at), 'h:mm a')}</div>
                     </div>
                   ))}
