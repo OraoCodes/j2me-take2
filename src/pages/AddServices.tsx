@@ -53,7 +53,7 @@ const AddServices = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('service_type')
+        .select('profession, customProfession')
         .eq('id', user.id)
         .single();
 
@@ -62,8 +62,13 @@ const AddServices = () => {
         return;
       }
 
-      if (profile?.service_type) {
-        setUserProfession(profile.service_type);
+      if (profile) {
+        // If the user selected "Other", use their custom profession input
+        if (profile.profession === "Other" && profile.customProfession) {
+          setUserProfession(profile.customProfession);
+        } else if (profile.profession) {
+          setUserProfession(profile.profession);
+        }
       }
     } catch (error) {
       console.error('Error:', error);
