@@ -4,9 +4,19 @@ import { Category } from "@/types/dashboard";
 import { toast } from "@/hooks/use-toast";
 
 export const fetchCategories = async () => {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.error("No authenticated user found");
+    return [];
+  }
+
+  // Fetch only categories belonging to the current user
   const { data, error } = await supabase
     .from('service_categories')
     .select('*')
+    .eq('user_id', user.id)
     .order('sequence', { ascending: true });
 
   if (error) {
