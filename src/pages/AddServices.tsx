@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +36,21 @@ const SERVICE_TYPE_TO_PROFESSION: Record<string, string> = {
   "Other": "Service Provider"
 };
 
+// Map of specific professions that should override the generic service type mapping
+const SPECIFIC_PROFESSION_MAPPING: Record<string, string> = {
+  "Photographer": "Photographer",
+  "Hairdresser / Hairstylist": "Hairstylist",
+  "Nail Technician": "Nail Technician",
+  "Makeup Artist": "Makeup Artist", 
+  "Personal Trainer": "Personal Trainer",
+  "Massage Therapist": "Massage Therapist",
+  "Graphic Designer": "Graphic Designer",
+  "Social Media Manager": "Social Media Manager",
+  "Barber": "Barber",
+  "Videographer": "Videographer",
+  "Coach": "Life Coach"
+};
+
 const AddServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -47,6 +61,7 @@ const AddServices = () => {
   const [suggestions, setSuggestions] = useState<ServiceSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [userProfession, setUserProfession] = useState<string | null>(null);
+  const [rawProfession, setRawProfession] = useState<string | null>(null);
   const [displayProfession, setDisplayProfession] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +70,7 @@ const AddServices = () => {
 
   useEffect(() => {
     if (userProfession) {
+      console.log('Preparing to fetch suggestions for:', userProfession);
       fetchServiceSuggestions(userProfession);
     }
   }, [userProfession]);
@@ -77,13 +93,27 @@ const AddServices = () => {
       }
 
       if (profile) {
-        // Use company_name as the display profession if available
-        // Otherwise fallback to the service type mapping
-        setDisplayProfession(profile.company_name || SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"]);
+        // Store the raw company_name for display purposes
+        setRawProfession(profile.company_name);
+        setDisplayProfession(profile.company_name);
         
-        // For the actual suggestion generation, use a profession term
-        // that would give better results with the AI
-        const suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type || "Other"] || profile.company_name || "Service Provider";
+        // First, check if we have the profession in our specific mapping
+        let suggestionProfession = SPECIFIC_PROFESSION_MAPPING[profile.company_name || ""] || null;
+        
+        // If not found in specific mapping, try the service type mapping
+        if (!suggestionProfession && profile.service_type) {
+          suggestionProfession = SERVICE_TYPE_TO_PROFESSION[profile.service_type] || null;
+        }
+        
+        // If still no match, just use the raw company_name
+        if (!suggestionProfession) {
+          suggestionProfession = profile.company_name || "Service Provider";
+        }
+        
+        console.log('Setting user profession for suggestions:', suggestionProfession);
+        console.log('Raw profession from profile:', profile.company_name);
+        console.log('Service type from profile:', profile.service_type);
+        
         setUserProfession(suggestionProfession);
       }
     } catch (error) {
@@ -111,6 +141,7 @@ const AddServices = () => {
       }
 
       if (data && data.services) {
+        console.log('Received service suggestions:', data.services);
         setSuggestions(data.services);
       }
     } catch (error) {
