@@ -1,3 +1,4 @@
+
 import { useRef, useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, Wand2 } from "lucide-react";
+import { Loader2, Upload, Wand2, Search } from "lucide-react";
 import { ProfileImageCropper } from "./ProfileImageCropper";
 import {
   Tooltip,
@@ -57,6 +58,7 @@ export const SettingsDialog = ({
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [selectedPrefix, setSelectedPrefix] = useState<string>("+254");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,6 +92,14 @@ export const SettingsDialog = ({
     setShowCropper(false);
     setTempImageUrl(null);
   };
+
+  // Filter phone prefixes based on search query
+  const filteredPrefixes = searchQuery 
+    ? PHONE_PREFIXES.filter(prefix => 
+        prefix.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prefix.value.includes(searchQuery)
+      )
+    : PHONE_PREFIXES;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -178,10 +188,21 @@ export const SettingsDialog = ({
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Select prefix" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
+                    <div className="px-2 py-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search country code..."
+                          className="pl-8"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                    </div>
                     <SelectGroup>
                       <SelectLabel>Phone Prefixes</SelectLabel>
-                      {PHONE_PREFIXES.map((prefix) => (
+                      {filteredPrefixes.map((prefix) => (
                         <SelectItem key={prefix.value} value={prefix.value}>
                           {prefix.label}
                         </SelectItem>
