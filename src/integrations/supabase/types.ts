@@ -384,6 +384,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_telegram_connections: {
+        Row: {
+          connected_at: string | null
+          id: string
+          telegram_chat_id: number
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string | null
+          id?: string
+          telegram_chat_id: number
+          user_id: string
+        }
+        Update: {
+          connected_at?: string | null
+          id?: string
+          telegram_chat_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

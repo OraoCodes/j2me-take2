@@ -151,14 +151,15 @@ const ServiceRequestsView = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
 
-      const { data, error } = await supabase
-        .from('user_telegram_connections')
-        .select('telegram_chat_id')
-        .eq('user_id', userData.user.id)
-        .single();
+      // Query the user_telegram_connections table
+      const { data, error } = await supabase.rpc('check_telegram_connection', {
+        user_id_param: userData.user.id
+      });
 
-      if (!error && data?.telegram_chat_id) {
+      if (!error && data) {
         setIsTelegramConnected(true);
+      } else {
+        console.log('No Telegram connection found:', error);
       }
     } catch (error) {
       console.error('Error checking Telegram connection:', error);
@@ -178,7 +179,7 @@ const ServiceRequestsView = () => {
       }
 
       // Create a Telegram bot deep link with the user ID
-      const botUsername = 'your_bot_username'; // Replace with your bot's username
+      const botUsername = 'gebeya_service_bot'; // Replace with your actual bot username
       const link = `https://t.me/${botUsername}?start=${userData.user.id}`;
       
       // Open the link in a new tab
