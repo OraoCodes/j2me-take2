@@ -12,6 +12,7 @@ import { SearchAndCategories } from '@/components/service-page/SearchAndCategori
 import { ServiceCard } from '@/components/service-page/ServiceCard';
 import ServiceChat from '@/components/service-chat/ServiceChat';
 import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 interface ServiceImage {
   id: string;
@@ -174,7 +175,7 @@ const ServicePage = () => {
 <i>You can manage this request in your Gebeya dashboard.</i>
 `;
 
-        const response = await fetch('/functions/v1/telegram-bot', {
+        const response = await fetch('/api/telegram-bot', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -279,6 +280,8 @@ const ServicePage = () => {
           />
         )}
       </div>
+      
+      <Toaster />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -352,7 +351,7 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
         console.log('Sending telegram notification with message:', message);
         
         // Try sending via normal method first
-        let response = await fetch('/functions/v1/telegram-bot', {
+        let response = await fetch('/api/telegram-bot', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -370,7 +369,7 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
         if (!result.success || result.error) {
           console.log('Trying direct message to hardcoded chat ID as fallback');
           
-          response = await fetch('/functions/v1/telegram-bot', {
+          response = await fetch('/api/telegram-bot', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

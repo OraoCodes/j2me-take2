@@ -1,6 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+
+// CORS headers for browser requests
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 interface RequestBody {
   user_id?: string;
@@ -12,6 +18,7 @@ interface RequestBody {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling CORS preflight request");
     return new Response("ok", { headers: corsHeaders });
   }
   
@@ -23,7 +30,10 @@ serve(async (req) => {
       console.error("TELEGRAM_BOT_TOKEN is not set");
       return new Response(
         JSON.stringify({ error: "TELEGRAM_BOT_TOKEN is not set" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
+        }
       );
     }
     
@@ -79,7 +89,6 @@ serve(async (req) => {
 
     // Create a Supabase client
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabaseAdmin = createClient(
@@ -98,6 +107,37 @@ serve(async (req) => {
 
     if (telegramError || !telegramConnection) {
       console.error("Error or no Telegram connection found:", telegramError?.message || "No connection");
+      
+      // Fallback to hardcoded chat ID if no connection found
+      if (requestData.chat_id) {
+        console.log(`Falling back to provided chat_id: ${requestData.chat_id}`);
+        
+        const telegramApiUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const telegramResponse = await fetch(telegramApiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_id: requestData.chat_id,
+            text: requestData.notification,
+            parse_mode: "HTML",
+          }),
+        });
+
+        const telegramResult = await telegramResponse.json();
+        console.log("Fallback Telegram API response:", JSON.stringify(telegramResult));
+
+        return new Response(
+          JSON.stringify({ 
+            success: telegramResult.ok, 
+            message: "Fallback notification sent", 
+            telegram_response: telegramResult 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ error: "No Telegram connection found for this user" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
@@ -139,6 +179,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper function to create a Supabase client
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
