@@ -31,7 +31,9 @@ export const TelegramLoginButton = () => {
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); // Your bot username
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-auth-url', 'https://ivndgetmkcwapmttsbqa.supabase.co'); // Use Supabase URL as auth domain
+    
+    // Don't set data-auth-url to avoid domain validation issues
+    // Instead, we'll use the JavaScript SDK approach
     script.setAttribute('data-request-access', 'write');
     script.async = true;
     
