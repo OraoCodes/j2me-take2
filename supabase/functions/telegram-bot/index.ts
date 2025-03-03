@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 
@@ -79,9 +80,9 @@ async function verifyTelegramWebAppData(telegramData: TelegramUser): Promise<boo
   return hash === telegramData.hash;
 }
 
-async function handleTelegramAuth(telegramUser: TelegramUser) {
+async function handleTelegramAuth(telegramUser: TelegramUser, forceSignUp = false) {
   try {
-    console.log("Handling Telegram auth for user:", telegramUser.id);
+    console.log("Handling Telegram auth for user:", telegramUser.id, "forceSignUp:", forceSignUp);
     
     // First check if the user already exists by checking user_telegram_connections
     const { data: connectionData, error: connectionError } = await supabase
@@ -95,8 +96,8 @@ async function handleTelegramAuth(telegramUser: TelegramUser) {
       throw new Error('Error checking existing user');
     }
 
-    // If we found a connection, sign in as that user
-    if (connectionData?.user_id) {
+    // If we found a connection and not forcing signup, sign in as that user
+    if (connectionData?.user_id && !forceSignUp) {
       console.log("Found existing user:", connectionData.user_id);
       
       // Generate a sign-in link for the existing user
@@ -190,6 +191,9 @@ Deno.serve(async (req) => {
       // Handle auth flow
       if (body.action === 'auth' && body.telegramUser) {
         const telegramUser = body.telegramUser as TelegramUser;
+        const forceSignUp = body.isSignUp === true;
+        
+        console.log("Processing auth request with forceSignUp:", forceSignUp);
         
         // For development, we can skip verification
         // In production, uncomment this verification
@@ -203,7 +207,9 @@ Deno.serve(async (req) => {
         }
         */
         
-        const authResult = await handleTelegramAuth(telegramUser);
+        const authResult = await handleTelegramAuth(telegramUser, forceSignUp);
+        
+        console.log("Auth result:", authResult);
         
         return new Response(
           JSON.stringify(authResult),

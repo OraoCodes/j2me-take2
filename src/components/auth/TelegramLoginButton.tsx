@@ -50,6 +50,8 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
 
     // Create global callback function that Telegram will call
     window.onTelegramAuth = handleTelegramAuth;
+    
+    console.log('Telegram login component mounted, isSignUp:', isSignUp);
 
     return () => {
       // Remove script on unmount
@@ -64,6 +66,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const handleTelegramLogin = () => {
     if (window.Telegram?.Login?.auth) {
       setIsLoading(true);
+      console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
       window.Telegram.Login.auth(
         {
           bot_id: BOT_ID,
@@ -83,15 +86,20 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const handleTelegramAuth = async (telegramUser: any) => {
     try {
       setIsLoading(true);
-      console.log('Telegram user data:', telegramUser);
+      console.log('Telegram user data received:', telegramUser);
       
       if (!telegramUser) {
         throw new Error('Authentication cancelled or failed');
       }
       
       // Call our Supabase Edge Function
+      console.log('Calling telegram-bot function with isSignUp:', isSignUp);
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
-        body: { action: 'auth', telegramUser }
+        body: { 
+          action: 'auth', 
+          telegramUser,
+          isSignUp // Pass the isSignUp flag to the function
+        }
       });
       
       if (error) {
@@ -99,12 +107,17 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         throw error;
       }
       
+      console.log('Response from telegram-bot function:', data);
+      
       if (data.authLink) {
         // Store the action type before navigating
-        const isNewUser = data.action === 'signup';
-        localStorage.setItem('telegram_auth_flow', isNewUser ? 'signup' : 'signin');
+        const isNewUser = data.action === 'signup' || isSignUp;
+        const authFlow = isNewUser ? 'signup' : 'signin';
+        console.log(`Setting telegram_auth_flow to '${authFlow}'`);
+        localStorage.setItem('telegram_auth_flow', authFlow);
         
         // Redirect to the auth link
+        console.log('Redirecting to auth link:', data.authLink);
         window.location.href = data.authLink;
       } else {
         toast({

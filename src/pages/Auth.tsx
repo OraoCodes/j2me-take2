@@ -21,22 +21,31 @@ const Auth = () => {
   const defaultTab = searchParams.get("tab") || "signin";
 
   useEffect(() => {
+    console.log('Auth component mounted, defaultTab:', defaultTab);
+    
     // Check if user is already authenticated
     const checkSession = async () => {
+      console.log('Checking for existing session...');
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
+        console.log('Session found, user is authenticated');
         // Get the stored auth flow type
         const authFlow = localStorage.getItem('telegram_auth_flow');
+        console.log('Retrieved auth flow from localStorage:', authFlow);
         
         if (authFlow === 'signup') {
+          console.log('Navigating to onboarding...');
           navigate('/onboarding');
         } else {
+          console.log('Navigating to dashboard...');
           navigate('/dashboard');
         }
         
         // Clean up after successful redirect
         localStorage.removeItem('telegram_auth_flow');
+      } else {
+        console.log('No session found, staying on auth page');
       }
     };
     
@@ -44,15 +53,19 @@ const Auth = () => {
     
     // Listen for authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change event:', event);
+      console.log('Auth state change event:', event, 'Session:', session ? 'exists' : 'null');
       
       if (event === 'SIGNED_IN' && session) {
+        console.log('User signed in event detected');
         // Get the stored auth flow type
         const authFlow = localStorage.getItem('telegram_auth_flow');
+        console.log('Retrieved auth flow from localStorage:', authFlow);
         
         if (authFlow === 'signup') {
+          console.log('Navigating to onboarding based on auth event...');
           navigate('/onboarding');
         } else {
+          console.log('Navigating to dashboard based on auth event...');
           navigate('/dashboard');
         }
         
@@ -62,6 +75,7 @@ const Auth = () => {
     });
     
     return () => {
+      console.log('Auth component unmounting, cleaning up subscription');
       subscription.unsubscribe();
     };
   }, [navigate]);
