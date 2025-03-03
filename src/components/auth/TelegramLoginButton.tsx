@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-export const TelegramLoginButton = () => {
+export const TelegramLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const BOT_ID = '7984716005'; // Updated Telegram bot ID
@@ -142,7 +142,7 @@ export const TelegramLoginButton = () => {
       className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
       disabled={isLoading}
     >
-      {isLoading ? "Authenticating..." : "Sign in with Telegram"}
+      {isLoading ? "Authenticating..." : isSignUp ? "Sign up with Telegram" : "Sign in with Telegram"}
     </Button>
   );
 };

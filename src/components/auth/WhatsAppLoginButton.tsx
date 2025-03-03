@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export const WhatsAppLoginButton = () => {
+export const WhatsAppLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -68,7 +68,7 @@ export const WhatsAppLoginButton = () => {
           className="w-full bg-[#25D366] hover:bg-[#25D366]/90 text-white"
           onClick={() => setIsOpen(true)}
         >
-          Sign in with WhatsApp
+          {isSignUp ? "Sign up with WhatsApp" : "Sign in with WhatsApp"}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -88,7 +88,7 @@ export const WhatsAppLoginButton = () => {
             className="w-full bg-[#25D366] hover:bg-[#25D366]/90"
             disabled={isLoading}
           >
-            {isLoading ? "Processing..." : "Continue with WhatsApp"}
+            {isLoading ? "Processing..." : isSignUp ? "Continue with WhatsApp" : "Continue with WhatsApp"}
           </Button>
         </form>
       </DialogContent>

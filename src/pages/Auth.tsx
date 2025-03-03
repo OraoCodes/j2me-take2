@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ const Auth = () => {
   const defaultTab = searchParams.get("tab") || "signin";
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/dashboard");
@@ -85,7 +83,6 @@ const Auth = () => {
       });
       setIsLoading(false);
     } else {
-      // Don't show the success toast since we're redirecting immediately
       navigate("/dashboard");
     }
   };
@@ -119,8 +116,8 @@ const Auth = () => {
           <TabsContent value="signin">
             <div className="space-y-4">
               <div className="grid gap-2">
-                <WhatsAppLoginButton />
-                <TelegramLoginButton />
+                <WhatsAppLoginButton isSignUp={false} />
+                <TelegramLoginButton isSignUp={false} />
               </div>
               
               <div className="relative">
@@ -174,8 +171,8 @@ const Auth = () => {
           <TabsContent value="signup">
             <div className="space-y-4">
               <div className="grid gap-2">
-                <WhatsAppLoginButton />
-                <TelegramLoginButton />
+                <WhatsAppLoginButton isSignUp={true} />
+                <TelegramLoginButton isSignUp={true} />
               </div>
               
               <div className="relative">
