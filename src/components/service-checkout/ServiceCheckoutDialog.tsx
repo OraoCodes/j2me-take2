@@ -350,8 +350,8 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
 
         console.log('Sending telegram notification with message:', message);
         
-        // Try sending via normal method first
-        let response = await fetch('/api/telegram-bot', {
+        // Send directly to the API endpoint
+        const response = await fetch('/api/telegram-bot', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -362,14 +362,18 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
           }),
         });
 
-        let result = await response.json();
+        if (!response.ok) {
+          throw new Error(`Error sending notification: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
         console.log('Telegram notification result:', result);
         
-        // If the normal method fails or returns an error, try the direct method
+        // If there was an error in the response, try the direct method with hardcoded chat ID
         if (!result.success || result.error) {
           console.log('Trying direct message to hardcoded chat ID as fallback');
           
-          response = await fetch('/api/telegram-bot', {
+          const directResponse = await fetch('/api/telegram-bot', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -381,8 +385,8 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
             }),
           });
           
-          result = await response.json();
-          console.log('Direct telegram notification result:', result);
+          const directResult = await directResponse.json();
+          console.log('Direct telegram notification result:', directResult);
         }
       } catch (notifyError) {
         console.error('Error sending telegram notification:', notifyError);

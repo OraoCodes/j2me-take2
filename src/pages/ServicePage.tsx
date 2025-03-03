@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,6 +185,10 @@ const ServicePage = () => {
             direct_message: true // Flag to indicate this is a direct message to chat_id
           }),
         });
+
+        if (!response.ok) {
+          throw new Error(`Error sending notification: ${response.status} ${response.statusText}`);
+        }
 
         const result = await response.json();
         console.log('Direct Telegram notification result:', result);
