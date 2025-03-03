@@ -16,18 +16,20 @@ declare global {
         }) => void;
       }
     }
+    onTelegramAuth: (user: any) => void;
   }
 }
 
 export const TelegramLoginButton = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const BOT_ID = '6768063576'; // Telegram bot ID
 
   useEffect(() => {
     // Load Telegram Login Widget script
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); // Replace with your bot username
+    script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); // Your bot username
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-auth-url', '#');
     script.setAttribute('data-request-access', 'write');
@@ -42,7 +44,7 @@ export const TelegramLoginButton = () => {
     script.id = 'telegram-login-script';
     document.body.appendChild(script);
 
-    // Listen for Telegram auth
+    // Create global callback function that Telegram will call
     window.onTelegramAuth = handleTelegramAuth;
 
     return () => {
@@ -57,9 +59,10 @@ export const TelegramLoginButton = () => {
 
   const handleTelegramLogin = () => {
     if (window.Telegram?.Login?.auth) {
+      setIsLoading(true);
       window.Telegram.Login.auth(
         {
-          bot_id: '6768063576', // Replace with your bot ID
+          bot_id: BOT_ID,
           request_access: true,
           callback: handleTelegramAuth,
         }
@@ -76,6 +79,11 @@ export const TelegramLoginButton = () => {
   const handleTelegramAuth = async (telegramUser: any) => {
     try {
       setIsLoading(true);
+      console.log('Telegram user data:', telegramUser);
+      
+      if (!telegramUser) {
+        throw new Error('Authentication cancelled or failed');
+      }
       
       // Call our Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
@@ -83,6 +91,7 @@ export const TelegramLoginButton = () => {
       });
       
       if (error) {
+        console.error('Telegram auth error from function:', error);
         throw error;
       }
       
@@ -118,10 +127,3 @@ export const TelegramLoginButton = () => {
     </Button>
   );
 };
-
-// Need to attach this method to window for the Telegram widget
-declare global {
-  interface Window {
-    onTelegramAuth: (user: any) => void;
-  }
-}
