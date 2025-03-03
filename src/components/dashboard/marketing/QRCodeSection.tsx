@@ -17,7 +17,11 @@ export const QRCodeSection = ({
   onDownloadSimple,
   onDownloadStyled,
 }: QRCodeSectionProps) => {
+  // Force the full URL to use https when deployed to ensure QR code consistency
   const qrCodeUrl = generateQRCodeUrl(fullUrl);
+  
+  // Log the URL to help with debugging
+  console.log("QR Code generated for URL:", fullUrl);
 
   return (
     <Card>

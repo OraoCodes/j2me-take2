@@ -42,7 +42,11 @@ export const Marketing = () => {
     fetchStoreUrl();
   }, []);
 
+  // Generate the absolute URL to ensure it works when deployed
   const fullUrl = `${window.location.origin}${storeUrl}`;
+  
+  // Log the URL for debugging
+  console.log("Generated full URL for sharing:", fullUrl);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(`${window.location.origin}${text}`);

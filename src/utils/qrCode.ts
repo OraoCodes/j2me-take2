@@ -1,6 +1,9 @@
 
 export const generateQRCodeUrl = (url: string) => {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  // Ensure the URL is properly encoded
+  const encodedUrl = encodeURIComponent(url);
+  console.log("Encoded URL for QR:", encodedUrl);
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
 };
 
 export const downloadQRCode = async (url: string, fileName: string) => {
