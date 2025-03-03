@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,6 @@ const ServiceRequestsView = () => {
   }, []);
 
   const setupRealtimeSubscription = () => {
-    // Subscribe to real-time updates for new service requests
     const channel = supabase
       .channel('service_requests_changes')
       .on('postgres_changes', { 
@@ -67,7 +65,6 @@ const ServiceRequestsView = () => {
         table: 'service_requests' 
       }, (payload) => {
         console.log('New service request received:', payload);
-        // Fetch the complete request with the services joined
         fetchNewRequest(payload.new.id);
       })
       .subscribe();
@@ -94,16 +91,11 @@ const ServiceRequestsView = () => {
       if (error) throw error;
 
       if (data) {
-        // Add to requests list
         setRequests(prevRequests => [data, ...prevRequests]);
-        
-        // Show toast notification
         toast({
           title: "New Service Request",
           description: `${data.customer_name} requested ${data.services.name}`,
         });
-        
-        // Send Telegram notification
         sendTelegramNotification(data);
       }
     } catch (error) {
@@ -151,10 +143,11 @@ const ServiceRequestsView = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
 
-      // Query the user_telegram_connections table
-      const { data, error } = await supabase.rpc('check_telegram_connection', {
-        user_id_param: userData.user.id
-      });
+      const { data, error } = await supabase
+        .from('user_telegram_connections')
+        .select('*')
+        .eq('user_id', userData.user.id)
+        .single();
 
       if (!error && data) {
         setIsTelegramConnected(true);
@@ -178,11 +171,9 @@ const ServiceRequestsView = () => {
         return;
       }
 
-      // Create a Telegram bot deep link with the user ID
-      const botUsername = 'gebeya_service_bot'; // Replace with your actual bot username
+      const botUsername = 'gebeya_service_bot';
       const link = `https://t.me/${botUsername}?start=${userData.user.id}`;
       
-      // Open the link in a new tab
       window.open(link, '_blank');
       
       toast({
@@ -214,10 +205,10 @@ const ServiceRequestsView = () => {
 
       if (error) throw error;
 
-      console.log('Fetched service requests:', data); // Debug log
+      console.log('Fetched service requests:', data);
       setRequests(data || []);
     } catch (error) {
-      console.error('Error fetching requests:', error); // Debug log
+      console.error('Error fetching requests:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -248,7 +239,7 @@ const ServiceRequestsView = () => {
         description: "Request status updated successfully",
       });
     } catch (error) {
-      console.error('Error updating status:', error); // Debug log
+      console.error('Error updating status:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -277,7 +268,7 @@ const ServiceRequestsView = () => {
         description: `Service request marked as ${!currentPaidStatus ? 'paid' : 'unpaid'}`,
       });
     } catch (error) {
-      console.error('Error toggling paid status:', error); // Debug log
+      console.error('Error toggling paid status:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -292,7 +283,7 @@ const ServiceRequestsView = () => {
 
   const handleEditComplete = () => {
     setEditingRequest(null);
-    fetchRequests(); // Refresh the requests list
+    fetchRequests();
   };
 
   const getStatusBadge = (status: string) => {
