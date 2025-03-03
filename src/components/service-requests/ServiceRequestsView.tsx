@@ -48,11 +48,155 @@ const ServiceRequestsView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
+  const [isTelegramConnected, setIsTelegramConnected] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchRequests();
+    checkTelegramConnection();
+    setupRealtimeSubscription();
   }, []);
+
+  const setupRealtimeSubscription = () => {
+    // Subscribe to real-time updates for new service requests
+    const channel = supabase
+      .channel('service_requests_changes')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public',
+        table: 'service_requests' 
+      }, (payload) => {
+        console.log('New service request received:', payload);
+        // Fetch the complete request with the services joined
+        fetchNewRequest(payload.new.id);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const fetchNewRequest = async (requestId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select(`
+          *,
+          services (
+            name,
+            price
+          )
+        `)
+        .eq('id', requestId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Add to requests list
+        setRequests(prevRequests => [data, ...prevRequests]);
+        
+        // Show toast notification
+        toast({
+          title: "New Service Request",
+          description: `${data.customer_name} requested ${data.services.name}`,
+        });
+        
+        // Send Telegram notification
+        sendTelegramNotification(data);
+      }
+    } catch (error) {
+      console.error('Error fetching new request:', error);
+    }
+  };
+
+  const sendTelegramNotification = async (request: ServiceRequest) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) return;
+      
+      const message = `
+<b>New Service Request</b>
+
+<b>Service:</b> ${request.services.name}
+<b>Customer:</b> ${request.customer_name}
+<b>Phone:</b> ${request.customer_phone || 'Not provided'}
+<b>Email:</b> ${request.customer_email || 'Not provided'}
+<b>Scheduled for:</b> ${format(parseISO(request.scheduled_at), 'PPP p')}
+<b>Notes:</b> ${request.notes || 'None'}
+<b>Price:</b> KES ${request.services.price.toLocaleString()}
+`;
+
+      const response = await fetch('/functions/v1/telegram-bot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userData.user.id,
+          notification: message
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Telegram notification result:', result);
+    } catch (error) {
+      console.error('Error sending Telegram notification:', error);
+    }
+  };
+
+  const checkTelegramConnection = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from('user_telegram_connections')
+        .select('telegram_chat_id')
+        .eq('user_id', userData.user.id)
+        .single();
+
+      if (!error && data?.telegram_chat_id) {
+        setIsTelegramConnected(true);
+      }
+    } catch (error) {
+      console.error('Error checking Telegram connection:', error);
+    }
+  };
+
+  const generateTelegramLink = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to connect Telegram",
+        });
+        return;
+      }
+
+      // Create a Telegram bot deep link with the user ID
+      const botUsername = 'your_bot_username'; // Replace with your bot's username
+      const link = `https://t.me/${botUsername}?start=${userData.user.id}`;
+      
+      // Open the link in a new tab
+      window.open(link, '_blank');
+      
+      toast({
+        title: "Telegram Connection",
+        description: "Please follow the instructions in Telegram to connect your account",
+      });
+    } catch (error) {
+      console.error('Error generating Telegram link:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate Telegram connection link",
+      });
+    }
+  };
 
   const fetchRequests = async () => {
     try {
@@ -203,6 +347,16 @@ const ServiceRequestsView = () => {
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        <Button
+          onClick={generateTelegramLink}
+          variant={isTelegramConnected ? "outline" : "default"}
+          className={isTelegramConnected ? "bg-green-50 text-green-700 border-green-200" : ""}
+        >
+          {isTelegramConnected 
+            ? "Telegram Connected ✓" 
+            : "Connect Telegram Notifications"}
+        </Button>
       </div>
 
       {upcomingRequests.length > 0 && (

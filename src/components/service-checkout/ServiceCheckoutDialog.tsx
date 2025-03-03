@@ -279,9 +279,11 @@ export const ServiceCheckoutDialog = ({
         location: service.serviceMode === 'client-location' ? formData.location : null,
       });
 
+      let requestData;
       let error;
+      
       if (isEditing && requestId) {
-        const { error: updateError } = await supabase
+        const { data, error: updateError } = await supabase
           .from("service_requests")
           .update({
             customer_name: formData.name,
@@ -291,10 +293,13 @@ export const ServiceCheckoutDialog = ({
             scheduled_at: scheduledAt.toISOString(),
             location: service.serviceMode === 'client-location' ? formData.location : null,
           })
-          .eq('id', requestId);
+          .eq('id', requestId)
+          .select();
+          
+        requestData = data?.[0];
         error = updateError;
       } else {
-        const { error: insertError } = await supabase
+        const { data, error: insertError } = await supabase
           .from("service_requests")
           .insert({
             service_id: service.id,
@@ -306,7 +311,10 @@ export const ServiceCheckoutDialog = ({
             scheduled_at: scheduledAt.toISOString(),
             status: service.instant_booking === true ? 'accepted' : 'pending',
             location: service.serviceMode === 'client-location' ? formData.location : null,
-          });
+          })
+          .select();
+          
+        requestData = data?.[0];
         error = insertError;
       }
 
