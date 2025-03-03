@@ -18,12 +18,13 @@ import {
 } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info, Edit2, DollarSign } from "lucide-react";
+import { Loader2, Info, Edit2, DollarSign, CalendarClock, Calendar as CalendarIcon, ListChecks } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceCheckoutDialog";
 import TimeSlotView from './TimeSlotView';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ServiceRequest {
   id: string;
@@ -49,6 +50,7 @@ const ServiceRequestsView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
   const [isTelegramConnected, setIsTelegramConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState("upcoming");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -361,45 +363,6 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
         </Button>
       </div>
 
-      {upcomingRequests.length > 0 && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Upcoming Appointments</CardTitle>
-            <CardDescription>Your next scheduled sessions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {upcomingRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="p-4 border rounded-lg space-y-3 bg-gray-50"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{request.services.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {request.customer_name} - {request.customer_phone}
-                      </p>
-                      {request.scheduled_at && (
-                        <p className="text-sm font-medium text-gebeya-pink">
-                          Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {getStatusBadge(request.status)}
-                      {request.paid && (
-                        <Badge className="bg-green-100 text-green-800">PAID</Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {editingRequest && (
         <ServiceCheckoutDialog
           isOpen={true}
@@ -424,120 +387,226 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      <Tabs defaultValue="upcoming" className="mb-6" onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="upcoming" className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4" />
+            <span>Upcoming Appointments</span>
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Calendar</span>
+          </TabsTrigger>
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            <span>All Requests</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upcoming" className="space-y-4">
+          {upcomingRequests.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Appointments</CardTitle>
+                <CardDescription>Your next scheduled sessions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {upcomingRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 border rounded-lg space-y-3 bg-gray-50"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{request.services.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {request.customer_name} - {request.customer_phone}
+                          </p>
+                          {request.scheduled_at && (
+                            <p className="text-sm font-medium text-gebeya-pink">
+                              Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          {getStatusBadge(request.status)}
+                          {request.paid && (
+                            <Badge className="bg-green-100 text-green-800">PAID</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          defaultValue={request.status}
+                          onValueChange={(value) => updateRequestStatus(request.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="accepted">Accept</SelectItem>
+                            <SelectItem value="rejected">Reject</SelectItem>
+                            <SelectItem value="completed">Complete</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditRequest(request)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant={request.paid ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => togglePaidStatus(request.id, request.paid)}
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="text-center p-12 bg-white rounded-lg shadow-sm">
+              <CalendarClock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No Upcoming Appointments</h3>
+              <p className="text-gray-500">You don't have any upcoming appointments scheduled.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calendar View</CardTitle>
+                  <CardDescription>View requests by date</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="rounded-md border"
+                    modifiers={{
+                      booked: (date) => 
+                        requests.some(request => 
+                          request.scheduled_at && 
+                          format(parseISO(request.scheduled_at), 'yyyy-MM-dd') === 
+                          format(date, 'yyyy-MM-dd')
+                        )
+                    }}
+                    modifiersStyles={{
+                      booked: { 
+                        fontWeight: 'bold',
+                        backgroundColor: '#fce7f3',
+                        color: '#be185d'
+                      }
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-4">
+              {selectedDate && (
+                <TimeSlotView 
+                  date={selectedDate} 
+                  requests={getRequestsForDate(selectedDate)}
+                />
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Calendar View</CardTitle>
-              <CardDescription>View requests by date</CardDescription>
+              <CardTitle>All Requests</CardTitle>
+              <CardDescription>View and manage all service requests</CardDescription>
             </CardHeader>
             <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-                modifiers={{
-                  booked: (date) => 
-                    requests.some(request => 
-                      request.scheduled_at && 
-                      format(parseISO(request.scheduled_at), 'yyyy-MM-dd') === 
-                      format(date, 'yyyy-MM-dd')
-                    )
-                }}
-                modifiersStyles={{
-                  booked: { 
-                    fontWeight: 'bold',
-                    backgroundColor: '#fce7f3',
-                    color: '#be185d'
-                  }
-                }}
-              />
+              {requests.length > 0 ? (
+                <div className="space-y-4">
+                  {requests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 border rounded-lg space-y-3"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{request.services.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {request.customer_name} - {request.customer_phone}
+                          </p>
+                          {request.scheduled_at && (
+                            <p className="text-sm text-gray-500">
+                              Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          {getStatusBadge(request.status)}
+                          {request.paid && (
+                            <Badge className="bg-green-100 text-green-800">PAID</Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Select
+                          defaultValue={request.status}
+                          onValueChange={(value) => updateRequestStatus(request.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="accepted">Accept</SelectItem>
+                            <SelectItem value="rejected">Reject</SelectItem>
+                            <SelectItem value="completed">Complete</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditRequest(request)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant={request.paid ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => togglePaidStatus(request.id, request.paid)}
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-12">
+                  <ListChecks className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">No Service Requests</h3>
+                  <p className="text-gray-500">You don't have any service requests yet.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
-
-        <div className="space-y-4">
-          {selectedDate && (
-            <TimeSlotView 
-              date={selectedDate} 
-              requests={getRequestsForDate(selectedDate)}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>All Requests</CardTitle>
-            <CardDescription>View and manage all service requests</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {requests.map((request) => (
-                <div
-                  key={request.id}
-                  className="p-4 border rounded-lg space-y-3"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{request.services.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {request.customer_name} - {request.customer_phone}
-                      </p>
-                      {request.scheduled_at && (
-                        <p className="text-sm text-gray-500">
-                          Scheduled for: {format(parseISO(request.scheduled_at), 'PPP p')}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {getStatusBadge(request.status)}
-                      {request.paid && (
-                        <Badge className="bg-green-100 text-green-800">PAID</Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Select
-                      defaultValue={request.status}
-                      onValueChange={(value) => updateRequestStatus(request.id, value)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="accepted">Accept</SelectItem>
-                        <SelectItem value="rejected">Reject</SelectItem>
-                        <SelectItem value="completed">Complete</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditRequest(request)}
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant={request.paid ? "outline" : "default"}
-                      size="sm"
-                      onClick={() => togglePaidStatus(request.id, request.paid)}
-                    >
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      {request.paid ? 'Mark Unpaid' : 'Mark Paid'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
     </>
   );
 };
