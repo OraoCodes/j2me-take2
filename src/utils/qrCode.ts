@@ -6,23 +6,6 @@ export const generateQRCodeUrl = (url: string) => {
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
 };
 
-export const downloadQRCode = async (url: string, fileName: string) => {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(downloadUrl);
-    document.body.removeChild(a);
-  } catch (error) {
-    console.error('Error downloading QR code:', error);
-  }
-};
-
 export const createStyledQRCode = async (
   qrUrl: string, 
   businessName: string, 

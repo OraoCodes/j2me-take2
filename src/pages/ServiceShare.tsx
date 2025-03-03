@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Link2, Instagram, Facebook, MessageCircle, ArrowRight, Copy, CheckCheck, QrCode, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { generateQRCodeUrl, downloadQRCode, createStyledQRCode } from "@/utils/qrCode";
+import { generateQRCodeUrl, createStyledQRCode } from "@/utils/qrCode";
 
 const ServiceShare = () => {
   const navigate = useNavigate();
@@ -88,23 +88,6 @@ const ServiceShare = () => {
     }
   };
 
-  const handleDownloadQR = async () => {
-    try {
-      const qrUrl = generateQRCodeUrl(serviceLink);
-      await downloadQRCode(qrUrl, 'service-qr-code.png');
-      toast({
-        title: "QR Code downloaded",
-        description: "Simple QR code has been downloaded successfully.",
-      });
-    } catch (err) {
-      toast({
-        title: "Download failed",
-        description: "There was a problem downloading your QR code.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleDownloadStyledQR = async () => {
     try {
       const qrUrl = generateQRCodeUrl(serviceLink);
@@ -163,58 +146,8 @@ const ServiceShare = () => {
           </div>
         </div>
 
-        {/* QR Code Section */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-8 hover:shadow-lg transition-shadow duration-200">
-          <div className="flex items-center gap-3 mb-4">
-            <QrCode className="w-6 h-6 text-gebeya-pink" />
-            <h2 className="text-lg font-semibold">QR Code</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg flex justify-center">
-                <img 
-                  src={generateQRCodeUrl(serviceLink)}
-                  alt="QR Code"
-                  className="w-40 h-40"
-                />
-              </div>
-              <Button 
-                onClick={handleDownloadQR} 
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Simple QR
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-4 rounded-lg flex flex-col items-center space-y-2">
-                <h3 className="text-white text-xl font-bold">SCAN ME</h3>
-                <div className="bg-white p-3 rounded-lg">
-                  <img 
-                    src={generateQRCodeUrl(serviceLink)}
-                    alt="Styled QR Code"
-                    className="w-32 h-32"
-                  />
-                </div>
-                <p className="text-white font-semibold text-lg">{businessName}</p>
-              </div>
-              <Button 
-                onClick={handleDownloadStyledQR} 
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Styled QR
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Social Share Buttons */}
-        <div className="space-y-4">
+        <div className="space-y-4 mb-8">
           <Button
             onClick={() => shareOnSocial("instagram")}
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 flex gap-3 items-center justify-center h-12"
@@ -240,8 +173,38 @@ const ServiceShare = () => {
           </Button>
         </div>
 
+        {/* Styled QR Code Section */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-8 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center gap-3 mb-4">
+            <QrCode className="w-6 h-6 text-gebeya-pink" />
+            <h2 className="text-lg font-semibold">QR Code</h2>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange p-4 rounded-lg flex flex-col items-center space-y-2">
+              <h3 className="text-white text-xl font-bold">SCAN ME</h3>
+              <div className="bg-white p-3 rounded-lg">
+                <img 
+                  src={generateQRCodeUrl(serviceLink)}
+                  alt="Styled QR Code"
+                  className="w-32 h-32"
+                />
+              </div>
+              <p className="text-white font-semibold text-lg">{businessName}</p>
+            </div>
+            <Button 
+              onClick={handleDownloadStyledQR} 
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download QR Code
+            </Button>
+          </div>
+        </div>
+
         {/* Dashboard Button */}
-        <div className="mt-12">
+        <div>
           <Button
             onClick={() => navigate("/dashboard")}
             variant="ghost"
