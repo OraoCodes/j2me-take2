@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,77 +24,22 @@ declare global {
 export const TelegramLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const BOT_ID = '7984716005'; // Updated Telegram bot ID
+  const BOT_ID = '7984716005'; // Telegram bot ID
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Load Telegram Login Widget script
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); // Your bot username
-    script.setAttribute('data-size', 'large');
-    
-    // Don't set data-auth-url to avoid domain validation issues
-    // Instead, we'll use the JavaScript SDK approach
-    script.setAttribute('data-request-access', 'write');
-    script.async = true;
-    
-    // Cleanup previous script if it exists
-    const existingScript = document.getElementById('telegram-login-script');
-    if (existingScript) {
-      existingScript.remove();
-    }
-    
-    script.id = 'telegram-login-script';
-    document.body.appendChild(script);
-
-    // Create global callback function that Telegram will call
-    window.onTelegramAuth = handleTelegramAuth;
-    
-    console.log('Telegram login component mounted, isSignUp:', isSignUp);
-
-    return () => {
-      // Remove script on unmount
-      const scriptToRemove = document.getElementById('telegram-login-script');
-      if (scriptToRemove) {
-        scriptToRemove.remove();
-      }
-      delete window.onTelegramAuth;
-    };
-  }, []);
-
-  const handleTelegramLogin = () => {
-    if (window.Telegram?.Login?.auth) {
-      setIsLoading(true);
-      console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
-      window.Telegram.Login.auth(
-        {
-          bot_id: BOT_ID,
-          request_access: true,
-          callback: handleTelegramAuth,
-        }
-      );
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Telegram widget not loaded",
-        description: "Please try again later",
-      });
-    }
-  };
-
-  const handleTelegramAuth = async (telegramUser: any) => {
+  // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
+  const handleTelegramAuth = useCallback(async (telegramUser: any) => {
     try {
-      setIsLoading(true);
-      console.log('Telegram user data received:', telegramUser);
+      console.log('Telegram auth callback received user data:', telegramUser);
       
       if (!telegramUser) {
+        setIsLoading(false);
         throw new Error('Authentication cancelled or failed');
       }
       
-      // Set telegram auth flow type in localStorage BEFORE making the API call
+      // Set telegram auth flow type in localStorage
       const authFlow = isSignUp ? 'signup' : 'signin';
-      console.log(`Setting telegram_auth_flow to '${authFlow}' BEFORE API call`);
+      console.log(`Setting telegram_auth_flow to '${authFlow}'`);
       localStorage.setItem('telegram_auth_flow', authFlow);
       
       // Call our Supabase Edge Function
@@ -103,7 +48,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         body: { 
           action: 'auth', 
           telegramUser,
-          isSignUp // Pass the isSignUp flag to the function
+          isSignUp
         }
       });
       
@@ -114,18 +59,12 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       
       console.log('Response from telegram-bot function:', data);
       
-      if (data.authLink) {
-        // Verify the auth flow type is still set correctly
+      if (data?.authLink) {
+        // Verify the auth flow type is still set
         const storedAuthFlow = localStorage.getItem('telegram_auth_flow');
-        console.log(`Verifying telegram_auth_flow is still set: '${storedAuthFlow}'`);
+        console.log(`Auth flow is set to: '${storedAuthFlow}' before redirect`);
         
-        // Double-check to ensure the auth flow is set
-        if (!storedAuthFlow) {
-          console.log('Auth flow not found in localStorage, setting it again');
-          localStorage.setItem('telegram_auth_flow', authFlow);
-        }
-        
-        // Redirect to the auth link
+        // Directly redirect to the auth link provided by the edge function
         console.log('Redirecting to auth link:', data.authLink);
         window.location.href = data.authLink;
       } else {
@@ -141,9 +80,80 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       toast({
         variant: "destructive",
         title: "Authentication failed",
-        description: "An error occurred during authentication"
+        description: err instanceof Error ? err.message : "An error occurred during authentication"
       });
       setIsLoading(false);
+    }
+  }, [isSignUp, toast, navigate]);
+
+  useEffect(() => {
+    // Set the global callback that Telegram will use
+    window.onTelegramAuth = handleTelegramAuth;
+    
+    // Load Telegram Login Widget script
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); 
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-request-access', 'write');
+    script.async = true;
+    
+    // Cleanup previous script if it exists
+    const existingScript = document.getElementById('telegram-login-script');
+    if (existingScript) {
+      existingScript.remove();
+    }
+    
+    script.id = 'telegram-login-script';
+    document.body.appendChild(script);
+    
+    console.log('Telegram login component mounted, isSignUp:', isSignUp);
+    console.log('Window onTelegramAuth set:', !!window.onTelegramAuth);
+
+    return () => {
+      // Remove script and callback on unmount
+      const scriptToRemove = document.getElementById('telegram-login-script');
+      if (scriptToRemove) {
+        scriptToRemove.remove();
+      }
+      console.log('Cleaning up Telegram login component');
+      delete window.onTelegramAuth;
+    };
+  }, [handleTelegramAuth]);
+
+  const handleTelegramLogin = () => {
+    if (!window.Telegram?.Login?.auth) {
+      console.error('Telegram Login SDK not loaded');
+      toast({
+        variant: "destructive",
+        title: "Telegram widget not loaded",
+        description: "Please try again later or refresh the page",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
+    
+    try {
+      window.Telegram.Login.auth(
+        {
+          bot_id: BOT_ID,
+          request_access: true,
+          callback: (user) => {
+            console.log('Direct Telegram callback with user:', user ? 'User data received' : 'No user data');
+            handleTelegramAuth(user);
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Error initiating Telegram auth:', error);
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Authentication error",
+        description: "Failed to start Telegram authentication",
+      });
     }
   };
 
