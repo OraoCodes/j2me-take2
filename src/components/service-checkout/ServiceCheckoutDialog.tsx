@@ -325,71 +325,47 @@ export const ServiceCheckoutDialog = ({
         throw error;
       }
 
-      // Send a notification
+      // Send a notification to n8n webhook
       try {
         const scheduledTime = format(scheduledAt, 'PPP p');
         const formattedPrice = service.price.toLocaleString();
         
-        const message = `
-🎉 <b>You Have a New Service Request!</b>
+        const webhookData = {
+          serviceName: service.name,
+          servicePrice: `KES ${formattedPrice}`,
+          serviceStatus: service.instant_booking === true ? 'accepted' : 'pending',
+          
+          customerName: formData.name,
+          customerPhone: fullPhoneNumber,
+          customerEmail: formData.email || "Not provided",
+          
+          appointmentDate: scheduledTime,
+          specialRequests: formData.notes || "None",
+          
+          location: service.serviceMode === 'client-location' ? formData.location : "Provider location",
+          
+          requestId: requestData?.id || "Unknown",
+          timestamp: new Date().toISOString()
+        };
 
-<b>Service:</b> ${service.name}
-<b>Price:</b> KES ${formattedPrice}
-
-<b>Customer Details:</b>
-👤 ${formData.name}
-${fullPhoneNumber ? `📞 ${fullPhoneNumber}` : ''}
-${formData.email ? `📧 ${formData.email}` : ''}
-
-<b>Appointment:</b> ${scheduledTime}
-
-${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
-
-<i>You can manage this request in your Gebeya dashboard.</i>
-`;
-
-        console.log('Sending telegram notification with message:', message);
+        console.log('Sending n8n webhook notification with data:', webhookData);
         
-        // Send directly to the API endpoint
-        const response = await fetch('/api/telegram-bot', {
+        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook-test/16091124-b34e-4c6e-a8f3-7a5856532bac', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            user_id: service.user_id,
-            notification: message
-          }),
+          body: JSON.stringify(webhookData),
         });
 
         if (!response.ok) {
-          throw new Error(`Error sending notification: ${response.status} ${response.statusText}`);
+          throw new Error(`Error sending n8n webhook: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
-        console.log('Telegram notification result:', result);
-        
-        // If there was an error in the response, try the direct method with hardcoded chat ID
-        if (!result.success || result.error) {
-          console.log('Trying direct message to hardcoded chat ID as fallback');
-          
-          const directResponse = await fetch('/api/telegram-bot', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              chat_id: "7318715212", // Hardcoded chat ID as fallback
-              notification: message,
-              direct_message: true
-            }),
-          });
-          
-          const directResult = await directResponse.json();
-          console.log('Direct telegram notification result:', directResult);
-        }
+        console.log('n8n webhook result:', result);
       } catch (notifyError) {
-        console.error('Error sending telegram notification:', notifyError);
+        console.error('Error sending n8n webhook notification:', notifyError);
         // Don't throw here - we don't want to fail the service request if notification fails
       }
 

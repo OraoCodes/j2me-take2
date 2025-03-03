@@ -158,42 +158,34 @@ const ServicePage = () => {
       description: "Your request has been sent to the service provider."
     });
     
-    // Test notification directly to your chat ID for debugging
     if (selectedService) {
       try {
-        console.log('Attempting to send direct Telegram notification');
+        console.log('Sending service request notification to n8n webhook');
         
-        const message = `
-🎉 <b>New Service Request Test!</b>
+        const message = {
+          serviceName: selectedService.name,
+          servicePrice: selectedService.price.toLocaleString(),
+          serviceProvider: businessName,
+          timestamp: new Date().toISOString(),
+          platform: 'Gebeya'
+        };
 
-<b>Service:</b> ${selectedService.name}
-<b>Price:</b> KES ${selectedService.price.toLocaleString()}
-
-<b>This is a test notification to verify Telegram integration.</b>
-
-<i>You can manage this request in your Gebeya dashboard.</i>
-`;
-
-        const response = await fetch('/api/telegram-bot', {
+        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook-test/16091124-b34e-4c6e-a8f3-7a5856532bac', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            chat_id: "7318715212", // Using your chat ID directly for testing
-            notification: message,
-            direct_message: true // Flag to indicate this is a direct message to chat_id
-          }),
+          body: JSON.stringify(message),
         });
 
         if (!response.ok) {
-          throw new Error(`Error sending notification: ${response.status} ${response.statusText}`);
+          throw new Error(`Error sending webhook notification: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
-        console.log('Direct Telegram notification result:', result);
+        console.log('Webhook notification result:', result);
       } catch (notifyError) {
-        console.error('Error sending direct telegram notification:', notifyError);
+        console.error('Error sending webhook notification:', notifyError);
       }
     }
     
