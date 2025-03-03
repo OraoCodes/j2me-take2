@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -108,16 +109,25 @@ const ServiceRequestsView = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
       
+      const scheduledTime = format(parseISO(request.scheduled_at), 'PPP p');
+      const formattedPrice = request.services.price.toLocaleString();
+      
       const message = `
-<b>New Service Request</b>
+🎉 <b>You Have a New Service Request!</b>
 
 <b>Service:</b> ${request.services.name}
-<b>Customer:</b> ${request.customer_name}
-<b>Phone:</b> ${request.customer_phone || 'Not provided'}
-<b>Email:</b> ${request.customer_email || 'Not provided'}
-<b>Scheduled for:</b> ${format(parseISO(request.scheduled_at), 'PPP p')}
-<b>Notes:</b> ${request.notes || 'None'}
-<b>Price:</b> KES ${request.services.price.toLocaleString()}
+<b>Price:</b> KES ${formattedPrice}
+
+<b>Customer Details:</b>
+👤 ${request.customer_name}
+${request.customer_phone ? `📞 ${request.customer_phone}` : ''}
+${request.customer_email ? `📧 ${request.customer_email}` : ''}
+
+<b>Appointment:</b> ${scheduledTime}
+
+${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
+
+<i>You can manage this request in your Gebeya dashboard.</i>
 `;
 
       const response = await fetch('/functions/v1/telegram-bot', {
@@ -171,7 +181,7 @@ const ServiceRequestsView = () => {
         return;
       }
 
-      const botUsername = 'gebeya_service_bot';
+      const botUsername = 'gebeya_services_bot';
       const link = `https://t.me/${botUsername}?start=${userData.user.id}`;
       
       window.open(link, '_blank');
