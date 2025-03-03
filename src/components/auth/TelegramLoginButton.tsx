@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -24,6 +25,7 @@ export const TelegramLoginButton = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const BOT_ID = '7984716005'; // Updated Telegram bot ID
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Load Telegram Login Widget script
@@ -100,6 +102,21 @@ export const TelegramLoginButton = () => {
       if (data.authLink) {
         // Redirect to the auth link
         window.location.href = data.authLink;
+        
+        // Listen for authentication state changes to handle redirection
+        supabase.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event);
+          if (event === 'SIGNED_IN' && session) {
+            console.log('User signed in, navigating to onboarding');
+            
+            // Check if this is a new user (signup) or existing user (signin)
+            if (data.action === 'signup') {
+              navigate('/onboarding');
+            } else {
+              navigate('/dashboard');
+            }
+          }
+        });
       } else {
         toast({
           variant: "destructive",
