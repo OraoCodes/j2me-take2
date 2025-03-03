@@ -100,29 +100,19 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       }
       
       if (data.authLink) {
+        // Store the action type before navigating
+        const isNewUser = data.action === 'signup';
+        localStorage.setItem('telegram_auth_flow', isNewUser ? 'signup' : 'signin');
+        
         // Redirect to the auth link
         window.location.href = data.authLink;
-        
-        // Listen for authentication state changes to handle redirection
-        supabase.auth.onAuthStateChange((event, session) => {
-          console.log('Auth state changed:', event);
-          if (event === 'SIGNED_IN' && session) {
-            console.log('User signed in, navigating to onboarding');
-            
-            // Check if this is a new user (signup) or existing user (signin)
-            if (data.action === 'signup') {
-              navigate('/onboarding');
-            } else {
-              navigate('/dashboard');
-            }
-          }
-        });
       } else {
         toast({
           variant: "destructive",
           title: "Authentication failed",
           description: "Could not authenticate with Telegram",
         });
+        setIsLoading(false);
       }
     } catch (err) {
       console.error('Telegram auth error:', err);
@@ -131,7 +121,6 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         title: "Authentication failed",
         description: "An error occurred during authentication"
       });
-    } finally {
       setIsLoading(false);
     }
   };

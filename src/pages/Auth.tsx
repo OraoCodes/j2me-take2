@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,49 @@ const Auth = () => {
   const defaultTab = searchParams.get("tab") || "signin";
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check if user is already authenticated
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
-        navigate("/dashboard");
+        // Get the stored auth flow type
+        const authFlow = localStorage.getItem('telegram_auth_flow');
+        
+        if (authFlow === 'signup') {
+          navigate('/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
+        
+        // Clean up after successful redirect
+        localStorage.removeItem('telegram_auth_flow');
+      }
+    };
+    
+    checkSession();
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change event:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // Get the stored auth flow type
+        const authFlow = localStorage.getItem('telegram_auth_flow');
+        
+        if (authFlow === 'signup') {
+          navigate('/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
+        
+        // Clean up after successful redirect
+        localStorage.removeItem('telegram_auth_flow');
       }
     });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
