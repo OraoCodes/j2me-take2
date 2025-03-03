@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,7 +22,7 @@ declare global {
 export const TelegramLoginButton = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const BOT_ID = '6768063576'; // Telegram bot ID
+  const BOT_ID = '7984716005'; // Updated Telegram bot ID
 
   useEffect(() => {
     // Load Telegram Login Widget script
