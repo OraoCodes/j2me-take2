@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -30,7 +31,7 @@ export const TelegramLoginButton = () => {
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); // Your bot username
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-auth-url', '#');
+    script.setAttribute('data-auth-url', 'https://ivndgetmkcwapmttsbqa.supabase.co'); // Use Supabase URL as auth domain
     script.setAttribute('data-request-access', 'write');
     script.async = true;
     
