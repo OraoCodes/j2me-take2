@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { ShareLinks } from "./marketing/ShareLinks";
 import { QRCodeSection } from "./marketing/QRCodeSection";
 import { MetaTags } from "../shared/MetaTags";
-import { downloadQRCode, createStyledQRCode, generateQRCodeUrl } from "@/utils/qrCode";
+import { generateQRCodeUrl, createStyledQRCode } from "@/utils/qrCode";
 
 export const Marketing = () => {
   const [storeUrl, setStoreUrl] = useState("");
@@ -66,7 +66,8 @@ export const Marketing = () => {
 
   const handleDownloadQR = async () => {
     const qrUrl = generateQRCodeUrl(fullUrl);
-    await downloadQRCode(qrUrl, 'service-qr-code.png');
+    // Using createStyledQRCode with a simpler name for the basic QR code
+    await createStyledQRCode(qrUrl, businessName, fullUrl);
   };
 
   const handleDownloadStyledQR = async () => {
