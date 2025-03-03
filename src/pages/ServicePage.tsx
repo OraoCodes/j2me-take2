@@ -152,11 +152,47 @@ const ServicePage = () => {
     setSelectedService(service);
   };
 
-  const handleServiceRequestSubmitted = () => {
+  const handleServiceRequestSubmitted = async () => {
     toast({
       title: "Service request submitted",
       description: "Your request has been sent to the service provider."
     });
+    
+    // Test notification directly to your chat ID for debugging
+    if (selectedService) {
+      try {
+        console.log('Attempting to send direct Telegram notification');
+        
+        const message = `
+🎉 <b>New Service Request Test!</b>
+
+<b>Service:</b> ${selectedService.name}
+<b>Price:</b> KES ${selectedService.price.toLocaleString()}
+
+<b>This is a test notification to verify Telegram integration.</b>
+
+<i>You can manage this request in your Gebeya dashboard.</i>
+`;
+
+        const response = await fetch('/functions/v1/telegram-bot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: "7318715212", // Using your chat ID directly for testing
+            notification: message,
+            direct_message: true // Flag to indicate this is a direct message to chat_id
+          }),
+        });
+
+        const result = await response.json();
+        console.log('Direct Telegram notification result:', result);
+      } catch (notifyError) {
+        console.error('Error sending direct telegram notification:', notifyError);
+      }
+    }
+    
     setSelectedService(null);
   };
 

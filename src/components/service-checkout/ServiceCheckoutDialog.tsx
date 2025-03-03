@@ -326,20 +326,12 @@ export const ServiceCheckoutDialog = ({
         throw error;
       }
 
-      // Send a manual notification for testing
+      // Send a notification
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        const currentUserId = userData?.user?.id;
+        const scheduledTime = format(scheduledAt, 'PPP p');
+        const formattedPrice = service.price.toLocaleString();
         
-        // Note: We don't need this check if we're sending to the service provider always
-        console.log('Current user:', currentUserId, 'Service user:', service.user_id);
-        
-        // Only send notification if we have a request
-        if (requestData) {
-          const scheduledTime = format(scheduledAt, 'PPP p');
-          const formattedPrice = service.price.toLocaleString();
-          
-          const message = `
+        const message = `
 🎉 <b>You Have a New Service Request!</b>
 
 <b>Service:</b> ${service.name}
@@ -357,21 +349,41 @@ ${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
 <i>You can manage this request in your Gebeya dashboard.</i>
 `;
 
-          console.log('Sending telegram notification with message:', message);
+        console.log('Sending telegram notification with message:', message);
+        
+        // Try sending via normal method first
+        let response = await fetch('/functions/v1/telegram-bot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: service.user_id,
+            notification: message
+          }),
+        });
+
+        let result = await response.json();
+        console.log('Telegram notification result:', result);
+        
+        // If the normal method fails or returns an error, try the direct method
+        if (!result.success || result.error) {
+          console.log('Trying direct message to hardcoded chat ID as fallback');
           
-          const response = await fetch('/functions/v1/telegram-bot', {
+          response = await fetch('/functions/v1/telegram-bot', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              user_id: service.user_id,
-              notification: message
+              chat_id: "7318715212", // Hardcoded chat ID as fallback
+              notification: message,
+              direct_message: true
             }),
           });
-
-          const result = await response.json();
-          console.log('Telegram notification result:', result);
+          
+          result = await response.json();
+          console.log('Direct telegram notification result:', result);
         }
       } catch (notifyError) {
         console.error('Error sending telegram notification:', notifyError);
