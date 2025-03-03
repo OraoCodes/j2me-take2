@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -153,7 +152,14 @@ const ServicePage = () => {
     setSelectedService(service);
   };
 
-  const handleServiceRequestSubmitted = async () => {
+  const handleServiceRequestSubmitted = async (customerData?: {
+    name: string;
+    email: string;
+    phone: string;
+    notes: string;
+    location?: string;
+    scheduledAt: Date;
+  }) => {
     toast({
       title: "Service request submitted",
       description: "Your request has been sent to the service provider."
@@ -167,6 +173,20 @@ const ServicePage = () => {
           serviceName: selectedService.name,
           servicePrice: selectedService.price.toLocaleString(),
           serviceProvider: businessName,
+          serviceStatus: selectedService.instant_booking === true ? 'accepted' : 'pending',
+          
+          customerName: customerData?.name || 'Unknown',
+          customerPhone: customerData?.phone || 'Unknown',
+          customerEmail: customerData?.email || 'Not provided',
+          
+          appointmentDate: customerData?.scheduledAt ? new Date(customerData.scheduledAt).toISOString() : new Date().toISOString(),
+          formattedAppointmentDate: customerData?.scheduledAt ? 
+            new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'short' }).format(new Date(customerData.scheduledAt)) : 
+            'Not specified',
+          specialRequests: customerData?.notes || 'None',
+          
+          location: customerData?.location || 'Not specified',
+          
           timestamp: new Date().toISOString(),
           platform: 'Gebeya'
         };

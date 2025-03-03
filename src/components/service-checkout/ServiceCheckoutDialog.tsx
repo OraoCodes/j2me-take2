@@ -39,7 +39,14 @@ interface ServiceCheckoutDialogProps {
   };
   isEditing?: boolean;
   requestId?: string;
-  onSubmitSuccess?: () => void;
+  onSubmitSuccess?: (customerData?: {
+    name: string;
+    email: string;
+    phone: string;
+    notes: string;
+    location?: string;
+    scheduledAt: Date;
+  }) => void;
 }
 
 interface AvailabilitySetting {
@@ -377,7 +384,14 @@ export const ServiceCheckoutDialog = ({
       });
 
       if (onSubmitSuccess) {
-        onSubmitSuccess();
+        onSubmitSuccess({
+          name: formData.name,
+          email: formData.email,
+          phone: fullPhoneNumber,
+          notes: formData.notes,
+          location: formData.location,
+          scheduledAt: scheduledAt
+        });
       }
       
       onClose();
