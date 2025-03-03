@@ -17,8 +17,8 @@ export const QRCodeSection = ({
   onDownloadSimple,
   onDownloadStyled,
 }: QRCodeSectionProps) => {
-  // Force the full URL to use https when deployed to ensure QR code consistency
-  const qrCodeUrl = generateQRCodeUrl(fullUrl);
+  // Generate QR code URL only if fullUrl is available
+  const qrCodeUrl = fullUrl ? generateQRCodeUrl(fullUrl) : '';
   
   // Log the URL to help with debugging
   console.log("QR Code generated for URL:", fullUrl);
@@ -35,14 +35,20 @@ export const QRCodeSection = ({
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="bg-gray-50 p-4 md:p-8 rounded-lg flex justify-center">
-              <img 
-                src={qrCodeUrl}
-                alt="QR Code"
-                className="w-36 h-36 md:w-48 md:h-48"
-              />
+              {fullUrl ? (
+                <img 
+                  src={qrCodeUrl}
+                  alt="QR Code"
+                  className="w-36 h-36 md:w-48 md:h-48"
+                />
+              ) : (
+                <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center text-gray-400">
+                  Loading QR Code...
+                </div>
+              )}
             </div>
             <div className="flex justify-center">
-              <Button variant="outline" onClick={onDownloadSimple} className="w-full md:w-auto">
+              <Button variant="outline" onClick={onDownloadSimple} disabled={!fullUrl} className="w-full md:w-auto">
                 <Download className="h-4 w-4 mr-2" />
                 Download Simple QR
               </Button>
@@ -54,11 +60,17 @@ export const QRCodeSection = ({
               <h3 className="text-white text-xl md:text-2xl font-bold">SCAN ME</h3>
               <p className="text-white text-xs md:text-sm">TO VISIT OUR WEBSITE</p>
               <div className="bg-white p-3 md:p-4 rounded-lg">
-                <img 
-                  src={qrCodeUrl}
-                  alt="Styled QR Code"
-                  className="w-36 h-36 md:w-48 md:h-48"
-                />
+                {fullUrl ? (
+                  <img 
+                    src={qrCodeUrl}
+                    alt="Styled QR Code"
+                    className="w-36 h-36 md:w-48 md:h-48"
+                  />
+                ) : (
+                  <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center text-gray-400">
+                    Loading QR Code...
+                  </div>
+                )}
               </div>
               <p className="text-white font-semibold text-lg md:text-xl">{businessName}</p>
               <img 
@@ -68,7 +80,7 @@ export const QRCodeSection = ({
               />
             </div>
             <div className="flex justify-center">
-              <Button variant="outline" onClick={onDownloadStyled} className="w-full md:w-auto">
+              <Button variant="outline" onClick={onDownloadStyled} disabled={!fullUrl} className="w-full md:w-auto">
                 <Download className="h-4 w-4 mr-2" />
                 Download Styled QR
               </Button>

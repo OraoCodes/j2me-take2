@@ -1,6 +1,6 @@
 
 export const generateQRCodeUrl = (url: string) => {
-  // Ensure the URL is properly encoded
+  // Ensure the URL is properly encoded and is absolute
   const encodedUrl = encodeURIComponent(url);
   console.log("Encoded URL for QR:", encodedUrl);
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;

@@ -7,12 +7,14 @@ import { ShareLinks } from "./marketing/ShareLinks";
 import { QRCodeSection } from "./marketing/QRCodeSection";
 import { MetaTags } from "../shared/MetaTags";
 import { generateQRCodeUrl, createStyledQRCode } from "@/utils/qrCode";
+import { useToast } from "@/components/ui/use-toast";
 
 export const Marketing = () => {
   const [storeUrl, setStoreUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [businessName, setBusinessName] = useState("");
   const [profileImage, setProfileImage] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchStoreUrl = async () => {
@@ -43,13 +45,40 @@ export const Marketing = () => {
   }, []);
 
   // Generate the absolute URL to ensure it works when deployed
-  const fullUrl = `${window.location.origin}${storeUrl}`;
+  // Handle both local development and production URLs correctly
+  const getFullUrl = () => {
+    if (!storeUrl) return "";
+    
+    // For Netlify deployments, use their environment variable if available
+    const netlifyUrl = process.env.REACT_APP_URL || 
+                       process.env.NETLIFY_URL || 
+                       window.location.origin;
+    
+    // Ensure we have a clean base URL without trailing slashes
+    const baseUrl = netlifyUrl.endsWith('/') 
+      ? netlifyUrl.slice(0, -1) 
+      : netlifyUrl;
+    
+    // Ensure store URL starts with a slash
+    const formattedStoreUrl = storeUrl.startsWith('/') 
+      ? storeUrl 
+      : `/${storeUrl}`;
+    
+    return `${baseUrl}${formattedStoreUrl}`;
+  };
+  
+  const fullUrl = getFullUrl();
   
   // Log the URL for debugging
   console.log("Generated full URL for sharing:", fullUrl);
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}${text}`);
+    // Make sure to use the full URL when copying
+    navigator.clipboard.writeText(getFullUrl());
+    toast({
+      title: "Link copied!",
+      description: "The URL has been copied to your clipboard.",
+    });
   };
 
   const handleFacebookShare = () => {
@@ -65,14 +94,39 @@ export const Marketing = () => {
   };
 
   const handleDownloadQR = async () => {
-    const qrUrl = generateQRCodeUrl(fullUrl);
-    // Using createStyledQRCode with a simpler name for the basic QR code
-    await createStyledQRCode(qrUrl, businessName, fullUrl);
+    try {
+      const qrUrl = generateQRCodeUrl(fullUrl);
+      await createStyledQRCode(qrUrl, businessName, fullUrl);
+      toast({
+        title: "QR Code Downloaded",
+        description: "Your QR code has been successfully downloaded.",
+      });
+    } catch (error) {
+      console.error("Error downloading QR code:", error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading your QR code.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownloadStyledQR = async () => {
-    const qrUrl = generateQRCodeUrl(fullUrl);
-    await createStyledQRCode(qrUrl, businessName, fullUrl);
+    try {
+      const qrUrl = generateQRCodeUrl(fullUrl);
+      await createStyledQRCode(qrUrl, businessName, fullUrl);
+      toast({
+        title: "Styled QR Code Downloaded",
+        description: "Your styled QR code has been successfully downloaded.",
+      });
+    } catch (error) {
+      console.error("Error downloading styled QR code:", error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading your styled QR code.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -97,7 +151,7 @@ export const Marketing = () => {
       </div>
 
       <ShareLinks
-        storeUrl={storeUrl}
+        storeUrl={fullUrl}
         onCopy={copyToClipboard}
         onFacebookShare={handleFacebookShare}
         onInstagramEdit={handleInstagramEdit}
