@@ -28,6 +28,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
     e.stopPropagation();
     setIsExpanded(true);
   };
+  
+  const hasImage = service.image_url || (serviceImages && serviceImages.length > 0);
 
   return (
     <>
@@ -36,14 +38,16 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         className="sm:hidden overflow-hidden hover:shadow-lg transition-shadow"
       >
         <div className="flex h-32">
-          <div className="w-1/3 relative">
-            <img
-              src={serviceImages[selectedImageIndex]?.image_url || service.image_url}
-              alt={service.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="w-2/3 p-3 flex flex-col">
+          {hasImage && (
+            <div className="w-1/3 relative">
+              <img
+                src={serviceImages[selectedImageIndex]?.image_url || service.image_url}
+                alt={service.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className={`${hasImage ? 'w-2/3' : 'w-full'} p-3 flex flex-col`}>
             <div className="flex-1">
               <h3 className="font-semibold text-base leading-tight mb-1">{service.name}</h3>
               <p className="font-bold text-gebeya-pink text-sm">
