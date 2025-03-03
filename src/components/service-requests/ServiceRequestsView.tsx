@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -335,6 +334,10 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
     return scheduledDate >= new Date() && request.status !== 'rejected';
   });
 
+  const allRequestsSorted = [...requests].sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   return (
     <>
       <div className="flex items-center justify-between mb-8">
@@ -534,9 +537,9 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
               <CardDescription>View and manage all service requests</CardDescription>
             </CardHeader>
             <CardContent>
-              {requests.length > 0 ? (
+              {allRequestsSorted.length > 0 ? (
                 <div className="space-y-4">
-                  {requests.map((request) => (
+                  {allRequestsSorted.map((request) => (
                     <div
                       key={request.id}
                       className="p-4 border rounded-lg space-y-3"
