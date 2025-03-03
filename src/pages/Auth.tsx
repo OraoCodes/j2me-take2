@@ -29,7 +29,7 @@ const Auth = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log('Session found, user is authenticated');
+        console.log('Session found, user is authenticated:', session.user.id);
         // Get the stored auth flow type
         const authFlow = localStorage.getItem('telegram_auth_flow');
         console.log('Retrieved auth flow from localStorage:', authFlow);
@@ -44,6 +44,7 @@ const Auth = () => {
         
         // Clean up after successful redirect
         localStorage.removeItem('telegram_auth_flow');
+        console.log('Removed telegram_auth_flow from localStorage');
       } else {
         console.log('No session found, staying on auth page');
       }
@@ -56,10 +57,10 @@ const Auth = () => {
       console.log('Auth state change event:', event, 'Session:', session ? 'exists' : 'null');
       
       if (event === 'SIGNED_IN' && session) {
-        console.log('User signed in event detected');
+        console.log('User signed in event detected, user id:', session.user.id);
         // Get the stored auth flow type
         const authFlow = localStorage.getItem('telegram_auth_flow');
-        console.log('Retrieved auth flow from localStorage:', authFlow);
+        console.log('Retrieved auth flow from localStorage after SIGNED_IN event:', authFlow);
         
         if (authFlow === 'signup') {
           console.log('Navigating to onboarding based on auth event...');
@@ -71,6 +72,7 @@ const Auth = () => {
         
         // Clean up after successful redirect
         localStorage.removeItem('telegram_auth_flow');
+        console.log('Removed telegram_auth_flow from localStorage');
       }
     });
     

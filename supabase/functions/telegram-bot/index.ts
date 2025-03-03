@@ -1,6 +1,5 @@
-
 import { createClient } from '@supabase/supabase-js'
-import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -114,8 +113,12 @@ async function handleTelegramAuth(telegramUser: TelegramUser, forceSignUp = fals
         throw error;
       }
 
-      console.log("Generated authentication link for existing user");
-      return { user: connectionData.user_id, action: 'signin', authLink: data.properties.action_link };
+      console.log("Generated authentication link for existing user:", data.properties.action_link);
+      return { 
+        user: connectionData.user_id, 
+        action: 'signin', 
+        authLink: data.properties.action_link 
+      };
     }
 
     // Otherwise, create a new user
@@ -169,15 +172,19 @@ async function handleTelegramAuth(telegramUser: TelegramUser, forceSignUp = fals
       throw error;
     }
 
-    console.log("Generated authentication link for new user");
-    return { user: userData.user.id, action: 'signup', authLink: data.properties.action_link };
+    console.log("Generated authentication link for new user:", data.properties.action_link);
+    return { 
+      user: userData.user.id, 
+      action: 'signup', 
+      authLink: data.properties.action_link 
+    };
   } catch (error) {
     console.error('Error in Telegram auth:', error);
     throw error;
   }
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

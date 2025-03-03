@@ -92,6 +92,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         throw new Error('Authentication cancelled or failed');
       }
       
+      // Set telegram auth flow type in localStorage BEFORE making the API call
+      const authFlow = isSignUp ? 'signup' : 'signin';
+      console.log(`Setting telegram_auth_flow to '${authFlow}' BEFORE API call`);
+      localStorage.setItem('telegram_auth_flow', authFlow);
+      
       // Call our Supabase Edge Function
       console.log('Calling telegram-bot function with isSignUp:', isSignUp);
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
@@ -110,11 +115,15 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       console.log('Response from telegram-bot function:', data);
       
       if (data.authLink) {
-        // Store the action type before navigating
-        const isNewUser = data.action === 'signup' || isSignUp;
-        const authFlow = isNewUser ? 'signup' : 'signin';
-        console.log(`Setting telegram_auth_flow to '${authFlow}'`);
-        localStorage.setItem('telegram_auth_flow', authFlow);
+        // Verify the auth flow type is still set correctly
+        const storedAuthFlow = localStorage.getItem('telegram_auth_flow');
+        console.log(`Verifying telegram_auth_flow is still set: '${storedAuthFlow}'`);
+        
+        // Double-check to ensure the auth flow is set
+        if (!storedAuthFlow) {
+          console.log('Auth flow not found in localStorage, setting it again');
+          localStorage.setItem('telegram_auth_flow', authFlow);
+        }
         
         // Redirect to the auth link
         console.log('Redirecting to auth link:', data.authLink);
