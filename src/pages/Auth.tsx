@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Key, User } from "lucide-react";
+import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
+import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
+import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -114,94 +117,126 @@ const Auth = () => {
           </TabsList>
 
           <TabsContent value="signin">
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signin-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signin-email"
-                    name="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    required
-                    className="pl-10"
-                  />
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <WhatsAppLoginButton />
+                <TelegramLoginButton />
+              </div>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signin-password">Password</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signin-password"
-                    name="password"
-                    type="password"
-                    required
-                    className="pl-10"
-                  />
+              
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-email"
+                      name="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-password"
+                      name="password"
+                      type="password"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </div>
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-name"
-                    name="fullName"
-                    type="text"
-                    required
-                    className="pl-10"
-                  />
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <WhatsAppLoginButton />
+                <TelegramLoginButton />
+              </div>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    required
-                    className="pl-10"
-                  />
+              
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-name"
+                      name="fullName"
+                      type="text"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    required
-                    className="pl-10"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type="password"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
