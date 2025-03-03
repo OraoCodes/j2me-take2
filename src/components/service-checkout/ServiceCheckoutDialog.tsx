@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ interface ServiceCheckoutDialogProps {
   };
   isEditing?: boolean;
   requestId?: string;
+  onSubmitSuccess?: () => void;
 }
 
 interface AvailabilitySetting {
@@ -63,6 +65,7 @@ export const ServiceCheckoutDialog = ({
   initialData,
   isEditing = false,
   requestId,
+  onSubmitSuccess,
 }: ServiceCheckoutDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -323,6 +326,58 @@ export const ServiceCheckoutDialog = ({
         throw error;
       }
 
+      // Send a manual notification for testing
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const currentUserId = userData?.user?.id;
+        
+        // Note: We don't need this check if we're sending to the service provider always
+        console.log('Current user:', currentUserId, 'Service user:', service.user_id);
+        
+        // Only send notification if we have a request
+        if (requestData) {
+          const scheduledTime = format(scheduledAt, 'PPP p');
+          const formattedPrice = service.price.toLocaleString();
+          
+          const message = `
+🎉 <b>You Have a New Service Request!</b>
+
+<b>Service:</b> ${service.name}
+<b>Price:</b> KES ${formattedPrice}
+
+<b>Customer Details:</b>
+👤 ${formData.name}
+${fullPhoneNumber ? `📞 ${fullPhoneNumber}` : ''}
+${formData.email ? `📧 ${formData.email}` : ''}
+
+<b>Appointment:</b> ${scheduledTime}
+
+${formData.notes ? `<b>Special Requests:</b>\n${formData.notes}` : ''}
+
+<i>You can manage this request in your Gebeya dashboard.</i>
+`;
+
+          console.log('Sending telegram notification with message:', message);
+          
+          const response = await fetch('/functions/v1/telegram-bot', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: service.user_id,
+              notification: message
+            }),
+          });
+
+          const result = await response.json();
+          console.log('Telegram notification result:', result);
+        }
+      } catch (notifyError) {
+        console.error('Error sending telegram notification:', notifyError);
+        // Don't throw here - we don't want to fail the service request if notification fails
+      }
+
       toast({
         title: "Success!",
         description: service.instant_booking === true
@@ -330,6 +385,10 @@ export const ServiceCheckoutDialog = ({
           : "Your service request has been submitted for approval.",
       });
 
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error submitting service request:', error);

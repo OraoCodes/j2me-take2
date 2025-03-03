@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +11,7 @@ import { BusinessProfile } from '@/components/service-page/BusinessProfile';
 import { SearchAndCategories } from '@/components/service-page/SearchAndCategories';
 import { ServiceCard } from '@/components/service-page/ServiceCard';
 import ServiceChat from '@/components/service-chat/ServiceChat';
+import { useToast } from '@/hooks/use-toast';
 
 interface ServiceImage {
   id: string;
@@ -20,6 +22,7 @@ interface ServiceImage {
 
 const ServicePage = () => {
   const { userId } = useParams();
+  const { toast } = useToast();
   const [businessName, setBusinessName] = useState("");
   const [profileImage, setProfileImage] = useState("");
   const [bannerImage, setBannerImage] = useState("");
@@ -145,6 +148,18 @@ const ServicePage = () => {
     console.log('Message received:', message);
   };
 
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service);
+  };
+
+  const handleServiceRequestSubmitted = () => {
+    toast({
+      title: "Service request submitted",
+      description: "Your request has been sent to the service provider."
+    });
+    setSelectedService(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -198,7 +213,7 @@ const ServicePage = () => {
               serviceImages={serviceImages[service.id] || []}
               selectedImageIndex={selectedImageIndex[service.id] || 0}
               onImageNavigation={(direction) => handleImageNavigation(service.id, direction)}
-              onServiceSelect={() => setSelectedService(service)}
+              onServiceSelect={() => handleServiceSelect(service)}
             />
           ))}
         </div>
@@ -217,6 +232,7 @@ const ServicePage = () => {
               ...selectedService,
               instant_booking: selectedService.instant_booking || false
             }}
+            onSubmitSuccess={handleServiceRequestSubmitted}
           />
         )}
 
