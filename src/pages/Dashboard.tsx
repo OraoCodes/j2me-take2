@@ -23,7 +23,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ServiceCategories from "./ServiceCategories";
 import AvailabilitySettings from "./AvailabilitySettings";
 
-const Dashboard = () => {
+interface DashboardProps {
+  initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability";
+}
+
+const Dashboard = ({ initialView }: DashboardProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
@@ -35,11 +39,11 @@ const Dashboard = () => {
   const [showCreateService, setShowCreateService] = useState(false);
   const [userCategories, setUserCategories] = useState<Category[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [showServiceRequests, setShowServiceRequests] = useState(false);
+  const [showServiceRequests, setShowServiceRequests] = useState(initialView === "service-requests");
   const [hasRequests, setHasRequests] = useState(false);
-  const [showCustomers, setShowCustomers] = useState(false);
-  const [showMarketing, setShowMarketing] = useState(false);
-  const [showAvailability, setShowAvailability] = useState(false);
+  const [showCustomers, setShowCustomers] = useState(initialView === "customers");
+  const [showMarketing, setShowMarketing] = useState(initialView === "marketing");
+  const [showAvailability, setShowAvailability] = useState(initialView === "availability");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,7 +55,13 @@ const Dashboard = () => {
     fetchServices().then(setServices);
     fetchProfile();
     checkServiceRequests();
-  }, []);
+    
+    if (initialView === "services") {
+      setShowServices(true);
+    } else if (initialView === "categories") {
+      setShowCategories(true);
+    }
+  }, [initialView]);
 
   const fetchProfile = async () => {
     try {
@@ -102,6 +112,8 @@ const Dashboard = () => {
       setShowServiceRequests(false);
       setShowCustomers(false);
       setShowMarketing(false);
+      setShowAvailability(false);
+      navigate("/dashboard");
     }},
     { label: "Category", onClick: () => {
       setShowCategories(true);
@@ -109,6 +121,8 @@ const Dashboard = () => {
       setShowServiceRequests(false);
       setShowCustomers(false);
       setShowMarketing(false);
+      setShowAvailability(false);
+      navigate("/dashboard");
     }},
   ];
 
@@ -123,6 +137,7 @@ const Dashboard = () => {
         setShowCustomers(false);
         setShowMarketing(false);
         setShowAvailability(false);
+        navigate("/dashboard");
       }
     },
     { 
@@ -135,6 +150,7 @@ const Dashboard = () => {
         setShowCustomers(false);
         setShowMarketing(false);
         setShowAvailability(false);
+        navigate("/dashboard/service-requests");
       }
     },
     { 

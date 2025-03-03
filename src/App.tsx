@@ -32,6 +32,7 @@ function App() {
         <Route path="/add-services" element={<AddServices />} />
         <Route path="/service-created" element={<ServiceCreated />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/service-requests" element={<Dashboard initialView="service-requests" />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/service-share" element={<ServiceShare />} />
         <Route path="/payment-methods" element={<PaymentMethods />} />
