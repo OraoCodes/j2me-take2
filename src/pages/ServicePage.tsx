@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -170,7 +171,7 @@ const ServicePage = () => {
           platform: 'Gebeya'
         };
 
-        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook-test/16091124-b34e-4c6e-a8f3-7a5856532bac', {
+        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook/16091124-b34e-4c6e-a8f3-7a5856532bac', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

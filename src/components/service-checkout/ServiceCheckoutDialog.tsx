@@ -350,7 +350,7 @@ export const ServiceCheckoutDialog = ({
 
         console.log('Sending n8n webhook notification with data:', webhookData);
         
-        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook-test/16091124-b34e-4c6e-a8f3-7a5856532bac', {
+        const response = await fetch('https://martinndlovu.app.n8n.cloud/webhook/16091124-b34e-4c6e-a8f3-7a5856532bac', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
