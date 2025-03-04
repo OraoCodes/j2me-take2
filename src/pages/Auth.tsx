@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -101,6 +100,10 @@ const Auth = () => {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+          data: {
+            signup_attempt: new Date().toISOString(),
+            origin: window.location.origin
+          }
         },
       });
 
