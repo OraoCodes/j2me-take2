@@ -156,6 +156,7 @@ export type Database = {
           id: string
           profile_image_url: string | null
           referral_source: string | null
+          role: string | null
           service_page_link: string | null
           service_requests_per_month: string | null
           service_type: string | null
@@ -169,6 +170,7 @@ export type Database = {
           id: string
           profile_image_url?: string | null
           referral_source?: string | null
+          role?: string | null
           service_page_link?: string | null
           service_requests_per_month?: string | null
           service_type?: string | null
@@ -182,6 +184,7 @@ export type Database = {
           id?: string
           profile_image_url?: string | null
           referral_source?: string | null
+          role?: string | null
           service_page_link?: string | null
           service_requests_per_month?: string | null
           service_type?: string | null
