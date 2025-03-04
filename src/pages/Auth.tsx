@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, AlertCircle, Check, RefreshCw, ExternalLink } from "lucide-react";
+import { Mail, Key, AlertCircle, Check, RefreshCw, ExternalLink, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
@@ -17,6 +18,7 @@ const Auth = () => {
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [providerError, setProviderError] = useState<string | null>(null);
+  const [signupResponse, setSignupResponse] = useState<any>(null);
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "signin");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -85,6 +87,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setSignupResponse(null);
     
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -108,10 +111,12 @@ const Auth = () => {
           title: "Error",
           description: error.message,
         });
+        setSignupResponse({error: error.message});
       } else {
         console.log("Sign up response:", data);
         setVerificationEmail(email);
         setVerificationSent(true);
+        setSignupResponse(data);
         toast({
           title: "Success",
           description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
@@ -124,6 +129,7 @@ const Auth = () => {
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
+      setSignupResponse({error: "Unexpected error occurred"});
     } finally {
       setIsLoading(false);
     }
@@ -379,6 +385,24 @@ const Auth = () => {
                   </AlertDescription>
                 </Alert>
                 
+                {signupResponse && (
+                  <Alert className="bg-gray-50 border-gray-200 mb-4">
+                    <Info className="h-4 w-4 text-gray-600" />
+                    <AlertTitle className="text-gray-800">Technical Details</AlertTitle>
+                    <AlertDescription className="text-xs text-gray-600">
+                      <div className="font-mono overflow-auto max-h-24 p-2 bg-gray-100 rounded">
+                        {JSON.stringify({
+                          userId: signupResponse?.user?.id,
+                          email: signupResponse?.user?.email,
+                          confirmationSent: signupResponse?.user?.confirmation_sent_at,
+                          emailConfirmed: signupResponse?.user?.email_confirmed_at,
+                          identities: signupResponse?.user?.identities?.length
+                        }, null, 2)}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
                 <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h3 className="font-medium text-gray-800">Troubleshooting verification emails:</h3>
                   
@@ -387,6 +411,7 @@ const Auth = () => {
                     <li>Add <strong>noreply@mail.app.supabase.io</strong> to your contacts</li>
                     <li>Check any email filters that might be redirecting messages</li>
                     <li>Try using a different email provider (Gmail, Outlook, etc.)</li>
+                    <li>Make sure your Supabase Site URL is set to: <code className="bg-gray-200 px-1 py-0.5 rounded text-xs">{window.location.origin}</code></li>
                   </ul>
                 </div>
                 
