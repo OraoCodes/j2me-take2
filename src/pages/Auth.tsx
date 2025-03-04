@@ -17,12 +17,15 @@ const Auth = () => {
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [providerError, setProviderError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "signin");
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const defaultTab = searchParams.get("tab") || "signin";
 
   useEffect(() => {
+    setActiveTab(defaultTab);
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         redirectBasedOnUserStatus(session.user);
@@ -224,11 +227,11 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg animate-fade-up [animation-delay:200ms]">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">
-            {defaultTab === "signup" ? "Start your journey" : "Welcome back"}
+            {activeTab === "signup" ? "Join us today!" : "Welcome back"}
           </h2>
           <p className="text-muted-foreground">
-            {defaultTab === "signup" 
-              ? "Create your account and start growing your business" 
+            {activeTab === "signup" 
+              ? "Create an account to get started" 
               : "Sign in to your account to continue"
             }
           </p>
@@ -242,7 +245,11 @@ const Auth = () => {
           </Alert>
         )}
 
-        <Tabs defaultValue={defaultTab} className="w-full">
+        <Tabs 
+          defaultValue={defaultTab} 
+          className="w-full"
+          onValueChange={(value) => setActiveTab(value)}
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
