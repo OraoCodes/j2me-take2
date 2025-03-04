@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail, Key, User, AlertCircle } from "lucide-react";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
+import { OTPlessWhatsAppLoginButton } from "@/components/auth/OTPlessWhatsAppLoginButton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
@@ -207,10 +209,9 @@ const Auth = () => {
 
         <Alert className="bg-blue-50 border-blue-100">
           <AlertCircle className="h-4 w-4 text-blue-500" />
-          <AlertTitle className="text-blue-700">Telegram Authentication</AlertTitle>
+          <AlertTitle className="text-blue-700">Social Authentication</AlertTitle>
           <AlertDescription className="text-blue-600 text-sm">
-            <p>Click the Telegram button below to authenticate with your Telegram account.</p>
-            <p className="mt-2 text-xs font-medium">Note: Make sure you have the Telegram app installed.</p>
+            <p>Sign in with your Telegram account or WhatsApp for the fastest experience.</p>
           </AlertDescription>
         </Alert>
 
@@ -223,6 +224,7 @@ const Auth = () => {
           <TabsContent value="signin">
             <div className="space-y-4">
               <div className="grid gap-2">
+                <OTPlessWhatsAppLoginButton isSignUp={false} />
                 <WhatsAppLoginButton isSignUp={false} />
                 <TelegramLoginButton isSignUp={false} />
               </div>
@@ -278,6 +280,7 @@ const Auth = () => {
           <TabsContent value="signup">
             <div className="space-y-4">
               <div className="grid gap-2">
+                <OTPlessWhatsAppLoginButton isSignUp={true} />
                 <WhatsAppLoginButton isSignUp={true} />
                 <TelegramLoginButton isSignUp={true} />
               </div>
