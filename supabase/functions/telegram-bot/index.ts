@@ -12,7 +12,17 @@ serve(async (req) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] Telegram bot function called with method: ${req.method}`);
   console.log(`[${timestamp}] Request URL: ${req.url}`);
-  console.log(`[${timestamp}] Request headers:`, JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  
+  // Log headers but remove any sensitive information
+  const headers = Object.fromEntries(req.headers.entries());
+  const safeHeaders = { ...headers };
+  if (safeHeaders.authorization) {
+    safeHeaders.authorization = safeHeaders.authorization.substring(0, 15) + '...';
+  }
+  if (safeHeaders.apikey) {
+    safeHeaders.apikey = safeHeaders.apikey.substring(0, 15) + '...';
+  }
+  console.log(`[${timestamp}] Request headers:`, JSON.stringify(safeHeaders, null, 2));
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {

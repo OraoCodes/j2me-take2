@@ -1,5 +1,8 @@
 
 project_id = "ivndgetmkcwapmttsbqa"
 
-[functions.telegram-bot]
+[api]
+# Disables the JWT verification so the edge function can be called by anyone
+[api.edge_functions]
+[api.edge_functions."telegram-bot"]
 verify_jwt = false
