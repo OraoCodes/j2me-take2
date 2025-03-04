@@ -30,7 +30,8 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const [widgetAttempts, setWidgetAttempts] = useState(0);
   const [useFallbackButton, setUseFallbackButton] = useState(false);
 
-  const botId = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GebeyaJitumeBot';
+  // Use the specific bot ID you mentioned
+  const botId = "IrenePABot";
 
   useEffect(() => {
     const loadTelegramWidget = async () => {
@@ -58,13 +59,17 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   useEffect(() => {
     if (scriptLoaded && containerRef.current && widgetAttempts < 3 && !useFallbackButton) {
       try {
+        // Clear any previous content
         containerRef.current.innerHTML = '';
         console.log(`[DEBUG:${debugIdRef.current}] Container cleared for Telegram widget`);
         
+        // Create a unique callback name for this instance
         const callbackName = `onTelegramAuth_${Math.random().toString(36).substring(2, 15)}`;
         
+        // Define the callback function in the global scope
         window[callbackName] = (user: TelegramUser) => handleTelegramAuth(user);
         
+        // Create the script element for the Telegram widget
         const script = document.createElement('script');
         script.setAttribute('async', '');
         script.setAttribute('data-telegram-login', botId);
@@ -74,6 +79,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         script.setAttribute('data-userpic', 'false');
         script.setAttribute('data-onauth', `${callbackName}(user)`);
         
+        // Set the auth URL to the current location
         const currentOrigin = window.location.origin;
         const authPath = `/auth?tab=${isSignUp ? 'signup' : 'signin'}`;
         const fullAuthUrl = `${currentOrigin}${authPath}`;
@@ -81,6 +87,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         
         console.log(`[DEBUG:${debugIdRef.current}] Setting auth URL to: ${fullAuthUrl}`);
         
+        // Append the script to the container
         containerRef.current.appendChild(script);
         console.log(`[DEBUG:${debugIdRef.current}] Telegram widget script appended to container`);
         
