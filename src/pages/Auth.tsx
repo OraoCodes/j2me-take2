@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,33 @@ const Auth = () => {
         navigate("/dashboard");
       }
     });
-  }, [navigate]);
+
+    // Check for auth errors in the URL
+    const errorCode = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
+    
+    if (errorCode) {
+      console.error("Auth error:", errorCode, errorDescription);
+      setProviderError(`Authentication error: ${errorDescription || errorCode}`);
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: errorDescription || "An error occurred during sign in",
+      });
+    }
+    
+    // Listen for auth state changes
+    const { data: { subscription }} = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      if (event === 'SIGNED_IN' && session) {
+        navigate("/dashboard");
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, searchParams, toast]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -151,6 +176,8 @@ const Auth = () => {
         // Handle the specific provider not enabled error
         if (error.message.includes("provider is not enabled") || error.status === 400) {
           setProviderError("Google login is not properly configured. Please make sure Google provider is enabled in Supabase.");
+        } else {
+          setProviderError(`Error: ${error.message}`);
         }
         
         toast({
@@ -162,6 +189,16 @@ const Auth = () => {
       } else {
         console.log("Google sign-in initiated successfully:", data);
         // We don't set loading to false here as we'll be redirected
+        
+        // If we reach this point but no redirection happens, it's probably a configuration issue
+        // Let's add a safety timeout to reset the loading state
+        setTimeout(() => {
+          if (document.visibilityState === 'visible') {
+            console.log("No redirection happened within timeout period");
+            setGoogleLoading(false);
+            setProviderError("No redirect occurred. This could be due to popup blockers or incorrect configuration.");
+          }
+        }, 5000);
       }
     } catch (e) {
       console.error("Unexpected error during Google sign-in:", e);
@@ -430,6 +467,10 @@ const Auth = () => {
             )}
           </TabsContent>
         </Tabs>
+      </div>
+      
+      <div className="mt-4 text-sm text-center text-gray-500">
+        Having trouble signing in? <a href="mailto:support@gebeya.com" className="text-gebeya-pink hover:underline">Contact support</a>
       </div>
     </div>
   );
