@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, User, AlertCircle, Check, RefreshCw } from "lucide-react";
+import { Mail, Key, AlertCircle, Check, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
@@ -23,14 +23,12 @@ const Auth = () => {
   const defaultTab = searchParams.get("tab") || "signin";
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         redirectBasedOnUserStatus(session.user);
       }
     });
 
-    // Check for auth errors in the URL
     const errorCode = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
     
@@ -44,7 +42,6 @@ const Auth = () => {
       });
     }
     
-    // Listen for auth state changes
     const { data: { subscription }} = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
       if (event === 'SIGNED_IN' && session) {
@@ -57,12 +54,10 @@ const Auth = () => {
     };
   }, [navigate, searchParams, toast]);
 
-  // New function to redirect based on user status
   const redirectBasedOnUserStatus = async (user) => {
     if (!user) return;
     
     try {
-      // Check if user has completed onboarding by checking if they have a profession set
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('profession, company_name')
@@ -71,7 +66,6 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // If user doesn't have a profession or company name set, they need to complete onboarding
       if (!profile?.profession || !profile?.company_name) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");
@@ -81,7 +75,6 @@ const Auth = () => {
       }
     } catch (error) {
       console.error("Error checking user profile:", error);
-      // Default to dashboard if there's an error checking profile
       navigate("/dashboard");
     }
   };
@@ -93,17 +86,11 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
 
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
         emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
       },
     });
@@ -176,27 +163,23 @@ const Auth = () => {
       setIsLoading(false);
     } else {
       console.log("Sign in response:", data);
-      // Don't navigate here, let the auth state change listener handle redirection
     }
   };
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    setProviderError(null); // Reset any previous provider errors
-    
+    setProviderError(null);
+
     try {
       console.log("Starting Google sign-in process...");
       
-      // Debug: Log the redirect URL
       const redirectUrl = `${window.location.origin}/auth?tab=signin`;
       console.log("Redirect URL:", redirectUrl);
       
-      // Important: Using redirectTo instead of a popup to avoid X-Frame-Options issue
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          // Remove any popup options, force full page redirect
           skipBrowserRedirect: false
         }
       });
@@ -204,7 +187,6 @@ const Auth = () => {
       if (error) {
         console.error("Google sign-in error:", error);
         
-        // Handle the specific provider not enabled error
         if (error.message.includes("provider is not enabled") || error.status === 400) {
           setProviderError("Google login is not properly configured. Please make sure Google provider is enabled in Supabase.");
         } else {
@@ -219,17 +201,7 @@ const Auth = () => {
         setGoogleLoading(false);
       } else {
         console.log("Google sign-in initiated successfully:", data);
-        // We don't set loading to false here as we'll be redirected
-        
-        // If we reach this point but no redirection happens, it's probably a configuration issue
-        // Let's add a safety timeout to reset the loading state
-        setTimeout(() => {
-          if (document.visibilityState === 'visible') {
-            console.log("No redirection happened within timeout period");
-            setGoogleLoading(false);
-            setProviderError("No redirect occurred. This could be due to popup blockers or incorrect configuration.");
-          }
-        }, 5000);
+        setGoogleLoading(false);
       }
     } catch (e) {
       console.error("Unexpected error during Google sign-in:", e);
@@ -391,32 +363,6 @@ const Auth = () => {
               </div>
             ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-firstName">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-firstName"
-                      name="firstName"
-                      type="text"
-                      required
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-lastName">Last Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-lastName"
-                      name="lastName"
-                      type="text"
-                      required
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
