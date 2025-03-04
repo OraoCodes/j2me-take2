@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -445,13 +444,6 @@ const Auth = () => {
                     />
                   </div>
                 </div>
-                <Alert variant="default" className="bg-blue-50 border-blue-200">
-                  <AlertCircle className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-800">Email verification required</AlertTitle>
-                  <AlertDescription className="text-blue-700">
-                    After signing up, you'll need to verify your email before you can log in.
-                  </AlertDescription>
-                </Alert>
                 <Button 
                   type="submit" 
                   className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
