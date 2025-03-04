@@ -206,6 +206,20 @@ const Auth = () => {
           </Alert>
         )}
 
+        <Alert className="bg-blue-50 border-blue-100">
+          <AlertCircle className="h-4 w-4 text-blue-500" />
+          <AlertTitle className="text-blue-700">Important: Telegram Authentication</AlertTitle>
+          <AlertDescription className="text-blue-600 text-sm">
+            <p>To use Telegram authentication, you <strong>must</strong> have a username set in your Telegram profile settings:</p>
+            <ol className="mt-2 list-decimal list-inside text-xs">
+              <li>Open Telegram app</li>
+              <li>Go to Settings</li>
+              <li>Tap on your profile info</li>
+              <li>Set a username</li>
+            </ol>
+          </AlertDescription>
+        </Alert>
+
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -269,14 +283,6 @@ const Auth = () => {
 
           <TabsContent value="signup">
             <div className="space-y-4">
-              <Alert className="bg-blue-50 border-blue-100">
-                <AlertCircle className="h-4 w-4 text-blue-500" />
-                <AlertTitle className="text-blue-700">Telegram Authentication Note</AlertTitle>
-                <AlertDescription className="text-blue-600 text-sm">
-                  To use Telegram authentication, you must have a username set in your Telegram profile settings.
-                </AlertDescription>
-              </Alert>
-              
               <div className="grid gap-2">
                 <WhatsAppLoginButton isSignUp={true} />
                 <TelegramLoginButton isSignUp={true} />

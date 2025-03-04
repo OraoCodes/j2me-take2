@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 declare global {
   interface Window {
@@ -25,6 +27,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [showUsernameWarning, setShowUsernameWarning] = useState(false);
   const BOT_ID = '7984716005'; // Telegram bot ID
   const navigate = useNavigate();
   const scriptRef = useRef<HTMLScriptElement | null>(null);
@@ -53,6 +56,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         
         if (usernameErrorDetectedRef.current) {
           // User encountered the username error
+          setShowUsernameWarning(true);
           toast({
             variant: "destructive",
             title: "Telegram Username Required",
@@ -362,8 +366,12 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       return;
     }
     
+    // Reset username warning display
+    setShowUsernameWarning(false);
+    
     // If we've already tried a few times, suggest setting up a username
     if (maxRetryAttemptsRef.current >= 2) {
+      setShowUsernameWarning(true);
       toast({
         variant: "destructive",
         title: "Telegram Username Required",
@@ -421,26 +429,28 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       if (tryDirectAuth()) {
         console.log(`[DEBUG:${debugId}] Using direct auth approach`);
         
-        // Set a timeout to reset loading state if auth takes too long (30 seconds)
+        // Set a timeout to reset loading state if auth takes too long (reduced to 15 seconds)
         authTimeoutRef.current = window.setTimeout(() => {
           console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
           if (isLoading) {
             setIsLoading(false);
             // Check if there was a username error
             if (checkForUsernameError()) {
+              setShowUsernameWarning(true);
               toast({
                 variant: "destructive",
                 title: "Telegram Username Required",
                 description: "Please set up a username in your Telegram profile settings and try again."
               });
             } else {
+              setShowUsernameWarning(true);
               toast({
                 title: "Authentication timed out",
-                description: "The Telegram authentication process took too long. Please try again.",
+                description: "The Telegram authentication process took too long. Make sure you have set a username in your Telegram profile.",
               });
             }
           }
-        }, 30000);
+        }, 15000); // Reduced timeout to 15 seconds
         
         return;
       }
@@ -473,12 +483,14 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
               setIsLoading(false);
               // Check if there was a username error
               if (checkForUsernameError()) {
+                setShowUsernameWarning(true);
                 toast({
                   variant: "destructive",
                   title: "Telegram Username Required",
                   description: "Please set up a username in your Telegram profile settings and try again."
                 });
               } else {
+                setShowUsernameWarning(true);
                 toast({
                   title: "Authentication timed out",
                   description: "The Telegram authentication process took too long. Please try again. Telegram requires setting a username in your profile.",
@@ -501,12 +513,14 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
                   // Check for username error
                   if (checkForUsernameError() || document.documentElement.innerHTML.includes("username invalid")) {
                     usernameErrorDetectedRef.current = true;
+                    setShowUsernameWarning(true);
                     toast({
                       variant: "destructive",
                       title: "Telegram Username Required",
                       description: "Please set up a username in your Telegram profile settings and try again."
                     });
                   } else {
+                    setShowUsernameWarning(true);
                     toast({
                       title: "Authentication cancelled",
                       description: "The Telegram authentication was cancelled. Please try again. Note that Telegram requires setting a username in your profile.",
@@ -531,6 +545,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       }
       
       // Final fallback - let user know about username requirement
+      setShowUsernameWarning(true);
       toast({
         variant: "destructive",
         title: "Authentication failed",
@@ -552,12 +567,31 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   };
 
   return (
-    <Button
-      onClick={handleTelegramLogin}
-      className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
-      disabled={isLoading}
-    >
-      {isLoading ? "Authenticating..." : isSignUp ? "Sign up with Telegram" : "Sign in with Telegram"}
-    </Button>
+    <div className="space-y-2">
+      {showUsernameWarning && (
+        <Alert className="bg-amber-50 border-amber-200 mb-2">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Telegram Username Required</AlertTitle>
+          <AlertDescription className="text-amber-700 text-sm">
+            <p>You must set a username in your Telegram profile settings before you can authenticate.</p>
+            <ol className="mt-2 list-decimal list-inside text-xs">
+              <li>Open Telegram app</li>
+              <li>Go to Settings</li>
+              <li>Tap on your profile info</li>
+              <li>Set a username</li>
+              <li>Return here and try again</li>
+            </ol>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <Button
+        onClick={handleTelegramLogin}
+        className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
+        disabled={isLoading}
+      >
+        {isLoading ? "Authenticating..." : isSignUp ? "Sign up with Telegram" : "Sign in with Telegram"}
+      </Button>
+    </div>
   );
 };

@@ -167,7 +167,8 @@ serve(async (req) => {
           JSON.stringify({ 
             error: "Invalid authentication data", 
             reason: validationResult.reason,
-            canProceed: validationResult.canProceed
+            canProceed: validationResult.canProceed,
+            requiresUsername: validationResult.requiresUsername
           }),
           { 
             status: validationResult.canProceed ? 200 : 400, 
@@ -381,7 +382,7 @@ serve(async (req) => {
 });
 
 // Function to validate Telegram authentication data
-function validateTelegramAuth(authData: any): { valid: boolean; reason?: string; canProceed: boolean } {
+function validateTelegramAuth(authData: any): { valid: boolean; reason?: string; canProceed: boolean; requiresUsername?: boolean } {
   // Basic validation
   if (!authData || !authData.id) {
     return { valid: false, reason: "Missing user ID", canProceed: false };
@@ -400,7 +401,8 @@ function validateTelegramAuth(authData: any): { valid: boolean; reason?: string;
     return { 
       valid: true, 
       reason: "Missing username but will attempt to proceed", 
-      canProceed: true 
+      canProceed: true,
+      requiresUsername: true
     };
   }
   
@@ -408,5 +410,5 @@ function validateTelegramAuth(authData: any): { valid: boolean; reason?: string;
   // using the bot token to ensure the data came from Telegram
   // But for this example, we'll just do basic validation
   
-  return { valid: true, canProceed: true };
+  return { valid: true, canProceed: true, requiresUsername: false };
 }
