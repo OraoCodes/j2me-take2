@@ -8,8 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log(`Telegram bot function called with method: ${req.method}`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
   
@@ -17,11 +20,37 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { 
+          status: 500, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+    
     // Initialize Supabase client with the service role key (for admin operations)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     // Get the request body
-    const { action, telegramUser, isSignUp } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log("Request body parsed successfully");
+    } catch (error) {
+      console.error("Error parsing request body:", error);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+    
+    const { action, telegramUser, isSignUp } = requestBody;
     
     console.log(`Telegram Bot function called with action: ${action}`);
     console.log(`isSignUp flag: ${isSignUp}`);
@@ -64,10 +93,31 @@ serve(async (req) => {
       // If this is a signup but user already exists, treat as sign in
       if (isSignUp && existingUser) {
         console.log("User tried to sign up but already exists, treating as sign in");
-        isSignUp = false;
-      }
-      
-      if (isSignUp) {
+        const adjustedSignUp = false;
+        
+        // Generate a sign-in link for the existing user
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email,
+          options: {
+            redirectTo: `${req.headers.get('origin') || ""}/dashboard`
+          }
+        });
+        
+        if (signInError) {
+          console.error("Error generating link for existing user:", signInError);
+          return new Response(
+            JSON.stringify({ error: "Failed to generate login link" }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        authLink = signInData?.properties?.action_link;
+        console.log("Generated auth link for existing user:", authLink);
+      } else if (isSignUp) {
         console.log("Creating new user account with Telegram");
         
         // Create a random password for the user
@@ -92,7 +142,7 @@ serve(async (req) => {
         if (createError) {
           console.error("Error creating user:", createError);
           return new Response(
-            JSON.stringify({ error: "Failed to create user" }),
+            JSON.stringify({ error: "Failed to create user", details: createError.message }),
             { 
               status: 500, 
               headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -114,6 +164,8 @@ serve(async (req) => {
             
           if (profileError) {
             console.error("Error updating profile:", profileError);
+          } else {
+            console.log("Profile updated successfully with telegram_id");
           }
         }
         
@@ -129,7 +181,7 @@ serve(async (req) => {
         if (signInError) {
           console.error("Error generating link:", signInError);
           return new Response(
-            JSON.stringify({ error: "Failed to generate login link" }),
+            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
             { 
               status: 500, 
               headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -154,7 +206,7 @@ serve(async (req) => {
         if (signInError) {
           console.error("Error generating link:", signInError);
           return new Response(
-            JSON.stringify({ error: "Failed to generate login link" }),
+            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
             { 
               status: 500, 
               headers: { 'Content-Type': 'application/json', ...corsHeaders } 

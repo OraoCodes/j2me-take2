@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,8 +23,11 @@ declare global {
 export const TelegramLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const BOT_ID = '7984716005'; // Telegram bot ID
   const navigate = useNavigate();
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const authAttemptedRef = useRef(false);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
@@ -86,9 +88,35 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
   }, [isSignUp, toast, navigate]);
 
+  // Handle manual cleanup of Telegram resources
+  const cleanupTelegramResources = useCallback(() => {
+    console.log('Cleaning up Telegram login resources');
+    // Remove the global callback
+    if (window.onTelegramAuth) {
+      delete window.onTelegramAuth;
+      console.log('Removed window.onTelegramAuth');
+    }
+    
+    // Remove the script element
+    if (scriptRef.current) {
+      scriptRef.current.remove();
+      scriptRef.current = null;
+      console.log('Removed Telegram script element');
+    }
+    
+    // Remove any Telegram iframe elements that might have been created
+    document.querySelectorAll('iframe[src*="telegram.org"]').forEach(iframe => {
+      iframe.remove();
+      console.log('Removed Telegram iframe element');
+    });
+    
+    setScriptLoaded(false);
+  }, []);
+
   useEffect(() => {
     // Set the global callback that Telegram will use
     window.onTelegramAuth = handleTelegramAuth;
+    console.log('Set window.onTelegramAuth callback, isSignUp:', isSignUp);
     
     // Load Telegram Login Widget script
     const script = document.createElement('script');
@@ -98,32 +126,73 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     script.setAttribute('data-request-access', 'write');
     script.async = true;
     
+    // Keep track of script loading status
+    script.onload = () => {
+      console.log('Telegram login script loaded successfully');
+      setScriptLoaded(true);
+    };
+    
+    script.onerror = (err) => {
+      console.error('Failed to load Telegram login script:', err);
+      toast({
+        variant: "destructive",
+        title: "Failed to load Telegram",
+        description: "Could not load Telegram authentication. Please try again later.",
+      });
+      setScriptLoaded(false);
+      setIsLoading(false);
+    };
+    
     // Cleanup previous script if it exists
     const existingScript = document.getElementById('telegram-login-script');
     if (existingScript) {
+      console.log('Removing existing Telegram script');
       existingScript.remove();
     }
     
     script.id = 'telegram-login-script';
     document.body.appendChild(script);
+    scriptRef.current = script;
     
     console.log('Telegram login component mounted, isSignUp:', isSignUp);
     console.log('Window onTelegramAuth set:', !!window.onTelegramAuth);
 
-    return () => {
-      // Remove script and callback on unmount
-      const scriptToRemove = document.getElementById('telegram-login-script');
-      if (scriptToRemove) {
-        scriptToRemove.remove();
+    // Check for auth state changes to reset loading state if needed
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'User logged in' : 'No session');
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setIsLoading(false);
       }
-      console.log('Cleaning up Telegram login component');
-      delete window.onTelegramAuth;
+    });
+
+    return () => {
+      // Run the cleanup logic
+      cleanupTelegramResources();
+      
+      // Unsubscribe from auth state changes
+      subscription.unsubscribe();
+      console.log('Unsubscribed from auth state changes');
     };
-  }, [handleTelegramAuth]);
+  }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast]);
 
   const handleTelegramLogin = () => {
+    if (authAttemptedRef.current) {
+      console.log('Auth already attempted, cleaning up and trying again');
+      cleanupTelegramResources();
+      
+      // Small delay to ensure cleanup is complete
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      return;
+    }
+    
     if (!window.Telegram?.Login?.auth) {
       console.error('Telegram Login SDK not loaded');
+      if (scriptLoaded) {
+        console.log('Script is loaded but Telegram.Login.auth is not available');
+      }
+      
       toast({
         variant: "destructive",
         title: "Telegram widget not loaded",
@@ -133,6 +202,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
     
     setIsLoading(true);
+    authAttemptedRef.current = true;
     console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
     
     try {
@@ -149,6 +219,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     } catch (error) {
       console.error('Error initiating Telegram auth:', error);
       setIsLoading(false);
+      authAttemptedRef.current = false;
       toast({
         variant: "destructive",
         title: "Authentication error",
