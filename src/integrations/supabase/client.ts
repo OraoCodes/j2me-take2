@@ -44,9 +44,34 @@ export async function sendAuthEmail(email: string, type: 'signup' | 'reset' | 'm
     });
     
     console.log('Custom auth email response:', response);
-    return response;
+    
+    // Check if the response contains an error
+    if (response.error) {
+      console.error('Error from auth email function:', response.error);
+      return {
+        success: false,
+        error: response.error.message || 'Failed to send authentication email'
+      };
+    }
+    
+    // Process the successful response
+    if (response.data?.success === false) {
+      console.error('Auth email function returned an error:', response.data.error);
+      return {
+        success: false,
+        error: response.data.error || 'Email service reported an error'
+      };
+    }
+    
+    return {
+      success: true,
+      data: response.data
+    };
   } catch (error) {
     console.error('Error sending custom auth email:', error);
-    throw error;
+    return {
+      success: false,
+      error: error.message || 'Unexpected error sending authentication email'
+    };
   }
 }

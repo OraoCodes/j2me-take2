@@ -95,47 +95,34 @@ const Auth = () => {
     try {
       console.log("Attempting custom signup for email:", email);
       
-      // Instead of using Supabase's signUp method, we'll create a user entry first using the admin API via our Edge Function
-      // This bypasses the email provider restriction
-      try {
-        // Send our custom verification email
-        const customEmailResponse = await sendAuthEmail(
-          email, 
-          'signup',
-          `${window.location.origin}/auth?tab=signin`
-        );
-        
-        console.log("Custom email response:", customEmailResponse);
-        
-        if (customEmailResponse.error) {
-          toast({
-            variant: "destructive",
-            title: "Email Error",
-            description: `Failed to send verification email: ${customEmailResponse.error}`,
-          });
-          setSignupResponse({error: customEmailResponse.error});
-        } else {
-          setVerificationEmail(email);
-          setVerificationSent(true);
-          setSignupResponse({
-            user: {
-              email: email,
-              confirmation_sent_at: new Date().toISOString()
-            }
-          });
-          toast({
-            title: "Success",
-            description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
-          });
-        }
-      } catch (emailError) {
-        console.error("Custom email error:", emailError);
+      const emailResponse = await sendAuthEmail(
+        email, 
+        'signup',
+        `${window.location.origin}/auth?tab=signin`
+      );
+      
+      console.log("Custom email response:", emailResponse);
+      
+      if (!emailResponse.success) {
         toast({
           variant: "destructive",
           title: "Email Error",
-          description: "There was a problem sending the verification email.",
+          description: `Failed to send verification email: ${emailResponse.error}`,
         });
-        setSignupResponse({error: "Failed to send verification email"});
+        setSignupResponse({error: emailResponse.error});
+      } else {
+        setVerificationEmail(email);
+        setVerificationSent(true);
+        setSignupResponse({
+          user: {
+            email: email,
+            confirmation_sent_at: new Date().toISOString()
+          }
+        });
+        toast({
+          title: "Success",
+          description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
+        });
       }
     } catch (err) {
       console.error("Unexpected error during signup:", err);
@@ -157,14 +144,13 @@ const Auth = () => {
     try {
       console.log("Attempting to resend verification to:", verificationEmail);
       
-      // Use our custom email service instead of Supabase's built-in resend
       const response = await sendAuthEmail(
         verificationEmail,
         'signup',
         `${window.location.origin}/auth?tab=signin`
       );
 
-      if (response.error) {
+      if (!response.success) {
         console.error("Error resending verification:", response.error);
         toast({
           variant: "destructive",

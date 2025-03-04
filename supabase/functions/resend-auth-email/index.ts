@@ -32,6 +32,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Auth email request received");
     const { email, type, redirectUrl, meta }: EmailRequest = await req.json();
     
+    console.log(`Processing ${type} email for ${email} with redirect to ${redirectUrl}`);
+    
     // Generate email content based on type
     let subject = "";
     let content = "";
@@ -44,6 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
         const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
         
         if (!existingUser) {
+          console.log("User doesn't exist, creating new user");
           // Generate a random password - users will never use this directly
           const tempPassword = Math.random().toString(36).slice(-10);
           
@@ -56,7 +59,16 @@ const handler = async (req: Request): Promise<Response> => {
           
           if (createError) {
             console.error("Error creating user:", createError);
-            throw createError;
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                error: `Failed to create user: ${createError.message}` 
+              }),
+              {
+                status: 400,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              }
+            );
           }
           
           console.log("Created new user:", newUser?.user?.id);
@@ -65,87 +77,181 @@ const handler = async (req: Request): Promise<Response> => {
         }
       } catch (userError) {
         console.error("Error with user creation:", userError);
-        // Continue with sending email even if user creation failed
-        // This way we don't reveal if an account exists
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `User creation error: ${userError.message || JSON.stringify(userError)}` 
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
       
       // Create a sign-in link with a magic link
-      const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-        options: {
-          redirectTo: redirectUrl
+      try {
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+          options: {
+            redirectTo: redirectUrl
+          }
+        });
+        
+        if (signInError) {
+          console.error("Error generating magic link:", signInError);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `Failed to generate magic link: ${signInError.message}` 
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
         }
-      });
-      
-      if (signInError) {
-        console.error("Error generating magic link:", signInError);
-        throw signInError;
+        
+        actionUrl = signInData.properties.action_link;
+        console.log("Generated magic link for signup:", actionUrl);
+        
+        subject = "Confirm your email address";
+        content = `
+          <h1>Welcome to Gebeya!</h1>
+          <p>Thank you for signing up. Please confirm your email address by clicking the button below:</p>
+          <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Confirm Email</a>
+          <p>Or copy and paste this URL into your browser:</p>
+          <p>${actionUrl}</p>
+          <p>This link will expire in 24 hours.</p>
+          <p>If you did not create an account, you can safely ignore this email.</p>
+        `;
+      } catch (linkError) {
+        console.error("Error generating link:", linkError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Link generation error: ${linkError.message || JSON.stringify(linkError)}` 
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
-      
-      actionUrl = signInData.properties.action_link;
-      subject = "Confirm your email address";
-      content = `
-        <h1>Welcome to Gebeya!</h1>
-        <p>Thank you for signing up. Please confirm your email address by clicking the button below:</p>
-        <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Confirm Email</a>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${actionUrl}</p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you did not create an account, you can safely ignore this email.</p>
-      `;
     } else if (type === "reset") {
       // Password reset functionality
-      const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: {
-          redirectTo: redirectUrl
+      try {
+        const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+          options: {
+            redirectTo: redirectUrl
+          }
+        });
+        
+        if (resetError) {
+          console.error("Error generating reset link:", resetError);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `Failed to generate reset link: ${resetError.message}` 
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
         }
-      });
-      
-      if (resetError) {
-        console.error("Error generating reset link:", resetError);
-        throw resetError;
+        
+        actionUrl = resetData.properties.action_link;
+        console.log("Generated reset link:", actionUrl);
+        
+        subject = "Reset your password";
+        content = `
+          <h1>Reset Your Password</h1>
+          <p>We received a request to reset your password. Click the button below to create a new password:</p>
+          <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Reset Password</a>
+          <p>Or copy and paste this URL into your browser:</p>
+          <p>${actionUrl}</p>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you did not request a password reset, you can safely ignore this email.</p>
+        `;
+      } catch (resetLinkError) {
+        console.error("Error generating reset link:", resetLinkError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Reset link generation error: ${resetLinkError.message || JSON.stringify(resetLinkError)}` 
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
-      
-      actionUrl = resetData.properties.action_link;
-      subject = "Reset your password";
-      content = `
-        <h1>Reset Your Password</h1>
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
-        <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Reset Password</a>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${actionUrl}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-      `;
     } else if (type === "magic_link") {
       // Magic link functionality
-      const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-        options: {
-          redirectTo: redirectUrl
+      try {
+        const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+          options: {
+            redirectTo: redirectUrl
+          }
+        });
+        
+        if (magicError) {
+          console.error("Error generating magic link:", magicError);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `Failed to generate magic link: ${magicError.message}` 
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
         }
-      });
-      
-      if (magicError) {
-        console.error("Error generating magic link:", magicError);
-        throw magicError;
+        
+        actionUrl = magicData.properties.action_link;
+        console.log("Generated magic link:", actionUrl);
+        
+        subject = "Your magic link to sign in";
+        content = `
+          <h1>Sign In to Gebeya</h1>
+          <p>Click the button below to sign in to your account:</p>
+          <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Sign In</a>
+          <p>Or copy and paste this URL into your browser:</p>
+          <p>${actionUrl}</p>
+          <p>This link will expire in 10 minutes.</p>
+          <p>If you did not request this email, you can safely ignore it.</p>
+        `;
+      } catch (magicLinkError) {
+        console.error("Error generating magic link:", magicLinkError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Magic link generation error: ${magicLinkError.message || JSON.stringify(magicLinkError)}` 
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
       }
-      
-      actionUrl = magicData.properties.action_link;
-      subject = "Your magic link to sign in";
-      content = `
-        <h1>Sign In to Gebeya</h1>
-        <p>Click the button below to sign in to your account:</p>
-        <a href="${actionUrl}" style="display: inline-block; background-color: #FF385C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Sign In</a>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${actionUrl}</p>
-        <p>This link will expire in 10 minutes.</p>
-        <p>If you did not request this email, you can safely ignore it.</p>
-      `;
+    } else {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Invalid email type: ${type}. Must be one of: signup, reset, magic_link` 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Send the email with Resend
@@ -153,7 +259,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     try {
       const emailResponse = await resend.emails.send({
-        from: "Gebeya <no-reply@gebeya.co>", // Updated from jitume.gebeya.com domain
+        from: "Gebeya <no-reply@gebeya.co>", 
         to: [email],
         subject: subject,
         html: content,
