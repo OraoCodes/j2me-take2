@@ -32,12 +32,19 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const popupCheckIntervalRef = useRef<number | null>(null);
   const popupRef = useRef<Window | null>(null);
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
+  const authTimeoutRef = useRef<number | null>(null);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
     try {
       const debugId = debugIdRef.current;
       console.log(`[DEBUG:${debugId}] Telegram auth callback received user data:`, telegramUser);
+      
+      // Clear any existing auth timeout
+      if (authTimeoutRef.current) {
+        window.clearTimeout(authTimeoutRef.current);
+        authTimeoutRef.current = null;
+      }
       
       if (!telegramUser) {
         setIsLoading(false);
@@ -132,6 +139,13 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       window.clearInterval(popupCheckIntervalRef.current);
       popupCheckIntervalRef.current = null;
       console.log(`[DEBUG:${debugIdRef.current}] Cleared popup check interval`);
+    }
+    
+    // Clear auth timeout if it exists
+    if (authTimeoutRef.current) {
+      window.clearTimeout(authTimeoutRef.current);
+      authTimeoutRef.current = null;
+      console.log(`[DEBUG:${debugIdRef.current}] Cleared auth timeout`);
     }
     
     // Close popup if it exists and is still open
@@ -332,6 +346,19 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         if (popupRef.current) {
           console.log(`[DEBUG:${debugId}] Telegram auth popup opened successfully`);
           
+          // Set a timeout to reset loading state if auth takes too long (30 seconds)
+          authTimeoutRef.current = window.setTimeout(() => {
+            console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
+            if (isLoading) {
+              setIsLoading(false);
+              authAttemptedRef.current = false;
+              toast({
+                title: "Authentication timed out",
+                description: "The Telegram authentication process took too long. Please try again.",
+              });
+            }
+          }, 30000);
+          
           // Check if popup gets closed
           const popupCheckInterval = window.setInterval(() => {
             if (popupRef.current && popupRef.current.closed) {
@@ -344,10 +371,25 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
                   console.log(`[DEBUG:${debugId}] Auth still loading after popup closed, resetting state`);
                   setIsLoading(false);
                   authAttemptedRef.current = false;
-                  toast({
-                    title: "Authentication cancelled",
-                    description: "The Telegram authentication was cancelled. Please try again.",
-                  });
+                  
+                  // Check if there's a username error in the console or elsewhere
+                  const consoleErrors = document.querySelectorAll('.console-error, .error-message');
+                  const hasUsernameError = Array.from(consoleErrors).some(el => 
+                    el.textContent?.toLowerCase().includes('username invalid')
+                  );
+                  
+                  if (hasUsernameError) {
+                    toast({
+                      variant: "destructive",
+                      title: "Username invalid",
+                      description: "Telegram reported that the username is invalid. Please ensure your Telegram account is properly set up.",
+                    });
+                  } else {
+                    toast({
+                      title: "Authentication cancelled",
+                      description: "The Telegram authentication was cancelled. Please try again.",
+                    });
+                  }
                 }
               }, 1000);
             }
@@ -376,6 +418,21 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         }
       );
       console.log(`[DEBUG:${debugId}] Telegram auth request sent successfully`);
+      
+      // Set a timeout to reset loading state if auth takes too long (30 seconds)
+      if (!authTimeoutRef.current) {
+        authTimeoutRef.current = window.setTimeout(() => {
+          console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
+          if (isLoading) {
+            setIsLoading(false);
+            authAttemptedRef.current = false;
+            toast({
+              title: "Authentication timed out",
+              description: "The Telegram authentication process took too long. Please try again.",
+            });
+          }
+        }, 30000);
+      }
       
       // Set up a check to see if the popup was blocked or closed without completing auth
       if (!popupCheckIntervalRef.current) {

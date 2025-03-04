@@ -324,6 +324,13 @@ function validateTelegramAuth(authData: any): boolean {
     return false;
   }
   
+  // Add validation for username if required
+  // If username is empty or missing, it could cause the "username invalid" error
+  if (authData.username === undefined || authData.username === "") {
+    console.log(`[${new Date().toISOString()}] Warning: User has no username set in Telegram`);
+    // We continue anyway since some Telegram users may not have set a username
+  }
+  
   // In a production environment, you would also verify the hash
   // using the bot token to ensure the data came from Telegram
   // But for this example, we'll just do basic validation
