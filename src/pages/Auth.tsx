@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail, Key, User, AlertCircle } from "lucide-react";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
-import { OTPlessWhatsAppLoginButton } from "@/components/auth/OTPlessWhatsAppLoginButton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
@@ -224,7 +222,6 @@ const Auth = () => {
           <TabsContent value="signin">
             <div className="space-y-4">
               <div className="grid gap-2">
-                <OTPlessWhatsAppLoginButton isSignUp={false} />
                 <WhatsAppLoginButton isSignUp={false} />
                 <TelegramLoginButton isSignUp={false} />
               </div>
@@ -280,7 +277,6 @@ const Auth = () => {
           <TabsContent value="signup">
             <div className="space-y-4">
               <div className="grid gap-2">
-                <OTPlessWhatsAppLoginButton isSignUp={true} />
                 <WhatsAppLoginButton isSignUp={true} />
                 <TelegramLoginButton isSignUp={true} />
               </div>
