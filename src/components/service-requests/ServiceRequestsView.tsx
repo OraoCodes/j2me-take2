@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,14 +17,13 @@ import {
 } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Info, Edit2, DollarSign, CalendarClock, Calendar as CalendarIcon, ListChecks, Link2 } from "lucide-react";
+import { Loader2, Info, Edit2, DollarSign, CalendarClock, Calendar as CalendarIcon, ListChecks } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ServiceCheckoutDialog } from "@/components/service-checkout/ServiceCheckoutDialog";
 import TimeSlotView from './TimeSlotView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 
 interface ServiceRequest {
   id: string;
@@ -339,15 +337,6 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
     });
   };
 
-  const copyDirectLink = () => {
-    const url = `${window.location.origin}/dashboard/service-requests`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Link Copied",
-      description: "Direct link copied to clipboard",
-    });
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -384,24 +373,6 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-4">
-          <div className="flex items-center gap-2 max-w-xs">
-            <Input 
-              value={`${window.location.origin}/dashboard/service-requests`}
-              readOnly
-              className="text-xs md:text-sm h-9 bg-gray-50"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyDirectLink}
-              className="h-9"
-              aria-label="Copy direct link"
-            >
-              <Link2 className="h-4 w-4 mr-2" />
-              Copy
-            </Button>
-          </div>
-          
           <Button
             onClick={generateTelegramLink}
             variant={isTelegramConnected ? "outline" : "default"}
