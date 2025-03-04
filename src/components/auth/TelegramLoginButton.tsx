@@ -29,6 +29,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const navigate = useNavigate();
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const authAttemptedRef = useRef(false);
+  const popupCheckIntervalRef = useRef<number | null>(null);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
@@ -98,6 +99,13 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   // Handle manual cleanup of Telegram resources
   const cleanupTelegramResources = useCallback(() => {
     console.log('Cleaning up Telegram login resources');
+    // Clear popup check interval if it exists
+    if (popupCheckIntervalRef.current) {
+      window.clearInterval(popupCheckIntervalRef.current);
+      popupCheckIntervalRef.current = null;
+      console.log('Cleared popup check interval');
+    }
+    
     // Remove the global callback
     if (window.onTelegramAuth) {
       delete window.onTelegramAuth;
@@ -118,6 +126,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     });
     
     setScriptLoaded(false);
+    authAttemptedRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -131,7 +140,9 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); 
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-auth-url', window.location.origin + window.location.pathname); // Add explicit auth URL
+    script.setAttribute('data-radius', '8');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-auth-url', window.location.origin + window.location.pathname);
     script.async = true;
     
     // Keep track of script loading status
@@ -185,6 +196,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast]);
 
   const handleTelegramLogin = () => {
+    if (isLoading) {
+      console.log('Already loading, ignoring click');
+      return;
+    }
+    
     if (authAttemptedRef.current) {
       console.log('Auth already attempted, cleaning up and trying again');
       cleanupTelegramResources();
@@ -227,6 +243,30 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         }
       );
       console.log('Telegram auth request sent successfully');
+      
+      // Set up a check to see if the popup was blocked or closed without completing auth
+      popupCheckIntervalRef.current = window.setInterval(() => {
+        // Check if there's a Telegram popup open
+        const telegramPopup = document.querySelector('iframe[src*="telegram.org"]');
+        if (!telegramPopup && isLoading) {
+          console.log('No Telegram popup detected, user might have closed it');
+          window.clearInterval(popupCheckIntervalRef.current!);
+          popupCheckIntervalRef.current = null;
+          
+          // Check if we're still in the loading state after popup closed
+          setTimeout(() => {
+            if (isLoading) {
+              console.log('Auth still loading after popup closed, resetting state');
+              setIsLoading(false);
+              authAttemptedRef.current = false;
+              toast({
+                title: "Authentication cancelled",
+                description: "The Telegram authentication was cancelled. Please try again.",
+              });
+            }
+          }, 1000);
+        }
+      }, 1000);
     } catch (error) {
       console.error('Error initiating Telegram auth:', error);
       setIsLoading(false);
