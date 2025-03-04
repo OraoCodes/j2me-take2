@@ -5,13 +5,6 @@
 export const loadOtplessSDK = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
-      // Check if script already exists and is properly loaded
-      if (document.getElementById('otpless-sdk') && window.otpless) {
-        console.log('OTPless SDK already loaded and available, resolving immediately');
-        resolve();
-        return;
-      }
-      
       // Clean up any existing script to prevent conflicts
       const existingScript = document.getElementById('otpless-sdk');
       if (existingScript) {
@@ -29,35 +22,18 @@ export const loadOtplessSDK = (): Promise<void> => {
       
       // Add event listeners for successful load and error
       script.onload = () => {
-        console.log('OTPless SDK script loaded, waiting for initialization');
+        console.log('OTPless script loaded successfully');
         
-        // Use a polling approach to check for the otpless object
-        let attempts = 0;
-        const maxAttempts = 20; // More attempts with shorter intervals
-        const checkInterval = 200; // Check every 200ms
-        
-        const checkOtpless = () => {
-          attempts++;
+        // Give the script a moment to initialize
+        setTimeout(() => {
           if (window.otpless) {
-            console.log(`OTPless SDK initialized successfully after ${attempts} checks`);
+            console.log('OTPless SDK initialized and detected');
             resolve();
-            return;
+          } else {
+            console.error('OTPless script loaded but window.otpless is not available');
+            reject(new Error('OTPless SDK failed to initialize after loading'));
           }
-          
-          if (attempts >= maxAttempts) {
-            const err = new Error(`OTPless SDK failed to initialize after ${maxAttempts} attempts`);
-            console.error(err);
-            script.remove();
-            reject(err);
-            return;
-          }
-          
-          console.log(`Waiting for OTPless SDK to initialize (attempt ${attempts}/${maxAttempts})`);
-          setTimeout(checkOtpless, checkInterval);
-        };
-        
-        // Start polling
-        checkOtpless();
+        }, 1000); // Wait 1 second for the script to initialize
       };
       
       script.onerror = (error) => {

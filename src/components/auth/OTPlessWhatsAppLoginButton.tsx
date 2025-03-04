@@ -38,34 +38,62 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
   const navigate = useNavigate();
   const otplessDivRef = useRef<HTMLDivElement>(null);
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
-  const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-
+  const loadingAttemptRef = useRef(0);
+  const maxLoadAttempts = 3;
+  
   // Load the OTPless SDK
   useEffect(() => {
-    if (loadingState !== 'idle' && loadingState !== 'error') return;
-    
-    setLoadingState('loading');
-    console.log(`[DEBUG:${debugIdRef.current}] Loading OTPless SDK...`);
-    
-    loadOtplessSDK()
-      .then(() => {
-        console.log(`[DEBUG:${debugIdRef.current}] OTPless SDK loaded successfully`);
-        setSdkLoaded(true);
-        setLoadingState('success');
-        setError(null);
-      })
-      .catch((err) => {
-        console.error(`[DEBUG:${debugIdRef.current}] Failed to load OTPless SDK:`, err);
-        setLoadingState('error');
-        setError('Failed to load WhatsApp login. Please try again later.');
-        // Only show toast for serious errors, not retryable ones
+    const loadSDK = async () => {
+      if (sdkLoaded) return;
+      
+      // Prevent too many retries
+      if (loadingAttemptRef.current >= maxLoadAttempts) {
+        setError("Failed to initialize WhatsApp login after multiple attempts. Please try again later.");
         toast({
           variant: "destructive",
           title: "WhatsApp Login Error",
-          description: "Could not initialize login service. Please try again later."
+          description: "Could not initialize login service after multiple attempts. Please reload the page and try again."
         });
-      });
-  }, [loadingState, toast]);
+        return;
+      }
+      
+      loadingAttemptRef.current += 1;
+      console.log(`[DEBUG:${debugIdRef.current}] Loading OTPless SDK, attempt ${loadingAttemptRef.current}/${maxLoadAttempts}`);
+      
+      setIsLoading(true);
+      
+      try {
+        await loadOtplessSDK();
+        console.log(`[DEBUG:${debugIdRef.current}] OTPless SDK loaded successfully`);
+        setSdkLoaded(true);
+        setError(null);
+      } catch (err) {
+        console.error(`[DEBUG:${debugIdRef.current}] Failed to load OTPless SDK:`, err);
+        
+        if (loadingAttemptRef.current < maxLoadAttempts) {
+          // Only show toast for the last failed attempt
+          if (loadingAttemptRef.current === maxLoadAttempts - 1) {
+            toast({
+              variant: "destructive",
+              title: "WhatsApp Login Warning",
+              description: "Having trouble connecting to login service. Retrying..."
+            });
+          }
+        } else {
+          setError("Failed to initialize WhatsApp login. Please try again later.");
+          toast({
+            variant: "destructive",
+            title: "WhatsApp Login Error",
+            description: "Could not initialize login service. Please reload the page and try again."
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadSDK();
+  }, [sdkLoaded, toast]);
 
   // Initialize the OTPless container once SDK is loaded
   useEffect(() => {
@@ -86,7 +114,9 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
   const initiateOTPlessAuth = () => {
     if (!window.otpless || !sdkLoaded) {
       console.error(`[DEBUG:${debugIdRef.current}] OTPless SDK not loaded yet`);
-      setLoadingState('idle'); // Reset to try loading again
+      // Reset loading attempt counter to try loading again
+      loadingAttemptRef.current = 0;
+      setSdkLoaded(false);
       return;
     }
 
@@ -200,10 +230,10 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
       <Button
         className="w-full bg-[#25D366] hover:bg-[#25D366]/90 text-white"
         onClick={initiateOTPlessAuth}
-        disabled={isLoading || loadingState === 'loading'}
+        disabled={isLoading}
       >
         {isLoading ? "Connecting..." : 
-         loadingState === 'loading' ? "Initializing..." : 
+         !sdkLoaded ? "Initializing..." : 
          isSignUp ? "Sign up with WhatsApp (OTPless)" : "Sign in with WhatsApp (OTPless)"}
       </Button>
     </div>
