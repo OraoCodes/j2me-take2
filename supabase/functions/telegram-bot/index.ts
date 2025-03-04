@@ -10,7 +10,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log(`Telegram bot function called with method: ${req.method}`);
   console.log(`Request URL: ${req.url}`);
-  console.log(`Request headers: ${JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2)}`);
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -41,6 +40,7 @@ serve(async (req) => {
     try {
       requestBody = await req.json();
       console.log("Request body parsed successfully");
+      console.log("Request body:", JSON.stringify(requestBody, null, 2));
     } catch (error) {
       console.error("Error parsing request body:", error);
       return new Response(

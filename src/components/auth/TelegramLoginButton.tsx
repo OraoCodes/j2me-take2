@@ -30,6 +30,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const authAttemptedRef = useRef(false);
   const popupCheckIntervalRef = useRef<number | null>(null);
+  const popupRef = useRef<Window | null>(null);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
@@ -106,6 +107,17 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       console.log('Cleared popup check interval');
     }
     
+    // Close popup if it exists and is still open
+    if (popupRef.current && !popupRef.current.closed) {
+      try {
+        popupRef.current.close();
+        console.log('Closed Telegram popup window');
+      } catch (e) {
+        console.error('Error closing popup:', e);
+      }
+      popupRef.current = null;
+    }
+    
     // Remove the global callback
     if (window.onTelegramAuth) {
       delete window.onTelegramAuth;
@@ -133,6 +145,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     // Set the global callback that Telegram will use
     window.onTelegramAuth = handleTelegramAuth;
     console.log('Set window.onTelegramAuth callback, isSignUp:', isSignUp);
+    
+    // Create a test object to verify callback access
+    const testObj = { test: true };
+    console.log('Can access callback directly:', window.onTelegramAuth === handleTelegramAuth);
+    console.log('Global object test:', testObj.test === true);
     
     // Load Telegram Login Widget script
     const script = document.createElement('script');
@@ -231,7 +248,57 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
     
     try {
-      // Force a direct auth call instead of relying on data attributes
+      // Try to open in a popup to have more control
+      const width = 550;
+      const height = 470;
+      const left = window.innerWidth / 2 - width / 2;
+      const top = window.innerHeight / 2 - height / 2;
+      
+      const popupUrl = `https://oauth.telegram.org/auth?bot_id=${BOT_ID}&origin=${encodeURIComponent(window.location.origin)}&return_to=${encodeURIComponent(window.location.href)}`;
+      
+      // Try to open in a popup first
+      try {
+        popupRef.current = window.open(
+          popupUrl,
+          'TelegramAuth',
+          `width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`
+        );
+        
+        if (popupRef.current) {
+          console.log('Telegram auth popup opened successfully');
+          
+          // Check if popup gets closed
+          const popupCheckInterval = window.setInterval(() => {
+            if (popupRef.current && popupRef.current.closed) {
+              console.log('Telegram popup was closed');
+              window.clearInterval(popupCheckInterval);
+              
+              // Give a small delay to see if onTelegramAuth gets called
+              setTimeout(() => {
+                if (isLoading) {
+                  console.log('Auth still loading after popup closed, resetting state');
+                  setIsLoading(false);
+                  authAttemptedRef.current = false;
+                  toast({
+                    title: "Authentication cancelled",
+                    description: "The Telegram authentication was cancelled. Please try again.",
+                  });
+                }
+              }, 1000);
+            }
+          }, 1000);
+          
+          popupCheckIntervalRef.current = popupCheckInterval;
+          return;
+        } else {
+          console.log('Popup was blocked, falling back to inline auth');
+        }
+      } catch (e) {
+        console.error('Error opening popup:', e);
+        console.log('Falling back to inline auth');
+      }
+      
+      // Fallback: Force a direct auth call instead of relying on data attributes
       window.Telegram.Login.auth(
         {
           bot_id: BOT_ID,
@@ -245,28 +312,30 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       console.log('Telegram auth request sent successfully');
       
       // Set up a check to see if the popup was blocked or closed without completing auth
-      popupCheckIntervalRef.current = window.setInterval(() => {
-        // Check if there's a Telegram popup open
-        const telegramPopup = document.querySelector('iframe[src*="telegram.org"]');
-        if (!telegramPopup && isLoading) {
-          console.log('No Telegram popup detected, user might have closed it');
-          window.clearInterval(popupCheckIntervalRef.current!);
-          popupCheckIntervalRef.current = null;
-          
-          // Check if we're still in the loading state after popup closed
-          setTimeout(() => {
-            if (isLoading) {
-              console.log('Auth still loading after popup closed, resetting state');
-              setIsLoading(false);
-              authAttemptedRef.current = false;
-              toast({
-                title: "Authentication cancelled",
-                description: "The Telegram authentication was cancelled. Please try again.",
-              });
-            }
-          }, 1000);
-        }
-      }, 1000);
+      if (!popupCheckIntervalRef.current) {
+        popupCheckIntervalRef.current = window.setInterval(() => {
+          // Check if there's a Telegram popup open
+          const telegramPopup = document.querySelector('iframe[src*="telegram.org"]');
+          if (!telegramPopup && isLoading) {
+            console.log('No Telegram popup detected, user might have closed it');
+            window.clearInterval(popupCheckIntervalRef.current!);
+            popupCheckIntervalRef.current = null;
+            
+            // Check if we're still in the loading state after popup closed
+            setTimeout(() => {
+              if (isLoading) {
+                console.log('Auth still loading after popup closed, resetting state');
+                setIsLoading(false);
+                authAttemptedRef.current = false;
+                toast({
+                  title: "Authentication cancelled",
+                  description: "The Telegram authentication was cancelled. Please try again.",
+                });
+              }
+            }, 1000);
+          }
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error initiating Telegram auth:', error);
       setIsLoading(false);
