@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,7 @@ const ServiceRequestsView = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
       
-      const scheduledTime = format(parseISO(request.scheduled_at), 'PPP p');
+      const scheduledTime = request.scheduled_at ? format(parseISO(request.scheduled_at), 'PPP p') : 'Not scheduled';
       const formattedPrice = request.services.price.toLocaleString();
       
       const message = `
@@ -159,7 +160,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
         .from('user_telegram_connections')
         .select('*')
         .eq('user_id', userData.user.id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setIsTelegramConnected(true);
@@ -340,6 +341,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
   }
 
   const upcomingRequests = requests.filter(request => {
+    if (!request.scheduled_at) return false;
     const scheduledDate = parseISO(request.scheduled_at);
     return scheduledDate >= new Date() && request.status !== 'rejected';
   });
@@ -454,7 +456,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
                         <div>
                           <h3 className="font-medium">{request.services.name}</h3>
                           <p className="text-sm text-gray-500">
-                            {request.customer_name} - {request.customer_phone}
+                            {request.customer_name} {request.customer_phone ? `- ${request.customer_phone}` : ''}
                           </p>
                           {request.scheduled_at && (
                             <p className="text-sm font-medium text-gebeya-pink">
@@ -578,7 +580,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
                         <div>
                           <h3 className="font-medium">{request.services.name}</h3>
                           <p className="text-sm text-gray-500">
-                            {request.customer_name} - {request.customer_phone}
+                            {request.customer_name} {request.customer_phone ? `- ${request.customer_phone}` : ''}
                           </p>
                           {request.scheduled_at && (
                             <p className="text-sm text-gray-500">
