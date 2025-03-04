@@ -4,10 +4,11 @@ import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const supabaseAdmin = createClient(
-  Deno.env.get("SUPABASE_URL") || "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-);
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+// Create a Supabase client with the service role key
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +31,41 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log("Auth email request received");
-    const { email, type, redirectUrl, meta }: EmailRequest = await req.json();
+    
+    const body = await req.text();
+    let requestData: EmailRequest;
+    
+    try {
+      requestData = JSON.parse(body);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Invalid request body: ${parseError.message}` 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    const { email, type, redirectUrl, meta } = requestData;
+    
+    if (!email || !type || !redirectUrl) {
+      console.error("Missing required fields:", { email, type, redirectUrl });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Missing required fields: email, type or redirectUrl" 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
     
     console.log(`Processing ${type} email for ${email} with redirect to ${redirectUrl}`);
     
@@ -42,10 +77,26 @@ const handler = async (req: Request): Promise<Response> => {
     if (type === "signup") {
       // For signup, we need to create the user first if they don't exist
       try {
-        // Check if user exists first
-        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        console.log("Checking if user exists with email:", email);
         
-        if (!existingUser) {
+        // Check if user exists using getUserByEmail
+        const { data: existingUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        
+        if (getUserError) {
+          console.error("Error checking if user exists:", getUserError);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `Error checking if user exists: ${getUserError.message}` 
+            }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
+        }
+        
+        if (!existingUserData) {
           console.log("User doesn't exist, creating new user");
           // Generate a random password - users will never use this directly
           const tempPassword = Math.random().toString(36).slice(-10);
@@ -91,6 +142,8 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Create a sign-in link with a magic link
       try {
+        console.log("Generating magic link for signup");
+        
         const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
           type: "magiclink",
           email,
@@ -108,6 +161,20 @@ const handler = async (req: Request): Promise<Response> => {
             }),
             {
               status: 400,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
+        }
+        
+        if (!signInData || !signInData.properties || !signInData.properties.action_link) {
+          console.error("Missing action_link in generated link data");
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: "Missing action link in generated data" 
+            }),
+            {
+              status: 500,
               headers: { "Content-Type": "application/json", ...corsHeaders },
             }
           );
