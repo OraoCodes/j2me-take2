@@ -1,6 +1,6 @@
 
-// Import the Deno standard library for HTTP server functionality
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -10,14 +10,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { name, profession } = await req.json();
-    console.log(`Generating business name for ${name}, profession: ${profession}`);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -50,7 +48,6 @@ serve(async (req) => {
     });
 
     const data = await response.json();
-    console.log('OpenAI response received');
     const businessName = data.choices[0].message.content.trim();
 
     return new Response(JSON.stringify({ businessName }), {
