@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -129,22 +128,41 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth?tab=signin`,
-      }
-    });
+    try {
+      console.log("Starting Google sign-in process...");
+      
+      // Debug: Log the redirect URL
+      const redirectUrl = `${window.location.origin}/auth?tab=signin`;
+      console.log("Redirect URL:", redirectUrl);
+      
+      const { error, data } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+        }
+      });
 
-    if (error) {
+      if (error) {
+        console.error("Google sign-in error:", error);
+        toast({
+          variant: "destructive",
+          title: "Google Sign In Error",
+          description: `${error.message} (Code: ${error.status || 'unknown'})`,
+        });
+        setGoogleLoading(false);
+      } else {
+        console.log("Google sign-in initiated successfully:", data);
+        // We don't set loading to false here as we'll be redirected
+      }
+    } catch (e) {
+      console.error("Unexpected error during Google sign-in:", e);
       toast({
         variant: "destructive",
-        title: "Google Sign In Error",
-        description: error.message,
+        title: "Unexpected Error",
+        description: "An unexpected error occurred. Please try again.",
       });
       setGoogleLoading(false);
     }
-    // No need to set loading to false on success as we'll be redirected
   };
 
   return (
