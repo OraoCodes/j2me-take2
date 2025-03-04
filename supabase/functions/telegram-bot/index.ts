@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -7,16 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Store PIN codes temporarily (in a real production system, this would be in a database)
-// Format: { username: { pin: string, timestamp: number, attempts: number } }
 const activePins = new Map();
 
-// Generate a random 6-digit PIN
 const generatePin = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send a message to a Telegram user
 const sendTelegramMessage = async (username: string, message: string) => {
   const timestamp = new Date().toISOString();
   const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
@@ -27,7 +22,6 @@ const sendTelegramMessage = async (username: string, message: string) => {
   }
   
   try {
-    // First we need to get the chat_id for the username
     const userResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/getChat?chat_id=@${username}`,
       { method: "GET" }
@@ -44,7 +38,6 @@ const sendTelegramMessage = async (username: string, message: string) => {
       };
     }
     
-    // Now send the message
     const sendResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
@@ -80,12 +73,10 @@ const sendTelegramMessage = async (username: string, message: string) => {
 };
 
 serve(async (req) => {
-  // Add timestamp to all logs for better debugging
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] Telegram bot function called with method: ${req.method}`);
   console.log(`[${timestamp}] Request URL: ${req.url}`);
   
-  // Log headers but remove any sensitive information
   const headers = Object.fromEntries(req.headers.entries());
   const safeHeaders = { ...headers };
   if (safeHeaders.authorization) {
@@ -96,7 +87,6 @@ serve(async (req) => {
   }
   console.log(`[${timestamp}] Request headers:`, JSON.stringify(safeHeaders, null, 2));
   
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log(`[${timestamp}] Handling CORS preflight request`);
     return new Response(null, { headers: corsHeaders });
@@ -119,11 +109,9 @@ serve(async (req) => {
       );
     }
     
-    // Initialize Supabase client with the service role key (for admin operations)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     console.log(`[${timestamp}] Supabase admin client initialized`);
     
-    // Get the request body
     let requestBody;
     try {
       requestBody = await req.json();
@@ -140,7 +128,6 @@ serve(async (req) => {
       );
     }
     
-    // Handle test requests
     if (requestBody.action === "test") {
       console.log(`[${timestamp}] Test request received`);
       return new Response(
@@ -152,7 +139,6 @@ serve(async (req) => {
       );
     }
     
-    // Handle PIN request action
     if (requestBody.action === "request-pin") {
       const { telegramUsername, isSignUp, origin } = requestBody;
       
@@ -178,11 +164,9 @@ serve(async (req) => {
       
       console.log(`[${timestamp}] PIN request for Telegram user: @${telegramUsername}`);
       
-      // Check if we already have an active PIN for this user
       const existingPinData = activePins.get(telegramUsername);
       const now = Date.now();
       
-      // If PIN was generated less than 60 seconds ago and user has made fewer than 3 attempts
       if (existingPinData && 
           (now - existingPinData.timestamp < 60000) && 
           existingPinData.attempts < 3) {
@@ -190,7 +174,6 @@ serve(async (req) => {
         existingPinData.attempts += 1;
         activePins.set(telegramUsername, existingPinData);
         
-        // Send the existing PIN via Telegram
         const message = `🔐 *Gebeya Jitume Authentication*\n\nYour verification PIN is: *${existingPinData.pin}*\n\nThis PIN will expire in 10 minutes.`;
         const sendResult = await sendTelegramMessage(telegramUsername, message);
         
@@ -214,11 +197,9 @@ serve(async (req) => {
         );
       }
       
-      // Generate a new PIN
       const pin = generatePin();
       console.log(`[${timestamp}] Generated new PIN for @${telegramUsername}: ${pin}`);
       
-      // Store the PIN with timestamp and reset attempts counter
       activePins.set(telegramUsername, { 
         pin, 
         timestamp: now,
@@ -227,7 +208,6 @@ serve(async (req) => {
         origin
       });
       
-      // Send the PIN via Telegram
       const message = `🔐 *Gebeya Jitume Authentication*\n\nYour verification PIN is: *${pin}*\n\nThis PIN will expire in 10 minutes.`;
       const sendResult = await sendTelegramMessage(telegramUsername, message);
       
@@ -251,7 +231,6 @@ serve(async (req) => {
       );
     }
     
-    // Handle PIN verification action
     if (requestBody.action === "verify-pin") {
       const { telegramUsername, pin, isSignUp, origin } = requestBody;
       
@@ -267,7 +246,6 @@ serve(async (req) => {
       
       console.log(`[${timestamp}] PIN verification for @${telegramUsername}`);
       
-      // Check if we have an active PIN for this user
       const pinData = activePins.get(telegramUsername);
       
       if (!pinData) {
@@ -281,7 +259,6 @@ serve(async (req) => {
         );
       }
       
-      // Check if PIN has expired (10 minutes)
       const now = Date.now();
       if (now - pinData.timestamp > 600000) {
         console.error(`[${timestamp}] PIN for @${telegramUsername} has expired`);
@@ -295,7 +272,6 @@ serve(async (req) => {
         );
       }
       
-      // Check if PIN matches
       if (pinData.pin !== pin) {
         console.error(`[${timestamp}] Invalid PIN for @${telegramUsername}`);
         return new Response(
@@ -309,8 +285,6 @@ serve(async (req) => {
       
       console.log(`[${timestamp}] PIN verified successfully for @${telegramUsername}`);
       
-      // Build Telegram user data
-      // We need to fetch the actual user from Telegram API
       const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
       
       if (!botToken) {
@@ -346,7 +320,6 @@ serve(async (req) => {
           );
         }
         
-        // Create a telegramUser object from the Telegram API response
         const telegramUser = {
           id: userData.result.id,
           username: telegramUsername,
@@ -354,13 +327,11 @@ serve(async (req) => {
           last_name: userData.result.last_name || ""
         };
         
-        // Create a unique identifier using Telegram's ID
         const identifier = `telegram:${telegramUser.id}`;
         const email = `${identifier}@telegram.gebeya-jitume.app`;
         
         console.log(`[${timestamp}] Using identifier: ${identifier} and email: ${email}`);
         
-        // Check if this Telegram user already exists in auth.users
         const { data: existingUser, error: lookupError } = await supabaseAdmin
           .from("profiles")
           .select("id")
@@ -374,7 +345,6 @@ serve(async (req) => {
         console.log(`[${timestamp}] Existing user check result:`, existingUser);
         
         let authLink;
-        // Make sure we have a valid origin
         const requestOrigin = origin || pinData.origin || "";
         if (!requestOrigin) {
           console.error(`[${timestamp}] No origin provided in request`);
@@ -389,13 +359,11 @@ serve(async (req) => {
         
         console.log(`[${timestamp}] Using request origin: ${requestOrigin}`);
         
-        // If this is a signup but user already exists, treat as sign in
         const isActualSignUp = requestBody.isSignUp || pinData.isSignUp || false;
         
         if (isActualSignUp && existingUser) {
           console.log(`[${timestamp}] User tried to sign up but already exists, treating as sign in`);
           
-          // Generate a sign-in link for the existing user
           const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
             email,
@@ -420,10 +388,8 @@ serve(async (req) => {
         } else if (isActualSignUp) {
           console.log(`[${timestamp}] Creating new user account with Telegram`);
           
-          // Create a random password for the user
           const randomPassword = Math.random().toString(36).slice(-10);
           
-          // Create a new user in auth.users
           const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password: randomPassword,
@@ -434,7 +400,7 @@ serve(async (req) => {
               telegram_first_name: telegramUser.first_name,
               telegram_last_name: telegramUser.last_name || '',
               full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
-              avatar_url: null,
+              avatar_url: telegramUser.photo_url || null,
               provider: "telegram"
             }
           });
@@ -452,7 +418,6 @@ serve(async (req) => {
           
           console.log(`[${timestamp}] User created successfully, user ID:`, authUser?.user?.id);
           
-          // Update the profiles table with Telegram ID
           if (authUser?.user?.id) {
             const { error: profileError } = await supabaseAdmin
               .from("profiles")
@@ -469,7 +434,6 @@ serve(async (req) => {
             }
           }
           
-          // Generate a sign-in link
           const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
             email,
@@ -494,7 +458,6 @@ serve(async (req) => {
         } else {
           console.log(`[${timestamp}] Generating sign-in link for existing user`);
           
-          // Generate a sign-in link for the existing user
           const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
             email,
@@ -529,7 +492,6 @@ serve(async (req) => {
           );
         }
         
-        // Remove the PIN data since verification was successful
         activePins.delete(telegramUsername);
         
         console.log(`[${timestamp}] Successfully generated auth link, returning response`);
@@ -551,13 +513,202 @@ serve(async (req) => {
         );
       }
     }
-
-    // Handle user notification requests
-    if (requestBody.action === "notify" && requestBody.user_id && requestBody.notification) {
+    
+    if (requestBody.action === "process-telegram-auth") {
+      const { telegramUser, isSignUp, origin } = requestBody;
+      
+      if (!telegramUser || !telegramUser.id) {
+        console.error(`[${timestamp}] Invalid Telegram user data in request`);
+        return new Response(
+          JSON.stringify({ error: "Invalid Telegram user data" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] Processing Telegram auth for user ID: ${telegramUser.id}`);
+      
+      const identifier = `telegram:${telegramUser.id}`;
+      const email = `${identifier}@telegram.gebeya-jitume.app`;
+      
+      console.log(`[${timestamp}] Using identifier: ${identifier} and email: ${email}`);
+      
+      const { data: existingUser, error: lookupError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("telegram_id", telegramUser.id)
+        .maybeSingle();
+        
+      if (lookupError) {
+        console.error(`[${timestamp}] Error looking up existing user:`, lookupError);
+      }
+      
+      console.log(`[${timestamp}] Existing user check result:`, existingUser);
+      
+      let authLink;
+      const requestOrigin = origin || "";
+      if (!requestOrigin) {
+        console.error(`[${timestamp}] No origin provided in request`);
+        return new Response(
+          JSON.stringify({ error: "No origin provided" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] Using request origin: ${requestOrigin}`);
+      
+      const isActualSignUp = requestBody.isSignUp || false;
+      
+      if (isActualSignUp && existingUser) {
+        console.log(`[${timestamp}] User tried to sign up but already exists, treating as sign in`);
+        
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email,
+          options: {
+            redirectTo: `${requestOrigin}/dashboard`
+          }
+        });
+        
+        if (signInError) {
+          console.error(`[${timestamp}] Error generating link for existing user:`, signInError);
+          return new Response(
+            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        authLink = signInData?.properties?.action_link;
+        console.log(`[${timestamp}] Generated auth link for existing user:`, authLink);
+      } else if (isActualSignUp) {
+        console.log(`[${timestamp}] Creating new user account with Telegram`);
+        
+        const randomPassword = Math.random().toString(36).slice(-10);
+        
+        const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password: randomPassword,
+          email_confirm: true,
+          user_metadata: {
+            telegram_id: telegramUser.id,
+            telegram_username: telegramUser.username || '',
+            telegram_first_name: telegramUser.first_name,
+            telegram_last_name: telegramUser.last_name || '',
+            full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
+            avatar_url: telegramUser.photo_url || null,
+            provider: "telegram"
+          }
+        });
+        
+        if (createError) {
+          console.error(`[${timestamp}] Error creating user:`, createError);
+          return new Response(
+            JSON.stringify({ error: "Failed to create user", details: createError.message }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        console.log(`[${timestamp}] User created successfully, user ID:`, authUser?.user?.id);
+        
+        if (authUser?.user?.id) {
+          const { error: profileError } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              telegram_id: telegramUser.id,
+              full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
+            })
+            .eq("id", authUser.user.id);
+            
+          if (profileError) {
+            console.error(`[${timestamp}] Error updating profile:`, profileError);
+          } else {
+            console.log(`[${timestamp}] Profile updated successfully with telegram_id`);
+          }
+        }
+        
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email,
+          options: {
+            redirectTo: `${requestOrigin}/onboarding`
+          }
+        });
+        
+        if (signInError) {
+          console.error(`[${timestamp}] Error generating link:`, signInError);
+          return new Response(
+            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        authLink = signInData?.properties?.action_link;
+        console.log(`[${timestamp}] Generated auth link for signup:`, authLink);
+      } else {
+        console.log(`[${timestamp}] Generating sign-in link for existing user`);
+        
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email,
+          options: {
+            redirectTo: `${requestOrigin}/dashboard`
+          }
+        });
+        
+        if (signInError) {
+          console.error(`[${timestamp}] Error generating link:`, signInError);
+          return new Response(
+            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        authLink = signInData?.properties?.action_link;
+        console.log(`[${timestamp}] Generated auth link for signin:`, authLink);
+      }
+      
+      if (!authLink) {
+        console.error(`[${timestamp}] Failed to generate authentication link`);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate authentication link" }),
+          { 
+            status: 500, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] Successfully generated auth link, returning response`);
+      return new Response(
+        JSON.stringify({ authLink }),
+        { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+    
+    if (requestBody.action === "notify") {
       console.log(`[${timestamp}] Processing notification request for user: ${requestBody.user_id}`);
       
       try {
-        // Look up the user's telegram connection
         const { data: telegramConnection, error: lookupError } = await supabaseAdmin
           .from("user_telegram_connections")
           .select("telegram_id")
@@ -579,10 +730,6 @@ serve(async (req) => {
         }
         
         console.log(`[${timestamp}] Found Telegram ID for user: ${telegramConnection.telegram_id}`);
-        
-        // TODO: Implement actual Telegram API call to send message
-        // This would typically use Telegram's Bot API to send a message
-        // For now, we'll simulate success
         
         return new Response(
           JSON.stringify({ 

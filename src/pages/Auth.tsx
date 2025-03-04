@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, User, AlertCircle, MessageSquare } from "lucide-react";
+import { Mail, Key, User, AlertCircle } from "lucide-react";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -207,17 +206,11 @@ const Auth = () => {
         )}
 
         <Alert className="bg-blue-50 border-blue-100">
-          <MessageSquare className="h-4 w-4 text-blue-500" />
-          <AlertTitle className="text-blue-700">Telegram PIN Verification</AlertTitle>
+          <AlertCircle className="h-4 w-4 text-blue-500" />
+          <AlertTitle className="text-blue-700">Telegram Authentication</AlertTitle>
           <AlertDescription className="text-blue-600 text-sm">
-            <p>We've updated our Telegram authentication to use a PIN code system:</p>
-            <ol className="mt-2 list-decimal list-inside text-xs">
-              <li>Enter your Telegram username (without @)</li>
-              <li>Click the Telegram button</li>
-              <li>You'll receive a PIN code in Telegram</li>
-              <li>Enter the PIN to complete authentication</li>
-            </ol>
-            <p className="mt-2 text-xs font-medium">Note: Make sure you've started a chat with our bot @GebeyaJitumeBot</p>
+            <p>Click the Telegram button below to authenticate with your Telegram account.</p>
+            <p className="mt-2 text-xs font-medium">Note: Make sure you have the Telegram app installed.</p>
           </AlertDescription>
         </Alert>
 
