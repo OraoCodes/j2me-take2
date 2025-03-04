@@ -34,11 +34,12 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      // Log the request being sent with more detail
+      // Log the request being sent with more detail - avoid using protected 'url' property
       console.log('Sending request to telegram-bot function with message:', {
         messageText: userMessage,
         timestamp: new Date().toISOString(),
-        url: `${supabase.functions.url}/telegram-bot`
+        // Using an alternative approach to log the endpoint information
+        endpoint: 'telegram-bot'
       });
 
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
