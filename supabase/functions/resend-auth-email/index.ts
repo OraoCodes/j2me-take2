@@ -1,8 +1,13 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL") || "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,10 +38,52 @@ const handler = async (req: Request): Promise<Response> => {
     let actionUrl = "";
     
     if (type === "signup") {
-      // For signup, we would need to create a token and pass it to the redirect URL
-      // This is a simplified version - you might want to create a proper JWT token
-      const token = crypto.randomUUID(); // This should actually be a JWT token
-      actionUrl = `${redirectUrl}?confirmation_token=${token}`;
+      // For signup, we need to create the user first if they don't exist
+      try {
+        // Check if user exists first
+        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        
+        if (!existingUser) {
+          // Generate a random password - users will never use this directly
+          const tempPassword = Math.random().toString(36).slice(-10);
+          
+          // Create the user with the admin API
+          const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: tempPassword,
+            email_confirm: false
+          });
+          
+          if (createError) {
+            console.error("Error creating user:", createError);
+            throw createError;
+          }
+          
+          console.log("Created new user:", newUser?.user?.id);
+        } else {
+          console.log("User already exists with email:", email);
+        }
+      } catch (userError) {
+        console.error("Error with user creation:", userError);
+        // Continue with sending email even if user creation failed
+        // This way we don't reveal if an account exists
+      }
+      
+      // Create a sign-in link with a magic link
+      const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+      
+      if (signInError) {
+        console.error("Error generating magic link:", signInError);
+        throw signInError;
+      }
+      
+      actionUrl = signInData.properties.action_link;
       subject = "Confirm your email address";
       content = `
         <h1>Welcome to Gebeya!</h1>
@@ -49,8 +96,20 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     } else if (type === "reset") {
       // Password reset functionality
-      const token = crypto.randomUUID(); // This should be a proper token
-      actionUrl = `${redirectUrl}?reset_token=${token}`;
+      const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+      
+      if (resetError) {
+        console.error("Error generating reset link:", resetError);
+        throw resetError;
+      }
+      
+      actionUrl = resetData.properties.action_link;
       subject = "Reset your password";
       content = `
         <h1>Reset Your Password</h1>
@@ -63,8 +122,20 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     } else if (type === "magic_link") {
       // Magic link functionality
-      const token = crypto.randomUUID(); // This should be a proper token
-      actionUrl = `${redirectUrl}?magic_token=${token}`;
+      const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+      
+      if (magicError) {
+        console.error("Error generating magic link:", magicError);
+        throw magicError;
+      }
+      
+      actionUrl = magicData.properties.action_link;
       subject = "Your magic link to sign in";
       content = `
         <h1>Sign In to Gebeya</h1>

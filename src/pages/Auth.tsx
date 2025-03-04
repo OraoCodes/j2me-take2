@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,66 +93,49 @@ const Auth = () => {
     const password = formData.get("password") as string;
 
     try {
-      console.log("Attempting signup for email:", email);
+      console.log("Attempting custom signup for email:", email);
       
-      // First, register the user with Supabase
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          // This is important - DON'T send the verification email through Supabase
-          emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
-          data: {
-            signup_attempt: new Date().toISOString(),
-            origin: window.location.origin
-          }
-        },
-      });
-
-      if (error) {
-        console.error("Signup error:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-        setSignupResponse({error: error.message});
-      } else {
-        console.log("Sign up response:", data);
+      // Instead of using Supabase's signUp method, we'll create a user entry first using the admin API via our Edge Function
+      // This bypasses the email provider restriction
+      try {
+        // Send our custom verification email
+        const customEmailResponse = await sendAuthEmail(
+          email, 
+          'signup',
+          `${window.location.origin}/auth?tab=signin`
+        );
         
-        // Now, send our custom verification email
-        try {
-          const customEmailResponse = await sendAuthEmail(
-            email, 
-            'signup',
-            `${window.location.origin}/auth?tab=signin`
-          );
-          
-          console.log("Custom email response:", customEmailResponse);
-          
-          if (customEmailResponse.error) {
-            toast({
-              variant: "destructive",
-              title: "Email Error",
-              description: `Account created but verification email failed: ${customEmailResponse.error}`,
-            });
-          }
-        } catch (emailError) {
-          console.error("Custom email error:", emailError);
+        console.log("Custom email response:", customEmailResponse);
+        
+        if (customEmailResponse.error) {
           toast({
             variant: "destructive",
             title: "Email Error",
-            description: "Account created but there was a problem sending the verification email.",
+            description: `Failed to send verification email: ${customEmailResponse.error}`,
+          });
+          setSignupResponse({error: customEmailResponse.error});
+        } else {
+          setVerificationEmail(email);
+          setVerificationSent(true);
+          setSignupResponse({
+            user: {
+              email: email,
+              confirmation_sent_at: new Date().toISOString()
+            }
+          });
+          toast({
+            title: "Success",
+            description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
           });
         }
-        
-        setVerificationEmail(email);
-        setVerificationSent(true);
-        setSignupResponse(data);
+      } catch (emailError) {
+        console.error("Custom email error:", emailError);
         toast({
-          title: "Success",
-          description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
+          variant: "destructive",
+          title: "Email Error",
+          description: "There was a problem sending the verification email.",
         });
+        setSignupResponse({error: "Failed to send verification email"});
       }
     } catch (err) {
       console.error("Unexpected error during signup:", err);
