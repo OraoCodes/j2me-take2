@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [providerError, setProviderError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -127,6 +129,7 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
+    setProviderError(null); // Reset any previous provider errors
     
     try {
       console.log("Starting Google sign-in process...");
@@ -144,6 +147,12 @@ const Auth = () => {
 
       if (error) {
         console.error("Google sign-in error:", error);
+        
+        // Handle the specific provider not enabled error
+        if (error.message.includes("provider is not enabled") || error.status === 400) {
+          setProviderError("Google login is not properly configured. Please make sure Google provider is enabled in Supabase.");
+        }
+        
         toast({
           variant: "destructive",
           title: "Google Sign In Error",
@@ -184,6 +193,14 @@ const Auth = () => {
             }
           </p>
         </div>
+
+        {providerError && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Configuration Error</AlertTitle>
+            <AlertDescription>{providerError}</AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
