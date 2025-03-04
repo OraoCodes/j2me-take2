@@ -58,6 +58,31 @@ serve(async (req) => {
       );
     }
     
+    // Check if this is a chat message request
+    if (requestBody.message && requestBody.message.text) {
+      console.log(`[${timestamp}] Chat message received:`, requestBody.message.text);
+      // Return a sample response for chat messages
+      return new Response(
+        JSON.stringify({ text: `You said: ${requestBody.message.text}. This is a response from the server.` }),
+        { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+    
+    // Handle test requests
+    if (requestBody.action === "test") {
+      console.log(`[${timestamp}] Test request received`);
+      return new Response(
+        JSON.stringify({ status: "ok", message: "Edge function is accessible", timestamp }),
+        { 
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+    
     const { action, telegramUser, isSignUp, origin } = requestBody;
     
     console.log(`[${timestamp}] Telegram Bot function called with action: ${action}`);
@@ -267,8 +292,8 @@ serve(async (req) => {
       { 
         status: 400, 
         headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-      }
-    );
+        }
+      );
   } catch (error) {
     console.error(`[${timestamp}] Error in telegram-bot function:`, error);
     

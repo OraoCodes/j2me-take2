@@ -34,8 +34,12 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      // Log the request being sent
-      console.log('Sending request to telegram-bot function with message:', userMessage);
+      // Log the request being sent with more detail
+      console.log('Sending request to telegram-bot function with message:', {
+        messageText: userMessage,
+        timestamp: new Date().toISOString(),
+        url: `${supabase.functions.url}/telegram-bot`
+      });
 
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
         body: { 
@@ -43,7 +47,8 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
           // Adding debugging info to help diagnose issues
           debug: {
             timestamp: new Date().toISOString(),
-            origin: window.location.origin
+            origin: window.location.origin,
+            route: window.location.pathname
           }
         }
       });
