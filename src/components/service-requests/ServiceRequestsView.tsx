@@ -67,7 +67,6 @@ const ServiceRequestsView = () => {
         table: 'service_requests' 
       }, (payload) => {
         console.log('New service request received:', payload);
-        // Only fetch the new request if it belongs to the current user
         if (payload.new && payload.new.user_id) {
           fetchNewRequest(payload.new.id);
         }
@@ -81,7 +80,6 @@ const ServiceRequestsView = () => {
 
   const fetchNewRequest = async (requestId: string) => {
     try {
-      // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
       
@@ -95,7 +93,7 @@ const ServiceRequestsView = () => {
           )
         `)
         .eq('id', requestId)
-        .eq('user_id', userData.user.id) // Ensure it belongs to current user
+        .eq('user_id', userData.user.id)
         .single();
 
       if (error) throw error;
@@ -211,7 +209,6 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
 
   const fetchRequests = async () => {
     try {
-      // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) {
         setLoading(false);
@@ -227,7 +224,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
             price
           )
         `)
-        .eq('user_id', userData.user.id) // Filter by current user's ID
+        .eq('user_id', userData.user.id)
         .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
@@ -370,18 +367,6 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <Button
-            onClick={generateTelegramLink}
-            variant={isTelegramConnected ? "outline" : "default"}
-            className={isTelegramConnected ? "bg-green-50 text-green-700 border-green-200" : ""}
-          >
-            {isTelegramConnected 
-              ? "Telegram Connected ✓" 
-              : "Connect Telegram Notifications"}
-          </Button>
         </div>
       </div>
 
