@@ -37,6 +37,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       try {
         await loadScript('https://telegram.org/js/telegram-widget.js?22', 'telegram-login');
         setScriptLoaded(true);
+        console.log(`[DEBUG:${debugIdRef.current}] Telegram script loaded successfully`);
       } catch (error) {
         console.error(`[DEBUG:${debugIdRef.current}] Failed to load Telegram widget:`, error);
         setError('Failed to load Telegram login widget. Please try again later.');
@@ -44,33 +45,55 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     };
     
     loadTelegramWidget();
+    
+    return () => {
+      // Clean up if needed
+      const oldScript = document.getElementById('telegram-login');
+      if (oldScript) {
+        console.log(`[DEBUG:${debugIdRef.current}] Cleaning up old Telegram script`);
+      }
+    };
   }, []);
 
   // Initialize Telegram widget once script is loaded
   useEffect(() => {
     if (scriptLoaded && containerRef.current) {
-      // Clear container first
-      containerRef.current.innerHTML = '';
-      
-      // Create a unique callback name to prevent conflicts
-      const callbackName = `onTelegramAuth_${Math.random().toString(36).substring(2, 15)}`;
-      
-      // Add the callback function to window
-      window[callbackName] = (user: TelegramUser) => handleTelegramAuth(user);
-      
-      // Create the script element with configuration
-      const script = document.createElement('script');
-      script.setAttribute('async', '');
-      script.setAttribute('data-telegram-login', botId);
-      script.setAttribute('data-size', 'large');
-      script.setAttribute('data-radius', '4');
-      script.setAttribute('data-request-access', 'write');
-      script.setAttribute('data-userpic', 'false');
-      script.setAttribute('data-auth-url', `${window.location.origin}/auth?tab=${isSignUp ? 'signup' : 'signin'}`);
-      script.setAttribute('data-onauth', `${callbackName}(user)`);
-      
-      // Append to container
-      containerRef.current.appendChild(script);
+      try {
+        // Clear container first
+        containerRef.current.innerHTML = '';
+        console.log(`[DEBUG:${debugIdRef.current}] Container cleared for Telegram widget`);
+        
+        // Create a unique callback name to prevent conflicts
+        const callbackName = `onTelegramAuth_${Math.random().toString(36).substring(2, 15)}`;
+        
+        // Add the callback function to window
+        window[callbackName] = (user: TelegramUser) => handleTelegramAuth(user);
+        
+        // Create the script element with configuration
+        const script = document.createElement('script');
+        script.setAttribute('async', '');
+        script.setAttribute('data-telegram-login', botId);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-radius', '4');
+        script.setAttribute('data-request-access', 'write');
+        script.setAttribute('data-userpic', 'false');
+        script.setAttribute('data-onauth', `${callbackName}(user)`);
+        
+        // Explicitly set the URL to the current origin to avoid redirect issues
+        const currentOrigin = window.location.origin;
+        const authPath = `/auth?tab=${isSignUp ? 'signup' : 'signin'}`;
+        const fullAuthUrl = `${currentOrigin}${authPath}`;
+        script.setAttribute('data-auth-url', fullAuthUrl);
+        
+        console.log(`[DEBUG:${debugIdRef.current}] Setting auth URL to: ${fullAuthUrl}`);
+        
+        // Append to container
+        containerRef.current.appendChild(script);
+        console.log(`[DEBUG:${debugIdRef.current}] Telegram widget script appended to container`);
+      } catch (err) {
+        console.error(`[DEBUG:${debugIdRef.current}] Error initializing Telegram widget:`, err);
+        setError('Error initializing Telegram login. Please refresh the page and try again.');
+      }
     }
   }, [scriptLoaded, isSignUp, botId]);
 
@@ -141,7 +164,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
       {error && (
         <Alert className="bg-amber-50 border-amber-200 mb-2">
           <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -160,12 +183,15 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
           Authenticating with Telegram...
         </Button>
       ) : (
-        <div 
-          ref={containerRef} 
-          className="flex justify-center w-full"
-          aria-label={scriptLoaded ? "Telegram login button" : "Loading Telegram login button"}
-        >
-          {/* Telegram widget will be inserted here by script */}
+        <div className="w-full">
+          <div 
+            ref={containerRef} 
+            className="flex justify-center w-full min-h-[48px]"
+            aria-label={scriptLoaded ? "Telegram login button" : "Loading Telegram login button"}
+          >
+            {/* Telegram widget will be inserted here by script */}
+          </div>
+          
           {!scriptLoaded && (
             <Button
               disabled
@@ -173,6 +199,44 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
             >
               Loading Telegram login...
             </Button>
+          )}
+          
+          {/* Fallback button in case the widget doesn't load properly */}
+          {scriptLoaded && (
+            <div className="telegram-login-fallback mt-2" style={{ display: 'none' }}>
+              <Button
+                className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
+                onClick={() => {
+                  // Show a helpful message if the widget didn't appear
+                  toast({
+                    title: "Telegram Login",
+                    description: "Please ensure you have Telegram installed and try again.",
+                  });
+                  
+                  // After a short delay, try refreshing the widget
+                  setTimeout(() => {
+                    if (containerRef.current) {
+                      containerRef.current.innerHTML = '';
+                      setScriptLoaded(false);
+                      setTimeout(() => setScriptLoaded(true), 500);
+                    }
+                  }, 1000);
+                }}
+              >
+                Connect with Telegram
+              </Button>
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    setTimeout(() => {
+                      if (!document.querySelector('iframe[src*="telegram.org"]')) {
+                        document.querySelector('.telegram-login-fallback').style.display = 'block';
+                      }
+                    }, 3000);
+                  `
+                }}
+              />
+            </div>
           )}
         </div>
       )}
