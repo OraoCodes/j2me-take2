@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -90,58 +91,81 @@ const Auth = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
-      },
-    });
+    try {
+      // Make sure we're using the latest Supabase Auth API
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        console.error("Signup error:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      } else {
+        console.log("Sign up response:", data);
+        setVerificationEmail(email);
+        setVerificationSent(true);
+        toast({
+          title: "Success",
+          description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
+        });
+      }
+    } catch (err) {
+      console.error("Unexpected error during signup:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
       });
-    } else {
-      console.log("Sign up response:", data);
-      setVerificationEmail(email);
-      setVerificationSent(true);
-      toast({
-        title: "Success",
-        description: "Verification email sent! Please check your inbox to complete registration.",
-      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleResendVerification = async () => {
     if (!verificationEmail) return;
     
     setResendLoading(true);
-    const { error, data } = await supabase.auth.resend({
-      type: 'signup',
-      email: verificationEmail,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
-      },
-    });
+    try {
+      const { error, data } = await supabase.auth.resend({
+        type: 'signup',
+        email: verificationEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        console.error("Error resending verification:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to resend: ${error.message}`,
+        });
+      } else {
+        console.log("Verification email resent:", data);
+        toast({
+          title: "Verification email resent",
+          description: "Please check your inbox and spam folder.",
+        });
+      }
+    } catch (err) {
+      console.error("Unexpected error resending verification:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to resend: ${error.message}`,
+        description: "An unexpected error occurred while resending verification.",
       });
-    } else {
-      toast({
-        title: "Verification email resent",
-        description: "Please check your inbox and spam folder.",
-      });
-      console.log("Resend response:", data);
+    } finally {
+      setResendLoading(false);
     }
-    setResendLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -152,20 +176,31 @@ const Auth = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        console.error("Signin error:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      } else {
+        console.log("Sign in response:", data);
+      }
+    } catch (err) {
+      console.error("Unexpected error during signin:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred during sign in.",
       });
+    } finally {
       setIsLoading(false);
-    } else {
-      console.log("Sign in response:", data);
     }
   };
 
