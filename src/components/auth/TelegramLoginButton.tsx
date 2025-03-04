@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -79,13 +78,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         script.setAttribute('data-userpic', 'false');
         script.setAttribute('data-onauth', `${callbackName}(user)`);
         
-        // Set the auth URL to the current location
-        const currentOrigin = window.location.origin;
-        const authPath = `/auth?tab=${isSignUp ? 'signup' : 'signin'}`;
-        const fullAuthUrl = `${currentOrigin}${authPath}`;
-        script.setAttribute('data-auth-url', fullAuthUrl);
+        // Using a Button URL approach instead of auth-url to avoid redirects
+        // This will keep users in the app and use our callback
+        script.removeAttribute('data-auth-url');
         
-        console.log(`[DEBUG:${debugIdRef.current}] Setting auth URL to: ${fullAuthUrl}`);
+        console.log(`[DEBUG:${debugIdRef.current}] Creating widget with bot ID: ${botId}`);
         
         // Append the script to the container
         containerRef.current.appendChild(script);
@@ -93,16 +90,23 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         
         // Check if widget initialized after a reasonable timeout
         setTimeout(() => {
-          if (containerRef.current && !containerRef.current.querySelector('iframe')) {
+          const iframe = containerRef.current?.querySelector('iframe');
+          if (containerRef.current && !iframe) {
             console.log(`[DEBUG:${debugIdRef.current}] Telegram widget failed to initialize after attempt ${widgetAttempts + 1}`);
+            console.log(`[DEBUG:${debugIdRef.current}] Container HTML: ${containerRef.current.innerHTML}`);
             
             if (widgetAttempts >= 2) {
               console.log(`[DEBUG:${debugIdRef.current}] Max attempts reached, switching to fallback button`);
               setUseFallbackButton(true);
+              toast({
+                title: "Telegram Login",
+                description: "Widget couldn't be loaded. Using alternative method.",
+              });
             } else {
               setWidgetAttempts(prev => prev + 1);
             }
           } else {
+            console.log(`[DEBUG:${debugIdRef.current}] Telegram widget initialized successfully. Iframe found:`, !!iframe);
             setWidgetInitialized(true);
           }
         }, 2000);
@@ -112,7 +116,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         setUseFallbackButton(true);
       }
     }
-  }, [scriptLoaded, isSignUp, botId, widgetAttempts, useFallbackButton]);
+  }, [scriptLoaded, isSignUp, botId, widgetAttempts, useFallbackButton, toast]);
 
   const handleTelegramAuth = async (user: TelegramUser) => {
     console.log(`[DEBUG:${debugIdRef.current}] Received Telegram auth:`, user);
@@ -177,20 +181,19 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   };
 
   const handleFallbackClick = () => {
-    // Open Telegram login flow manually
-    const telegramAuthUrl = `https://telegram.me/${botId}?start=auth_${isSignUp ? 'signup' : 'signin'}`;
-    
+    // Creating a PIN verification flow instead of direct app redirect
+    setError(null);
     toast({
       title: "Telegram Login",
-      description: "Opening Telegram authentication. Please continue in the Telegram app.",
+      description: "Please provide your Telegram username to receive a verification PIN.",
     });
     
-    // First try to open in app if possible
-    window.location.href = telegramAuthUrl;
-    
-    // Reset widget attempts to try again on next render
-    setWidgetAttempts(0);
-    setUseFallbackButton(false);
+    // Open a dialog to collect the username and verify PIN
+    // This dialog is defined in TelegramPinVerificationDialog.tsx
+    const event = new CustomEvent('open-telegram-pin-dialog', { 
+      detail: { isSignUp } 
+    });
+    window.dispatchEvent(event);
   };
 
   return (
