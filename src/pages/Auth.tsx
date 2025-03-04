@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, sendAuthEmail } from "@/integrations/supabase/client";
 import { Mail, Key, AlertCircle, Check, RefreshCw, ExternalLink, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -95,10 +96,12 @@ const Auth = () => {
     try {
       console.log("Attempting signup for email:", email);
       
+      // First, register the user with Supabase
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          // This is important - DON'T send the verification email through Supabase
           emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
           data: {
             signup_attempt: new Date().toISOString(),
@@ -117,6 +120,33 @@ const Auth = () => {
         setSignupResponse({error: error.message});
       } else {
         console.log("Sign up response:", data);
+        
+        // Now, send our custom verification email
+        try {
+          const customEmailResponse = await sendAuthEmail(
+            email, 
+            'signup',
+            `${window.location.origin}/auth?tab=signin`
+          );
+          
+          console.log("Custom email response:", customEmailResponse);
+          
+          if (customEmailResponse.error) {
+            toast({
+              variant: "destructive",
+              title: "Email Error",
+              description: `Account created but verification email failed: ${customEmailResponse.error}`,
+            });
+          }
+        } catch (emailError) {
+          console.error("Custom email error:", emailError);
+          toast({
+            variant: "destructive",
+            title: "Email Error",
+            description: "Account created but there was a problem sending the verification email.",
+          });
+        }
+        
         setVerificationEmail(email);
         setVerificationSent(true);
         setSignupResponse(data);
@@ -145,23 +175,22 @@ const Auth = () => {
     try {
       console.log("Attempting to resend verification to:", verificationEmail);
       
-      const { error, data } = await supabase.auth.resend({
-        type: 'signup',
-        email: verificationEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
-        },
-      });
+      // Use our custom email service instead of Supabase's built-in resend
+      const response = await sendAuthEmail(
+        verificationEmail,
+        'signup',
+        `${window.location.origin}/auth?tab=signin`
+      );
 
-      if (error) {
-        console.error("Error resending verification:", error);
+      if (response.error) {
+        console.error("Error resending verification:", response.error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: `Failed to resend: ${error.message}`,
+          description: `Failed to resend: ${response.error}`,
         });
       } else {
-        console.log("Verification email resent:", data);
+        console.log("Verification email resent:", response);
         toast({
           title: "Verification email resent",
           description: "Please check your inbox and spam folder.",
