@@ -45,7 +45,7 @@ export async function sendAuthEmail(email: string, type: 'signup' | 'reset' | 'm
     
     console.log('Custom auth email response:', response);
     
-    // Check if the response contains an error
+    // Check if there's a network error with the function invocation itself
     if (response.error) {
       console.error('Error from auth email function:', response.error);
       return {
@@ -54,7 +54,7 @@ export async function sendAuthEmail(email: string, type: 'signup' | 'reset' | 'm
       };
     }
     
-    // Process the successful response
+    // Process the response from the function itself
     if (response.data?.success === false) {
       console.error('Auth email function returned an error:', response.data.error);
       return {

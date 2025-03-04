@@ -79,15 +79,19 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log("Checking if user exists with email:", email);
         
-        // Check if user exists using getUserByEmail
-        const { data: existingUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        // Using listUsers filter instead of getUserByEmail which doesn't exist in this version
+        const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          filter: {
+            email: email
+          }
+        });
         
-        if (getUserError) {
-          console.error("Error checking if user exists:", getUserError);
+        if (listError) {
+          console.error("Error checking if user exists:", listError);
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: `Error checking if user exists: ${getUserError.message}` 
+              error: `Error checking if user exists: ${listError.message}` 
             }),
             {
               status: 500,
@@ -95,6 +99,8 @@ const handler = async (req: Request): Promise<Response> => {
             }
           );
         }
+        
+        const existingUserData = users?.users?.find(user => user.email === email);
         
         if (!existingUserData) {
           console.log("User doesn't exist, creating new user");
