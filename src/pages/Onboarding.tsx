@@ -128,6 +128,8 @@ const Onboarding = () => {
   const handleCropComplete = async (croppedImageUrl: string) => {
     try {
       setIsLoading(true);
+      setShowCropDialog(false); // Close dialog immediately to prevent double cropping
+      
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
       const { data: { user } } = await supabase.auth.getUser();
@@ -155,7 +157,6 @@ const Onboarding = () => {
       if (updateError) throw updateError;
 
       setProfileImage(publicUrl);
-      setShowCropDialog(false);
       setTempImageUrl(null);
       
       toast({

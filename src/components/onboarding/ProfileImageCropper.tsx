@@ -90,7 +90,6 @@ export const ProfileImageCropper = ({
 
     const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
     onCropComplete(croppedImageUrl);
-    onClose();
   };
 
   return (
