@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase, sendAuthEmail } from "@/integrations/supabase/client";
-import { Mail, Key, AlertCircle, Check, RefreshCw, ExternalLink, Info } from "lucide-react";
+import { Mail, Key, AlertCircle, Check, RefreshCw, Info, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
@@ -551,21 +551,7 @@ const Auth = () => {
         </Tabs>
       </div>
       
-      <div className="mt-4 text-sm text-center text-gray-500 space-y-2">
-        <div>
-          Having trouble signing in? <a href="mailto:support@gebeya.com" className="text-gebeya-pink hover:underline">Contact support</a>
-        </div>
-        <div className="flex items-center justify-center gap-2 text-xs font-medium">
-          <a 
-            href="https://supabase.com/dashboard/project/ivndgetmkcwapmttsbqa/auth/providers" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-gray-400 hover:text-gray-600"
-          >
-            Check Supabase Settings <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      </div>
+      
     </div>
   );
 };
