@@ -131,6 +131,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     script.setAttribute('data-telegram-login', 'GebeyaJitumeBot'); 
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-auth-url', window.location.origin + window.location.pathname); // Add explicit auth URL
     script.async = true;
     
     // Keep track of script loading status
@@ -196,15 +197,15 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
     
     if (!window.Telegram?.Login?.auth) {
-      console.error('Telegram Login SDK not loaded');
-      if (scriptLoaded) {
-        console.log('Script is loaded but Telegram.Login.auth is not available');
-      }
+      console.error('Telegram Login SDK not loaded properly');
+      console.log('Script loaded status:', scriptLoaded);
+      console.log('Telegram object available:', !!window.Telegram);
+      console.log('Telegram.Login available:', !!window.Telegram?.Login);
       
       toast({
         variant: "destructive",
-        title: "Telegram widget not loaded",
-        description: "Please try again later or refresh the page",
+        title: "Telegram widget not loaded properly",
+        description: "Please try again in a few moments or refresh the page",
       });
       return;
     }
@@ -214,6 +215,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     console.log('Initiating Telegram auth flow, isSignUp:', isSignUp);
     
     try {
+      // Force a direct auth call instead of relying on data attributes
       window.Telegram.Login.auth(
         {
           bot_id: BOT_ID,
@@ -224,6 +226,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
           },
         }
       );
+      console.log('Telegram auth request sent successfully');
     } catch (error) {
       console.error('Error initiating Telegram auth:', error);
       setIsLoading(false);

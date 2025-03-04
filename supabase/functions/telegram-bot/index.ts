@@ -9,6 +9,8 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log(`Telegram bot function called with method: ${req.method}`);
+  console.log(`Request URL: ${req.url}`);
+  console.log(`Request headers: ${JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2)}`);
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -90,7 +92,19 @@ serve(async (req) => {
       console.log("Existing user check result:", existingUser);
       
       let authLink;
+      // Make sure we have a valid origin
       const requestOrigin = origin || req.headers.get('origin') || "";
+      if (!requestOrigin) {
+        console.error("No origin provided in request");
+        return new Response(
+          JSON.stringify({ error: "No origin provided" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
       console.log(`Using request origin: ${requestOrigin}`);
       
       // If this is a signup but user already exists, treat as sign in
