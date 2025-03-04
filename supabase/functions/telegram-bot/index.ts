@@ -98,7 +98,7 @@ serve(async (req) => {
     console.log(`[${timestamp}] Telegram Bot function called with action: ${action}`);
     console.log(`[${timestamp}] isSignUp flag: ${isSignUp}`);
     console.log(`[${timestamp}] Origin: ${origin || "Not provided"}`);
-    console.log(`[${timestamp}] Telegram user data:`, telegramUser);
+    console.log(`[${timestamp}] Telegram user data:`, telegramUser ? JSON.stringify(telegramUser) : "No user data");
 
     // Handle user notification requests
     if (action === "notify" && requestBody.user_id && requestBody.notification) {
@@ -156,12 +156,21 @@ serve(async (req) => {
 
     if (action === "auth" && telegramUser) {
       // Validate the authentication data from Telegram
-      if (!validateTelegramAuth(telegramUser)) {
-        console.error(`[${timestamp}] Invalid Telegram authentication data`);
+      // Note: We're handling the case with missing username differently now
+      const validationResult = validateTelegramAuth(telegramUser);
+      
+      if (!validationResult.valid) {
+        console.error(`[${timestamp}] Invalid Telegram authentication data: ${validationResult.reason}`);
+        
+        // Return a more specific error message
         return new Response(
-          JSON.stringify({ error: "Invalid authentication data" }),
+          JSON.stringify({ 
+            error: "Invalid authentication data", 
+            reason: validationResult.reason,
+            canProceed: validationResult.canProceed
+          }),
           { 
-            status: 400, 
+            status: validationResult.canProceed ? 200 : 400, 
             headers: { 'Content-Type': 'application/json', ...corsHeaders } 
           }
         );
@@ -372,23 +381,32 @@ serve(async (req) => {
 });
 
 // Function to validate Telegram authentication data
-function validateTelegramAuth(authData: any): boolean {
+function validateTelegramAuth(authData: any): { valid: boolean; reason?: string; canProceed: boolean } {
   // Basic validation
-  if (!authData || !authData.id || !authData.first_name) {
-    return false;
+  if (!authData || !authData.id) {
+    return { valid: false, reason: "Missing user ID", canProceed: false };
+  }
+  
+  if (!authData.first_name) {
+    return { valid: false, reason: "Missing first name", canProceed: false };
   }
   
   // Add validation for username if required
   // If username is empty or missing, it could cause the "username invalid" error
   if (authData.username === undefined || authData.username === "") {
     console.log(`[${new Date().toISOString()}] Warning: User has no username set in Telegram`);
-    console.log(`[${new Date().toISOString()}] Proceeding with authentication despite missing username`);
-    // We continue anyway since some Telegram users may not have set a username
+    console.log(`[${new Date().toISOString()}] Will attempt to proceed despite missing username`);
+    // We'll try to proceed anyway, but flag the warning
+    return { 
+      valid: true, 
+      reason: "Missing username but will attempt to proceed", 
+      canProceed: true 
+    };
   }
   
   // In a production environment, you would also verify the hash
   // using the bot token to ensure the data came from Telegram
   // But for this example, we'll just do basic validation
   
-  return true;
+  return { valid: true, canProceed: true };
 }

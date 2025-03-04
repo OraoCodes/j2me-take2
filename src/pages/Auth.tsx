@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, User } from "lucide-react";
+import { Mail, Key, User, AlertCircle } from "lucide-react";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +19,7 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const defaultTab = searchParams.get("tab") || "signin";
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('Auth component mounted, defaultTab:', defaultTab);
@@ -76,13 +78,14 @@ const Auth = () => {
     });
     
     // Check URL for error parameters
-    const errorMessage = searchParams.get("error_description") || searchParams.get("error");
-    if (errorMessage) {
-      console.log('Error found in URL parameters:', errorMessage);
+    const urlErrorMessage = searchParams.get("error_description") || searchParams.get("error");
+    if (urlErrorMessage) {
+      console.log('Error found in URL parameters:', urlErrorMessage);
+      setErrorMessage(urlErrorMessage);
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: errorMessage
+        description: urlErrorMessage
       });
     }
     
@@ -195,6 +198,14 @@ const Auth = () => {
           </p>
         </div>
 
+        {errorMessage && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Authentication Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -258,6 +269,14 @@ const Auth = () => {
 
           <TabsContent value="signup">
             <div className="space-y-4">
+              <Alert className="bg-blue-50 border-blue-100">
+                <AlertCircle className="h-4 w-4 text-blue-500" />
+                <AlertTitle className="text-blue-700">Telegram Authentication Note</AlertTitle>
+                <AlertDescription className="text-blue-600 text-sm">
+                  To use Telegram authentication, you must have a username set in your Telegram profile settings.
+                </AlertDescription>
+              </Alert>
+              
               <div className="grid gap-2">
                 <WhatsAppLoginButton isSignUp={true} />
                 <TelegramLoginButton isSignUp={true} />

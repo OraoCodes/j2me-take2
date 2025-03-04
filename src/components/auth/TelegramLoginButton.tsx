@@ -34,6 +34,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
   const authTimeoutRef = useRef<number | null>(null);
   const usernameErrorDetectedRef = useRef(false);
+  const maxRetryAttemptsRef = useRef(0);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
@@ -72,7 +73,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       
       // Check if there's a username (some platforms require it)
       if (!telegramUser.username) {
-        console.log(`[DEBUG:${debugId}] Warning: User has no Telegram username`);
+        console.log(`[DEBUG:${debugId}] Warning: User has no Telegram username. Will attempt to proceed anyway.`);
         toast({
           variant: "default",
           title: "Telegram Authentication",
@@ -217,7 +218,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     // Check the page for error messages
     const errorMessages = Array.from(document.querySelectorAll('body *'))
       .map(el => el.textContent?.toLowerCase())
-      .filter(text => text && text.includes('username invalid'));
+      .filter(text => text && (text.includes('username invalid') || text.includes('user not found')));
       
     // Also check console errors if we have access (usually we don't)
     const hasUsernameError = errorMessages.length > 0;
@@ -229,6 +230,35 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     
     return hasUsernameError;
   }, []);
+
+  // Try to handle Telegram auth in direct mode - bypassing popup
+  const tryDirectAuth = useCallback(() => {
+    const debugId = debugIdRef.current;
+    
+    if (!window.Telegram?.Login?.auth) {
+      console.error(`[DEBUG:${debugId}] Telegram Login SDK not available for direct auth`);
+      return false;
+    }
+    
+    try {
+      console.log(`[DEBUG:${debugId}] Attempting direct Telegram.Login.auth call`);
+      window.Telegram.Login.auth(
+        {
+          bot_id: BOT_ID,
+          request_access: true,
+          callback: (user) => {
+            console.log(`[DEBUG:${debugId}] Direct Telegram callback with user:`, user ? 'User data received' : 'No user data');
+            handleTelegramAuth(user);
+          },
+        }
+      );
+      console.log(`[DEBUG:${debugId}] Telegram direct auth request sent successfully`);
+      return true;
+    } catch (error) {
+      console.error(`[DEBUG:${debugId}] Error in direct auth:`, error);
+      return false;
+    }
+  }, [BOT_ID, handleTelegramAuth]);
 
   useEffect(() => {
     const debugId = debugIdRef.current;
@@ -323,12 +353,23 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       subscription.unsubscribe();
       console.log(`[DEBUG:${debugId}] Unsubscribed from auth state changes`);
     };
-  }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast, checkForUsernameError]);
+  }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast, checkForUsernameError, tryDirectAuth]);
 
   const handleTelegramLogin = () => {
     const debugId = debugIdRef.current;
     if (isLoading) {
       console.log(`[DEBUG:${debugId}] Already loading, ignoring click`);
+      return;
+    }
+    
+    // If we've already tried a few times, suggest setting up a username
+    if (maxRetryAttemptsRef.current >= 2) {
+      toast({
+        variant: "destructive",
+        title: "Telegram Username Required",
+        description: "Please set up a username in your Telegram profile settings and try again. Without a username, authentication may not work properly."
+      });
+      maxRetryAttemptsRef.current = 0;
       return;
     }
     
@@ -338,7 +379,8 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       
       // Small delay to ensure cleanup is complete
       setTimeout(() => {
-        window.location.reload();
+        authAttemptedRef.current = false;
+        handleTelegramLogin();
       }, 500);
       return;
     }
@@ -360,6 +402,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     setIsLoading(true);
     authAttemptedRef.current = true;
     usernameErrorDetectedRef.current = false;
+    maxRetryAttemptsRef.current += 1;
     console.log(`[DEBUG:${debugId}] Initiating Telegram auth flow, isSignUp:`, isSignUp);
     
     try {
@@ -373,6 +416,34 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         botId: BOT_ID,
         timestamp: new Date().toISOString()
       });
+      
+      // First try direct auth approach
+      if (tryDirectAuth()) {
+        console.log(`[DEBUG:${debugId}] Using direct auth approach`);
+        
+        // Set a timeout to reset loading state if auth takes too long (30 seconds)
+        authTimeoutRef.current = window.setTimeout(() => {
+          console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
+          if (isLoading) {
+            setIsLoading(false);
+            // Check if there was a username error
+            if (checkForUsernameError()) {
+              toast({
+                variant: "destructive",
+                title: "Telegram Username Required",
+                description: "Please set up a username in your Telegram profile settings and try again."
+              });
+            } else {
+              toast({
+                title: "Authentication timed out",
+                description: "The Telegram authentication process took too long. Please try again.",
+              });
+            }
+          }
+        }, 30000);
+        
+        return;
+      }
       
       // Try to open in a popup to have more control
       const width = 550;
@@ -410,7 +481,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
               } else {
                 toast({
                   title: "Authentication timed out",
-                  description: "The Telegram authentication process took too long. Please try again.",
+                  description: "The Telegram authentication process took too long. Please try again. Telegram requires setting a username in your profile.",
                 });
               }
             }
@@ -438,7 +509,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
                   } else {
                     toast({
                       title: "Authentication cancelled",
-                      description: "The Telegram authentication was cancelled. Please try again.",
+                      description: "The Telegram authentication was cancelled. Please try again. Note that Telegram requires setting a username in your profile.",
                     });
                   }
                   
@@ -459,81 +530,15 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         console.log(`[DEBUG:${debugId}] Falling back to inline auth`);
       }
       
-      // Fallback: Force a direct auth call instead of relying on data attributes
-      console.log(`[DEBUG:${debugId}] Initiating direct Telegram.Login.auth call`);
-      window.Telegram.Login.auth(
-        {
-          bot_id: BOT_ID,
-          request_access: true,
-          callback: (user) => {
-            console.log(`[DEBUG:${debugId}] Direct Telegram callback with user:`, user ? 'User data received' : 'No user data');
-            handleTelegramAuth(user);
-          },
-        }
-      );
-      console.log(`[DEBUG:${debugId}] Telegram auth request sent successfully`);
+      // Final fallback - let user know about username requirement
+      toast({
+        variant: "destructive",
+        title: "Authentication failed",
+        description: "Please make sure you have set up a username in your Telegram profile settings and try again.",
+      });
+      setIsLoading(false);
+      authAttemptedRef.current = false;
       
-      // Set a timeout to reset loading state if auth takes too long (30 seconds)
-      if (!authTimeoutRef.current) {
-        authTimeoutRef.current = window.setTimeout(() => {
-          console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
-          if (isLoading) {
-            setIsLoading(false);
-            authAttemptedRef.current = false;
-            
-            // Check for username error
-            if (checkForUsernameError()) {
-              toast({
-                variant: "destructive",
-                title: "Telegram Username Required",
-                description: "Please set up a username in your Telegram profile settings and try again."
-              });
-            } else {
-              toast({
-                title: "Authentication timed out",
-                description: "The Telegram authentication process took too long. Please try again.",
-              });
-            }
-          }
-        }, 30000);
-      }
-      
-      // Set up a check to see if the popup was blocked or closed without completing auth
-      if (!popupCheckIntervalRef.current) {
-        popupCheckIntervalRef.current = window.setInterval(() => {
-          // Check if there's a Telegram popup open
-          const telegramPopup = document.querySelector('iframe[src*="telegram.org"]');
-          if (!telegramPopup && isLoading) {
-            console.log(`[DEBUG:${debugId}] No Telegram popup detected, user might have closed it`);
-            window.clearInterval(popupCheckIntervalRef.current!);
-            popupCheckIntervalRef.current = null;
-            
-            // Delayed reset to give the callback a chance to fire
-            setTimeout(() => {
-              if (isLoading) {
-                console.log(`[DEBUG:${debugId}] Auth still loading after popup closed, resetting state`);
-                
-                // Check for username error
-                if (checkForUsernameError()) {
-                  toast({
-                    variant: "destructive",
-                    title: "Telegram Username Required",
-                    description: "Please set up a username in your Telegram profile settings and try again."
-                  });
-                } else {
-                  toast({
-                    title: "Authentication cancelled",
-                    description: "The Telegram authentication was cancelled. Please try again.",
-                  });
-                }
-                
-                setIsLoading(false);
-                authAttemptedRef.current = false;
-              }
-            }, 1500);
-          }
-        }, 1000);
-      }
     } catch (error) {
       console.error(`[DEBUG:${debugId}] Error initiating Telegram auth:`, error);
       setIsLoading(false);
@@ -541,7 +546,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       toast({
         variant: "destructive",
         title: "Authentication error",
-        description: "Failed to start Telegram authentication",
+        description: "Failed to start Telegram authentication. Please ensure you have a username set in Telegram.",
       });
     }
   };
