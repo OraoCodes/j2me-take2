@@ -38,6 +38,7 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
   const navigate = useNavigate();
   const otplessDivRef = useRef<HTMLDivElement>(null);
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
+  const [retryCount, setRetryCount] = useState(0);
 
   // Load the OTPless SDK
   useEffect(() => {
@@ -49,20 +50,30 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
       } catch (error) {
         console.error(`[DEBUG:${debugIdRef.current}] Failed to load OTPless SDK:`, error);
         setError('Failed to load WhatsApp login. Please try again later.');
+        // If we haven't tried too many times, retry loading
+        if (retryCount < 3) {
+          console.log(`[DEBUG:${debugIdRef.current}] Retrying SDK load, attempt ${retryCount + 1}`);
+          setRetryCount(prev => prev + 1);
+          // Try again after a short delay
+          setTimeout(() => loadSDK(), 1500);
+        }
       }
     };
     
-    loadSDK();
-  }, []);
+    if (!sdkLoaded) {
+      loadSDK();
+    }
+  }, [retryCount, sdkLoaded]);
 
   // Initialize the OTPless container
   useEffect(() => {
-    if (sdkLoaded && otplessDivRef.current) {
+    if (sdkLoaded && otplessDivRef.current && window.otpless) {
       console.log(`[DEBUG:${debugIdRef.current}] SDK loaded, initializing OTPless container`);
       
       // Initialize the OTPless button
       const otplessDiv = document.createElement('div');
       otplessDiv.id = 'otpless-login-page';
+      otplessDiv.style.display = 'none'; // Hide the button as we'll use our custom button
       
       // Clear and append the OTPless div
       otplessDivRef.current.innerHTML = '';
@@ -73,10 +84,19 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
   const initiateOTPlessAuth = () => {
     if (!window.otpless || !sdkLoaded) {
       console.error(`[DEBUG:${debugIdRef.current}] OTPless SDK not loaded yet`);
-      toast({
-        variant: "destructive",
-        title: "WhatsApp Login Error",
-        description: "Login service not available. Please try again later."
+      // Try to reload the SDK before showing error
+      loadOtplessSDK().then(() => {
+        setSdkLoaded(true);
+        console.log(`[DEBUG:${debugIdRef.current}] OTPless SDK loaded on demand`);
+        // Try again after a short delay to allow initialization
+        setTimeout(() => initiateOTPlessAuth(), 500);
+      }).catch(err => {
+        console.error(`[DEBUG:${debugIdRef.current}] Failed to load OTPless SDK on demand:`, err);
+        toast({
+          variant: "destructive",
+          title: "WhatsApp Login Error",
+          description: "Login service not available. Please try again later."
+        });
       });
       return;
     }
@@ -85,7 +105,7 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
     setError(null);
     
     try {
-      console.log(`[DEBUG:${debugIdRef.current}] Initiating OTPless auth`);
+      console.log(`[DEBUG:${debugIdRef.current}] Initiating OTPless auth, window.otpless:`, window.otpless ? 'available' : 'not available');
       
       // Use the OTPless SDK for authentication
       window.otpless.auth({
@@ -191,7 +211,7 @@ export const OTPlessWhatsAppLoginButton = ({ isSignUp = false }) => {
       <Button
         className="w-full bg-[#25D366] hover:bg-[#25D366]/90 text-white"
         onClick={initiateOTPlessAuth}
-        disabled={isLoading || !sdkLoaded}
+        disabled={isLoading}
       >
         {isLoading ? "Connecting..." : isSignUp ? "Sign up with WhatsApp (OTPless)" : "Sign in with WhatsApp (OTPless)"}
       </Button>
