@@ -12,6 +12,11 @@ BEGIN
         
         -- Add an index on telegram_id for faster lookups
         CREATE INDEX IF NOT EXISTS idx_profiles_telegram_id ON public.profiles(telegram_id);
+        
+        -- Log that we're adding the column
+        RAISE NOTICE 'Adding telegram_id column to profiles table';
+    ELSE
+        RAISE NOTICE 'telegram_id column already exists in profiles table';
     END IF;
 END
 $$;

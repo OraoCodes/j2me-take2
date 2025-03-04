@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,13 +45,18 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       console.log(`Setting telegram_auth_flow to '${authFlow}'`);
       localStorage.setItem('telegram_auth_flow', authFlow);
       
+      // Log additional info about the environment
+      console.log('Current origin:', window.location.origin);
+      console.log('Current URL:', window.location.href);
+      
       // Call our Supabase Edge Function
       console.log('Calling telegram-bot function with isSignUp:', isSignUp);
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
         body: { 
           action: 'auth', 
           telegramUser,
-          isSignUp
+          isSignUp,
+          origin: window.location.origin
         }
       });
       
@@ -70,10 +76,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         console.log('Redirecting to auth link:', data.authLink);
         window.location.href = data.authLink;
       } else {
+        console.error('No auth link received from edge function');
         toast({
           variant: "destructive",
           title: "Authentication failed",
-          description: "Could not authenticate with Telegram",
+          description: "Could not authenticate with Telegram. No authentication link was provided.",
         });
         setIsLoading(false);
       }
@@ -129,6 +136,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     // Keep track of script loading status
     script.onload = () => {
       console.log('Telegram login script loaded successfully');
+      console.log('Telegram Login object available:', !!window.Telegram?.Login);
       setScriptLoaded(true);
     };
     
