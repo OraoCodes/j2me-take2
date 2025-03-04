@@ -35,10 +35,17 @@ const ServiceChat = ({ businessName, onSendMessage }: ServiceChatProps) => {
 
     try {
       // Log the request being sent
-      console.log('Sending request to telegram-bot function');
+      console.log('Sending request to telegram-bot function with message:', userMessage);
 
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
-        body: { message: { text: userMessage } }
+        body: { 
+          message: { text: userMessage },
+          // Adding debugging info to help diagnose issues
+          debug: {
+            timestamp: new Date().toISOString(),
+            origin: window.location.origin
+          }
+        }
       });
 
       console.log('Response from telegram-bot:', { data, error });

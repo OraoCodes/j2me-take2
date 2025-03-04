@@ -8,12 +8,15 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log(`Telegram bot function called with method: ${req.method}`);
-  console.log(`Request URL: ${req.url}`);
+  // Add timestamp to all logs for better debugging
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Telegram bot function called with method: ${req.method}`);
+  console.log(`[${timestamp}] Request URL: ${req.url}`);
+  console.log(`[${timestamp}] Request headers:`, JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    console.log("Handling CORS preflight request");
+    console.log(`[${timestamp}] Handling CORS preflight request`);
     return new Response(null, { headers: corsHeaders });
   }
   
@@ -22,7 +25,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase configuration");
+      console.error(`[${timestamp}] Missing Supabase configuration`);
+      console.error(`[${timestamp}] SUPABASE_URL set: ${!!supabaseUrl}`);
+      console.error(`[${timestamp}] SUPABASE_SERVICE_ROLE_KEY set: ${!!supabaseServiceKey}`);
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
         { 
@@ -34,15 +39,16 @@ serve(async (req) => {
     
     // Initialize Supabase client with the service role key (for admin operations)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    console.log(`[${timestamp}] Supabase admin client initialized`);
     
     // Get the request body
     let requestBody;
     try {
       requestBody = await req.json();
-      console.log("Request body parsed successfully");
-      console.log("Request body:", JSON.stringify(requestBody, null, 2));
+      console.log(`[${timestamp}] Request body parsed successfully`);
+      console.log(`[${timestamp}] Request body:`, JSON.stringify(requestBody, null, 2));
     } catch (error) {
-      console.error("Error parsing request body:", error);
+      console.error(`[${timestamp}] Error parsing request body:`, error);
       return new Response(
         JSON.stringify({ error: "Invalid request body" }),
         { 
@@ -54,15 +60,15 @@ serve(async (req) => {
     
     const { action, telegramUser, isSignUp, origin } = requestBody;
     
-    console.log(`Telegram Bot function called with action: ${action}`);
-    console.log(`isSignUp flag: ${isSignUp}`);
-    console.log(`Origin: ${origin || "Not provided"}`);
-    console.log(`Telegram user data:`, telegramUser);
+    console.log(`[${timestamp}] Telegram Bot function called with action: ${action}`);
+    console.log(`[${timestamp}] isSignUp flag: ${isSignUp}`);
+    console.log(`[${timestamp}] Origin: ${origin || "Not provided"}`);
+    console.log(`[${timestamp}] Telegram user data:`, telegramUser);
 
     if (action === "auth" && telegramUser) {
       // Validate the authentication data from Telegram
       if (!validateTelegramAuth(telegramUser)) {
-        console.error("Invalid Telegram authentication data");
+        console.error(`[${timestamp}] Invalid Telegram authentication data`);
         return new Response(
           JSON.stringify({ error: "Invalid authentication data" }),
           { 
@@ -76,7 +82,7 @@ serve(async (req) => {
       const identifier = `telegram:${telegramUser.id}`;
       const email = `${identifier}@telegram.gebeya-jitume.app`;
       
-      console.log(`Using identifier: ${identifier} and email: ${email}`);
+      console.log(`[${timestamp}] Using identifier: ${identifier} and email: ${email}`);
       
       // Check if this Telegram user already exists in auth.users
       const { data: existingUser, error: lookupError } = await supabaseAdmin
@@ -86,16 +92,16 @@ serve(async (req) => {
         .maybeSingle();
         
       if (lookupError) {
-        console.error("Error looking up existing user:", lookupError);
+        console.error(`[${timestamp}] Error looking up existing user:`, lookupError);
       }
       
-      console.log("Existing user check result:", existingUser);
+      console.log(`[${timestamp}] Existing user check result:`, existingUser);
       
       let authLink;
       // Make sure we have a valid origin
       const requestOrigin = origin || req.headers.get('origin') || "";
       if (!requestOrigin) {
-        console.error("No origin provided in request");
+        console.error(`[${timestamp}] No origin provided in request`);
         return new Response(
           JSON.stringify({ error: "No origin provided" }),
           { 
@@ -105,11 +111,11 @@ serve(async (req) => {
         );
       }
       
-      console.log(`Using request origin: ${requestOrigin}`);
+      console.log(`[${timestamp}] Using request origin: ${requestOrigin}`);
       
       // If this is a signup but user already exists, treat as sign in
       if (isSignUp && existingUser) {
-        console.log("User tried to sign up but already exists, treating as sign in");
+        console.log(`[${timestamp}] User tried to sign up but already exists, treating as sign in`);
         
         // Generate a sign-in link for the existing user
         const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
@@ -121,7 +127,7 @@ serve(async (req) => {
         });
         
         if (signInError) {
-          console.error("Error generating link for existing user:", signInError);
+          console.error(`[${timestamp}] Error generating link for existing user:`, signInError);
           return new Response(
             JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
             { 
@@ -132,9 +138,9 @@ serve(async (req) => {
         }
         
         authLink = signInData?.properties?.action_link;
-        console.log("Generated auth link for existing user:", authLink);
+        console.log(`[${timestamp}] Generated auth link for existing user:`, authLink);
       } else if (isSignUp) {
-        console.log("Creating new user account with Telegram");
+        console.log(`[${timestamp}] Creating new user account with Telegram`);
         
         // Create a random password for the user
         const randomPassword = Math.random().toString(36).slice(-10);
@@ -156,7 +162,7 @@ serve(async (req) => {
         });
         
         if (createError) {
-          console.error("Error creating user:", createError);
+          console.error(`[${timestamp}] Error creating user:`, createError);
           return new Response(
             JSON.stringify({ error: "Failed to create user", details: createError.message }),
             { 
@@ -166,7 +172,7 @@ serve(async (req) => {
           );
         }
         
-        console.log("User created successfully, user ID:", authUser?.user?.id);
+        console.log(`[${timestamp}] User created successfully, user ID:`, authUser?.user?.id);
         
         // Update the profiles table with Telegram ID
         if (authUser?.user?.id) {
@@ -179,9 +185,9 @@ serve(async (req) => {
             .eq("id", authUser.user.id);
             
           if (profileError) {
-            console.error("Error updating profile:", profileError);
+            console.error(`[${timestamp}] Error updating profile:`, profileError);
           } else {
-            console.log("Profile updated successfully with telegram_id");
+            console.log(`[${timestamp}] Profile updated successfully with telegram_id`);
           }
         }
         
@@ -195,7 +201,7 @@ serve(async (req) => {
         });
         
         if (signInError) {
-          console.error("Error generating link:", signInError);
+          console.error(`[${timestamp}] Error generating link:`, signInError);
           return new Response(
             JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
             { 
@@ -206,9 +212,9 @@ serve(async (req) => {
         }
         
         authLink = signInData?.properties?.action_link;
-        console.log("Generated auth link for signup:", authLink);
+        console.log(`[${timestamp}] Generated auth link for signup:`, authLink);
       } else {
-        console.log("Generating sign-in link for existing user");
+        console.log(`[${timestamp}] Generating sign-in link for existing user`);
         
         // Generate a sign-in link for the existing user
         const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
@@ -220,7 +226,7 @@ serve(async (req) => {
         });
         
         if (signInError) {
-          console.error("Error generating link:", signInError);
+          console.error(`[${timestamp}] Error generating link:`, signInError);
           return new Response(
             JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
             { 
@@ -231,10 +237,11 @@ serve(async (req) => {
         }
         
         authLink = signInData?.properties?.action_link;
-        console.log("Generated auth link for signin:", authLink);
+        console.log(`[${timestamp}] Generated auth link for signin:`, authLink);
       }
       
       if (!authLink) {
+        console.error(`[${timestamp}] Failed to generate authentication link`);
         return new Response(
           JSON.stringify({ error: "Failed to generate authentication link" }),
           { 
@@ -244,6 +251,7 @@ serve(async (req) => {
         );
       }
       
+      console.log(`[${timestamp}] Successfully generated auth link, returning response`);
       return new Response(
         JSON.stringify({ authLink }),
         { 
@@ -253,6 +261,7 @@ serve(async (req) => {
       );
     }
     
+    console.log(`[${timestamp}] Invalid request - no auth action or missing telegramUser`);
     return new Response(
       JSON.stringify({ error: "Invalid request" }),
       { 
@@ -261,7 +270,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in telegram-bot function:", error);
+    console.error(`[${timestamp}] Error in telegram-bot function:`, error);
     
     return new Response(
       JSON.stringify({ error: "Internal server error", details: error.message }),
