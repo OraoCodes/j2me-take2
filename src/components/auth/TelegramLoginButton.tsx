@@ -1,14 +1,12 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { loadScript } from '@/utils/scriptLoader';
-import { AlertCircle, Telegram } from 'lucide-react';
+import { AlertCircle, MessageCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
-// This is what Telegram returns after successful authentication
 interface TelegramUser {
   id: number;
   first_name: string;
@@ -30,10 +28,8 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [widgetAttempts, setWidgetAttempts] = useState(0);
 
-  // Unique value for bot_id to prevent caching issues
   const botId = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GebeyaJitumeBot';
 
-  // Load the Telegram script
   useEffect(() => {
     const loadTelegramWidget = async () => {
       try {
@@ -49,7 +45,6 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     loadTelegramWidget();
     
     return () => {
-      // Clean up if needed
       const oldScript = document.getElementById('telegram-login');
       if (oldScript) {
         console.log(`[DEBUG:${debugIdRef.current}] Cleaning up old Telegram script`);
@@ -57,21 +52,16 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     };
   }, []);
 
-  // Initialize Telegram widget once script is loaded
   useEffect(() => {
     if (scriptLoaded && containerRef.current && widgetAttempts < 3) {
       try {
-        // Clear container first
         containerRef.current.innerHTML = '';
         console.log(`[DEBUG:${debugIdRef.current}] Container cleared for Telegram widget`);
         
-        // Create a unique callback name to prevent conflicts
         const callbackName = `onTelegramAuth_${Math.random().toString(36).substring(2, 15)}`;
         
-        // Add the callback function to window
         window[callbackName] = (user: TelegramUser) => handleTelegramAuth(user);
         
-        // Create the script element with configuration
         const script = document.createElement('script');
         script.setAttribute('async', '');
         script.setAttribute('data-telegram-login', botId);
@@ -81,7 +71,6 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         script.setAttribute('data-userpic', 'false');
         script.setAttribute('data-onauth', `${callbackName}(user)`);
         
-        // Explicitly set the URL to the current origin to avoid redirect issues
         const currentOrigin = window.location.origin;
         const authPath = `/auth?tab=${isSignUp ? 'signup' : 'signin'}`;
         const fullAuthUrl = `${currentOrigin}${authPath}`;
@@ -89,11 +78,9 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         
         console.log(`[DEBUG:${debugIdRef.current}] Setting auth URL to: ${fullAuthUrl}`);
         
-        // Append to container
         containerRef.current.appendChild(script);
         console.log(`[DEBUG:${debugIdRef.current}] Telegram widget script appended to container`);
         
-        // Set timeout to check if widget was initialized
         setTimeout(() => {
           if (containerRef.current && !containerRef.current.querySelector('iframe')) {
             console.log(`[DEBUG:${debugIdRef.current}] Telegram widget failed to initialize after attempt ${widgetAttempts + 1}`);
@@ -109,13 +96,11 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
   }, [scriptLoaded, isSignUp, botId, widgetAttempts]);
 
-  // Handle Telegram authentication result
   const handleTelegramAuth = async (user: TelegramUser) => {
     console.log(`[DEBUG:${debugIdRef.current}] Received Telegram auth:`, user);
     setIsLoading(true);
     
     try {
-      // Verify the telegram authentication on the server
       const { data, error } = await supabase.functions.invoke('telegram-bot', {
         body: { 
           action: 'process-telegram-auth', 
@@ -139,12 +124,10 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       console.log(`[DEBUG:${debugIdRef.current}] Telegram auth response:`, data);
       
       if (data?.authLink) {
-        // Set telegram auth flow type in localStorage
         const authFlow = isSignUp ? 'signup' : 'signin';
         console.log(`[DEBUG:${debugIdRef.current}] Setting telegram_auth_flow to '${authFlow}'`);
         localStorage.setItem('telegram_auth_flow', authFlow);
         
-        // Redirect to the auth link
         console.log(`[DEBUG:${debugIdRef.current}] Redirecting to auth link:`, data.authLink);
         window.location.href = data.authLink;
       } else if (data?.error) {
@@ -175,7 +158,6 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
   };
 
-  // Fallback button click handler
   const handleFallbackClick = () => {
     toast({
       title: "Telegram Login",
@@ -185,7 +167,6 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     setWidgetAttempts(0);
     setWidgetInitialized(false);
     
-    // Force a reset of the widget
     if (containerRef.current) {
       containerRef.current.innerHTML = '';
       setScriptLoaded(false);
@@ -228,7 +209,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
               onClick={handleFallbackClick}
               disabled={isLoading}
             >
-              <Telegram className="mr-2 h-4 w-4" />
+              <MessageCircle className="mr-2 h-4 w-4" />
               {isSignUp ? "Sign up with Telegram" : "Sign in with Telegram"}
             </Button>
           )}
