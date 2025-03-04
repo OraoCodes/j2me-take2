@@ -7,6 +7,78 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Store PIN codes temporarily (in a real production system, this would be in a database)
+// Format: { username: { pin: string, timestamp: number, attempts: number } }
+const activePins = new Map();
+
+// Generate a random 6-digit PIN
+const generatePin = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Send a message to a Telegram user
+const sendTelegramMessage = async (username: string, message: string) => {
+  const timestamp = new Date().toISOString();
+  const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+  
+  if (!botToken) {
+    console.error(`[${timestamp}] TELEGRAM_BOT_TOKEN not set in environment variables`);
+    return { success: false, error: "Bot configuration error" };
+  }
+  
+  try {
+    // First we need to get the chat_id for the username
+    const userResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/getChat?chat_id=@${username}`,
+      { method: "GET" }
+    );
+    
+    const userData = await userResponse.json();
+    console.log(`[${timestamp}] Telegram getChat response:`, JSON.stringify(userData));
+    
+    if (!userData.ok) {
+      console.error(`[${timestamp}] Failed to find Telegram user @${username}:`, userData.description);
+      return { 
+        success: false, 
+        error: `Telegram user @${username} not found. Make sure you've set up a username and started a chat with our bot (@GebeyaJitumeBot).`
+      };
+    }
+    
+    // Now send the message
+    const sendResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: userData.result.id,
+          text: message,
+          parse_mode: "Markdown"
+        })
+      }
+    );
+    
+    const sendData = await sendResponse.json();
+    console.log(`[${timestamp}] Telegram sendMessage response:`, JSON.stringify(sendData));
+    
+    if (!sendData.ok) {
+      console.error(`[${timestamp}] Failed to send message to @${username}:`, sendData.description);
+      return { 
+        success: false, 
+        error: `Failed to send message to @${username}. ${sendData.description}`
+      };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error(`[${timestamp}] Error sending Telegram message:`, error);
+    return { 
+      success: false, 
+      error: "Failed to communicate with Telegram. Please try again later."
+    };
+  }
+};
+
 serve(async (req) => {
   // Add timestamp to all logs for better debugging
   const timestamp = new Date().toISOString();
@@ -68,19 +140,6 @@ serve(async (req) => {
       );
     }
     
-    // Check if this is a chat message request
-    if (requestBody.message && requestBody.message.text) {
-      console.log(`[${timestamp}] Chat message received:`, requestBody.message.text);
-      // Return a sample response for chat messages
-      return new Response(
-        JSON.stringify({ text: `You said: ${requestBody.message.text}. This is a response from the server.` }),
-        { 
-          status: 200, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
-    }
-    
     // Handle test requests
     if (requestBody.action === "test") {
       console.log(`[${timestamp}] Test request received`);
@@ -93,15 +152,408 @@ serve(async (req) => {
       );
     }
     
-    const { action, telegramUser, isSignUp, origin } = requestBody;
+    // Handle PIN request action
+    if (requestBody.action === "request-pin") {
+      const { telegramUsername, isSignUp, origin } = requestBody;
+      
+      if (!telegramUsername) {
+        return new Response(
+          JSON.stringify({ error: "Telegram username is required" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      if (!origin) {
+        return new Response(
+          JSON.stringify({ error: "Origin is required" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] PIN request for Telegram user: @${telegramUsername}`);
+      
+      // Check if we already have an active PIN for this user
+      const existingPinData = activePins.get(telegramUsername);
+      const now = Date.now();
+      
+      // If PIN was generated less than 60 seconds ago and user has made fewer than 3 attempts
+      if (existingPinData && 
+          (now - existingPinData.timestamp < 60000) && 
+          existingPinData.attempts < 3) {
+        console.log(`[${timestamp}] Reusing existing PIN for @${telegramUsername}`);
+        existingPinData.attempts += 1;
+        activePins.set(telegramUsername, existingPinData);
+        
+        // Send the existing PIN via Telegram
+        const message = `🔐 *Gebeya Jitume Authentication*\n\nYour verification PIN is: *${existingPinData.pin}*\n\nThis PIN will expire in 10 minutes.`;
+        const sendResult = await sendTelegramMessage(telegramUsername, message);
+        
+        if (!sendResult.success) {
+          console.error(`[${timestamp}] Failed to send PIN to @${telegramUsername}:`, sendResult.error);
+          return new Response(
+            JSON.stringify({ error: sendResult.error }),
+            { 
+              status: 400, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { 
+            status: 200, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      // Generate a new PIN
+      const pin = generatePin();
+      console.log(`[${timestamp}] Generated new PIN for @${telegramUsername}: ${pin}`);
+      
+      // Store the PIN with timestamp and reset attempts counter
+      activePins.set(telegramUsername, { 
+        pin, 
+        timestamp: now,
+        attempts: 1,
+        isSignUp,
+        origin
+      });
+      
+      // Send the PIN via Telegram
+      const message = `🔐 *Gebeya Jitume Authentication*\n\nYour verification PIN is: *${pin}*\n\nThis PIN will expire in 10 minutes.`;
+      const sendResult = await sendTelegramMessage(telegramUsername, message);
+      
+      if (!sendResult.success) {
+        console.error(`[${timestamp}] Failed to send PIN to @${telegramUsername}:`, sendResult.error);
+        return new Response(
+          JSON.stringify({ error: sendResult.error }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ success: true }),
+        { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
     
-    console.log(`[${timestamp}] Telegram Bot function called with action: ${action}`);
-    console.log(`[${timestamp}] isSignUp flag: ${isSignUp}`);
-    console.log(`[${timestamp}] Origin: ${origin || "Not provided"}`);
-    console.log(`[${timestamp}] Telegram user data:`, telegramUser ? JSON.stringify(telegramUser) : "No user data");
+    // Handle PIN verification action
+    if (requestBody.action === "verify-pin") {
+      const { telegramUsername, pin, isSignUp, origin } = requestBody;
+      
+      if (!telegramUsername || !pin) {
+        return new Response(
+          JSON.stringify({ error: "Telegram username and PIN are required" }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] PIN verification for @${telegramUsername}`);
+      
+      // Check if we have an active PIN for this user
+      const pinData = activePins.get(telegramUsername);
+      
+      if (!pinData) {
+        console.error(`[${timestamp}] No active PIN found for @${telegramUsername}`);
+        return new Response(
+          JSON.stringify({ error: "No active PIN found. Please request a new PIN." }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      // Check if PIN has expired (10 minutes)
+      const now = Date.now();
+      if (now - pinData.timestamp > 600000) {
+        console.error(`[${timestamp}] PIN for @${telegramUsername} has expired`);
+        activePins.delete(telegramUsername);
+        return new Response(
+          JSON.stringify({ error: "PIN has expired. Please request a new PIN." }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      // Check if PIN matches
+      if (pinData.pin !== pin) {
+        console.error(`[${timestamp}] Invalid PIN for @${telegramUsername}`);
+        return new Response(
+          JSON.stringify({ error: "Invalid PIN. Please try again." }),
+          { 
+            status: 400, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      console.log(`[${timestamp}] PIN verified successfully for @${telegramUsername}`);
+      
+      // Build Telegram user data
+      // We need to fetch the actual user from Telegram API
+      const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+      
+      if (!botToken) {
+        console.error(`[${timestamp}] TELEGRAM_BOT_TOKEN not set in environment variables`);
+        return new Response(
+          JSON.stringify({ error: "Bot configuration error" }),
+          { 
+            status: 500, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+      
+      try {
+        const userResponse = await fetch(
+          `https://api.telegram.org/bot${botToken}/getChat?chat_id=@${telegramUsername}`,
+          { method: "GET" }
+        );
+        
+        const userData = await userResponse.json();
+        console.log(`[${timestamp}] Telegram getChat response:`, JSON.stringify(userData));
+        
+        if (!userData.ok) {
+          console.error(`[${timestamp}] Failed to find Telegram user @${telegramUsername}:`, userData.description);
+          return new Response(
+            JSON.stringify({ 
+              error: `Telegram user @${telegramUsername} not found. Make sure you've set up a username correctly.`
+            }),
+            { 
+              status: 400, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        // Create a telegramUser object from the Telegram API response
+        const telegramUser = {
+          id: userData.result.id,
+          username: telegramUsername,
+          first_name: userData.result.first_name || telegramUsername,
+          last_name: userData.result.last_name || ""
+        };
+        
+        // Create a unique identifier using Telegram's ID
+        const identifier = `telegram:${telegramUser.id}`;
+        const email = `${identifier}@telegram.gebeya-jitume.app`;
+        
+        console.log(`[${timestamp}] Using identifier: ${identifier} and email: ${email}`);
+        
+        // Check if this Telegram user already exists in auth.users
+        const { data: existingUser, error: lookupError } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("telegram_id", telegramUser.id)
+          .maybeSingle();
+          
+        if (lookupError) {
+          console.error(`[${timestamp}] Error looking up existing user:`, lookupError);
+        }
+        
+        console.log(`[${timestamp}] Existing user check result:`, existingUser);
+        
+        let authLink;
+        // Make sure we have a valid origin
+        const requestOrigin = origin || pinData.origin || "";
+        if (!requestOrigin) {
+          console.error(`[${timestamp}] No origin provided in request`);
+          return new Response(
+            JSON.stringify({ error: "No origin provided" }),
+            { 
+              status: 400, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        console.log(`[${timestamp}] Using request origin: ${requestOrigin}`);
+        
+        // If this is a signup but user already exists, treat as sign in
+        const isActualSignUp = requestBody.isSignUp || pinData.isSignUp || false;
+        
+        if (isActualSignUp && existingUser) {
+          console.log(`[${timestamp}] User tried to sign up but already exists, treating as sign in`);
+          
+          // Generate a sign-in link for the existing user
+          const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: {
+              redirectTo: `${requestOrigin}/dashboard`
+            }
+          });
+          
+          if (signInError) {
+            console.error(`[${timestamp}] Error generating link for existing user:`, signInError);
+            return new Response(
+              JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+              { 
+                status: 500, 
+                headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+              }
+            );
+          }
+          
+          authLink = signInData?.properties?.action_link;
+          console.log(`[${timestamp}] Generated auth link for existing user:`, authLink);
+        } else if (isActualSignUp) {
+          console.log(`[${timestamp}] Creating new user account with Telegram`);
+          
+          // Create a random password for the user
+          const randomPassword = Math.random().toString(36).slice(-10);
+          
+          // Create a new user in auth.users
+          const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: randomPassword,
+            email_confirm: true,
+            user_metadata: {
+              telegram_id: telegramUser.id,
+              telegram_username: telegramUser.username,
+              telegram_first_name: telegramUser.first_name,
+              telegram_last_name: telegramUser.last_name || '',
+              full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
+              avatar_url: null,
+              provider: "telegram"
+            }
+          });
+          
+          if (createError) {
+            console.error(`[${timestamp}] Error creating user:`, createError);
+            return new Response(
+              JSON.stringify({ error: "Failed to create user", details: createError.message }),
+              { 
+                status: 500, 
+                headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+              }
+            );
+          }
+          
+          console.log(`[${timestamp}] User created successfully, user ID:`, authUser?.user?.id);
+          
+          // Update the profiles table with Telegram ID
+          if (authUser?.user?.id) {
+            const { error: profileError } = await supabaseAdmin
+              .from("profiles")
+              .update({
+                telegram_id: telegramUser.id,
+                full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
+              })
+              .eq("id", authUser.user.id);
+              
+            if (profileError) {
+              console.error(`[${timestamp}] Error updating profile:`, profileError);
+            } else {
+              console.log(`[${timestamp}] Profile updated successfully with telegram_id`);
+            }
+          }
+          
+          // Generate a sign-in link
+          const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: {
+              redirectTo: `${requestOrigin}/onboarding`
+            }
+          });
+          
+          if (signInError) {
+            console.error(`[${timestamp}] Error generating link:`, signInError);
+            return new Response(
+              JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+              { 
+                status: 500, 
+                headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+              }
+            );
+          }
+          
+          authLink = signInData?.properties?.action_link;
+          console.log(`[${timestamp}] Generated auth link for signup:`, authLink);
+        } else {
+          console.log(`[${timestamp}] Generating sign-in link for existing user`);
+          
+          // Generate a sign-in link for the existing user
+          const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: {
+              redirectTo: `${requestOrigin}/dashboard`
+            }
+          });
+          
+          if (signInError) {
+            console.error(`[${timestamp}] Error generating link:`, signInError);
+            return new Response(
+              JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
+              { 
+                status: 500, 
+                headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+              }
+            );
+          }
+          
+          authLink = signInData?.properties?.action_link;
+          console.log(`[${timestamp}] Generated auth link for signin:`, authLink);
+        }
+        
+        if (!authLink) {
+          console.error(`[${timestamp}] Failed to generate authentication link`);
+          return new Response(
+            JSON.stringify({ error: "Failed to generate authentication link" }),
+            { 
+              status: 500, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        // Remove the PIN data since verification was successful
+        activePins.delete(telegramUsername);
+        
+        console.log(`[${timestamp}] Successfully generated auth link, returning response`);
+        return new Response(
+          JSON.stringify({ authLink }),
+          { 
+            status: 200, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      } catch (error) {
+        console.error(`[${timestamp}] Error verifying user with Telegram:`, error);
+        return new Response(
+          JSON.stringify({ error: "Failed to verify user with Telegram. Please try again later." }),
+          { 
+            status: 500, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+    }
 
     // Handle user notification requests
-    if (action === "notify" && requestBody.user_id && requestBody.notification) {
+    if (requestBody.action === "notify" && requestBody.user_id && requestBody.notification) {
       console.log(`[${timestamp}] Processing notification request for user: ${requestBody.user_id}`);
       
       try {
@@ -153,221 +605,15 @@ serve(async (req) => {
         );
       }
     }
-
-    if (action === "auth" && telegramUser) {
-      // Validate the authentication data from Telegram
-      // Note: We're handling the case with missing username differently now
-      const validationResult = validateTelegramAuth(telegramUser);
-      
-      if (!validationResult.valid) {
-        console.error(`[${timestamp}] Invalid Telegram authentication data: ${validationResult.reason}`);
-        
-        // Return a more specific error message
-        return new Response(
-          JSON.stringify({ 
-            error: "Invalid authentication data", 
-            reason: validationResult.reason,
-            canProceed: validationResult.canProceed,
-            requiresUsername: validationResult.requiresUsername
-          }),
-          { 
-            status: validationResult.canProceed ? 200 : 400, 
-            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-          }
-        );
-      }
-      
-      // Create a unique identifier using Telegram's ID
-      const identifier = `telegram:${telegramUser.id}`;
-      const email = `${identifier}@telegram.gebeya-jitume.app`;
-      
-      console.log(`[${timestamp}] Using identifier: ${identifier} and email: ${email}`);
-      
-      // Check if this Telegram user already exists in auth.users
-      const { data: existingUser, error: lookupError } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .eq("telegram_id", telegramUser.id)
-        .maybeSingle();
-        
-      if (lookupError) {
-        console.error(`[${timestamp}] Error looking up existing user:`, lookupError);
-      }
-      
-      console.log(`[${timestamp}] Existing user check result:`, existingUser);
-      
-      let authLink;
-      // Make sure we have a valid origin
-      const requestOrigin = origin || req.headers.get('origin') || "";
-      if (!requestOrigin) {
-        console.error(`[${timestamp}] No origin provided in request`);
-        return new Response(
-          JSON.stringify({ error: "No origin provided" }),
-          { 
-            status: 400, 
-            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-          }
-        );
-      }
-      
-      console.log(`[${timestamp}] Using request origin: ${requestOrigin}`);
-      
-      // If this is a signup but user already exists, treat as sign in
-      if (isSignUp && existingUser) {
-        console.log(`[${timestamp}] User tried to sign up but already exists, treating as sign in`);
-        
-        // Generate a sign-in link for the existing user
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email,
-          options: {
-            redirectTo: `${requestOrigin}/dashboard`
-          }
-        });
-        
-        if (signInError) {
-          console.error(`[${timestamp}] Error generating link for existing user:`, signInError);
-          return new Response(
-            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
-            { 
-              status: 500, 
-              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-            }
-          );
-        }
-        
-        authLink = signInData?.properties?.action_link;
-        console.log(`[${timestamp}] Generated auth link for existing user:`, authLink);
-      } else if (isSignUp) {
-        console.log(`[${timestamp}] Creating new user account with Telegram`);
-        
-        // Create a random password for the user
-        const randomPassword = Math.random().toString(36).slice(-10);
-        
-        // Create a new user in auth.users
-        const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password: randomPassword,
-          email_confirm: true,
-          user_metadata: {
-            telegram_id: telegramUser.id,
-            telegram_username: telegramUser.username || '',  // Handle missing username
-            telegram_first_name: telegramUser.first_name,
-            telegram_last_name: telegramUser.last_name || '',
-            full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
-            avatar_url: null,
-            provider: "telegram"
-          }
-        });
-        
-        if (createError) {
-          console.error(`[${timestamp}] Error creating user:`, createError);
-          return new Response(
-            JSON.stringify({ error: "Failed to create user", details: createError.message }),
-            { 
-              status: 500, 
-              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-            }
-          );
-        }
-        
-        console.log(`[${timestamp}] User created successfully, user ID:`, authUser?.user?.id);
-        
-        // Update the profiles table with Telegram ID
-        if (authUser?.user?.id) {
-          const { error: profileError } = await supabaseAdmin
-            .from("profiles")
-            .update({
-              telegram_id: telegramUser.id,
-              full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
-            })
-            .eq("id", authUser.user.id);
-            
-          if (profileError) {
-            console.error(`[${timestamp}] Error updating profile:`, profileError);
-          } else {
-            console.log(`[${timestamp}] Profile updated successfully with telegram_id`);
-          }
-        }
-        
-        // Generate a sign-in link
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email,
-          options: {
-            redirectTo: `${requestOrigin}/onboarding`
-          }
-        });
-        
-        if (signInError) {
-          console.error(`[${timestamp}] Error generating link:`, signInError);
-          return new Response(
-            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
-            { 
-              status: 500, 
-              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-            }
-          );
-        }
-        
-        authLink = signInData?.properties?.action_link;
-        console.log(`[${timestamp}] Generated auth link for signup:`, authLink);
-      } else {
-        console.log(`[${timestamp}] Generating sign-in link for existing user`);
-        
-        // Generate a sign-in link for the existing user
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email,
-          options: {
-            redirectTo: `${requestOrigin}/dashboard`
-          }
-        });
-        
-        if (signInError) {
-          console.error(`[${timestamp}] Error generating link:`, signInError);
-          return new Response(
-            JSON.stringify({ error: "Failed to generate login link", details: signInError.message }),
-            { 
-              status: 500, 
-              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-            }
-          );
-        }
-        
-        authLink = signInData?.properties?.action_link;
-        console.log(`[${timestamp}] Generated auth link for signin:`, authLink);
-      }
-      
-      if (!authLink) {
-        console.error(`[${timestamp}] Failed to generate authentication link`);
-        return new Response(
-          JSON.stringify({ error: "Failed to generate authentication link" }),
-          { 
-            status: 500, 
-            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-          }
-        );
-      }
-      
-      console.log(`[${timestamp}] Successfully generated auth link, returning response`);
-      return new Response(
-        JSON.stringify({ authLink }),
-        { 
-          status: 200, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
-    }
     
-    console.log(`[${timestamp}] Invalid request - no auth action or missing telegramUser`);
+    console.log(`[${timestamp}] Invalid request - unsupported action`);
     return new Response(
-      JSON.stringify({ error: "Invalid request" }),
+      JSON.stringify({ error: "Invalid action" }),
       { 
         status: 400, 
         headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
+      }
+    );
   } catch (error) {
     console.error(`[${timestamp}] Error in telegram-bot function:`, error);
     
@@ -380,35 +626,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Function to validate Telegram authentication data
-function validateTelegramAuth(authData: any): { valid: boolean; reason?: string; canProceed: boolean; requiresUsername?: boolean } {
-  // Basic validation
-  if (!authData || !authData.id) {
-    return { valid: false, reason: "Missing user ID", canProceed: false };
-  }
-  
-  if (!authData.first_name) {
-    return { valid: false, reason: "Missing first name", canProceed: false };
-  }
-  
-  // Add validation for username if required
-  // If username is empty or missing, it could cause the "username invalid" error
-  if (authData.username === undefined || authData.username === "") {
-    console.log(`[${new Date().toISOString()}] Warning: User has no username set in Telegram`);
-    console.log(`[${new Date().toISOString()}] Will attempt to proceed despite missing username`);
-    // We'll try to proceed anyway, but flag the warning
-    return { 
-      valid: true, 
-      reason: "Missing username but will attempt to proceed", 
-      canProceed: true,
-      requiresUsername: true
-    };
-  }
-  
-  // In a production environment, you would also verify the hash
-  // using the bot token to ensure the data came from Telegram
-  // But for this example, we'll just do basic validation
-  
-  return { valid: true, canProceed: true, requiresUsername: false };
-}
