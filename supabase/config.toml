@@ -3,3 +3,6 @@ project_id = "ivndgetmkcwapmttsbqa"
 
 [functions.telegram-bot]
 verify_jwt = false
+
+[functions.resend-auth-email]
+verify_jwt = false

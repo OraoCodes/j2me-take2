@@ -15,10 +15,9 @@ const options = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    flowType: 'pkce' as const,
     redirectTo: `${window.location.origin}/auth?tab=signin`
   }
 };
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
-
