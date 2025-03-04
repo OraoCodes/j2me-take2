@@ -39,6 +39,8 @@ const Onboarding = () => {
     const customProf = formData.get("customProfession") as string;
     const serviceType = formData.get("serviceType") as string;
     const referralSource = formData.get("referralSource") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
     
     const profession = selectedProf === "Other" ? customProf : selectedProf;
 
@@ -58,6 +60,8 @@ const Onboarding = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
+          first_name: firstName,
+          last_name: lastName,
           profession: profession,
           service_type: serviceType,
           referral_source: referralSource,

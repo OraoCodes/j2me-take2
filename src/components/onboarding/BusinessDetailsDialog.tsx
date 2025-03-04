@@ -108,11 +108,32 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
             Tell us about yourself
           </DialogTitle>
           <DialogDescription>
-            Select your profession and service details
+            Let's get to know you better
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleFormSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                name="firstName"
+                placeholder="Enter your first name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                name="lastName"
+                placeholder="Enter your last name"
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="profession">What's your profession?</Label>
             <Select 
