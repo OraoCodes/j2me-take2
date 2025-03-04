@@ -12,8 +12,13 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Configure the redirect URL for auth redirects
 const options = {
   auth: {
-    redirectTo: window.location.origin + '/auth?tab=signin'
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    redirectTo: `${window.location.origin}/auth?tab=signin`
   }
 };
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
+
