@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, User } from "lucide-react";
+import { Mail, Key, User, AlertCircle, Check } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
+  const [verificationSent, setVerificationSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -44,6 +46,7 @@ const Auth = () => {
           first_name: firstName,
           last_name: lastName,
         },
+        emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
       },
     });
 
@@ -54,11 +57,11 @@ const Auth = () => {
         description: error.message,
       });
     } else {
+      setVerificationSent(true);
       toast({
         title: "Success",
-        description: "Account created successfully!",
+        description: "Verification email sent! Please check your inbox to complete registration.",
       });
-      navigate("/onboarding");
     }
     setIsLoading(false);
   };
@@ -155,68 +158,85 @@ const Auth = () => {
           </TabsContent>
 
           <TabsContent value="signup">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-firstName">First Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    className="pl-10"
-                  />
+            {verificationSent ? (
+              <Alert className="bg-green-50 border-green-200 mb-4">
+                <Check className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800">Verification email sent!</AlertTitle>
+                <AlertDescription className="text-green-700">
+                  Please check your email inbox and click the verification link to complete your registration.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-firstName">First Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-lastName">Last Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-lastName"
-                    name="lastName"
-                    type="text"
-                    required
-                    className="pl-10"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="signup-lastName">Last Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-lastName"
+                      name="lastName"
+                      type="text"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    required
-                    className="pl-10"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    required
-                    className="pl-10"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type="password"
+                      required
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
+                <Alert variant="default" className="bg-blue-50 border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-800">Email verification required</AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    After signing up, you'll need to verify your email before you can log in.
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            )}
           </TabsContent>
         </Tabs>
       </div>
