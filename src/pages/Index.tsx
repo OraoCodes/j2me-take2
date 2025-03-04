@@ -18,16 +18,16 @@ const Index = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/dashboard');
+        await redirectBasedOnUserStatus(session.user);
       }
     };
 
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        navigate('/dashboard');
+        await redirectBasedOnUserStatus(session.user);
       }
     });
 
@@ -35,6 +35,35 @@ const Index = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  // New function to redirect based on user status
+  const redirectBasedOnUserStatus = async (user) => {
+    if (!user) return;
+    
+    try {
+      // Check if user has completed onboarding by checking if they have a profession set
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('profession, company_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      // If user doesn't have a profession or company name set, they need to complete onboarding
+      if (!profile?.profession || !profile?.company_name) {
+        console.log("User needs to complete onboarding, redirecting to /onboarding");
+        navigate("/onboarding");
+      } else {
+        console.log("User has completed onboarding, redirecting to /dashboard");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error checking user profile:", error);
+      // Default to dashboard if there's an error checking profile
+      navigate("/dashboard");
+    }
+  };
 
   const navigateToAuth = (defaultTab: 'signin' | 'signup') => {
     navigate(`/auth?tab=${defaultTab}`);

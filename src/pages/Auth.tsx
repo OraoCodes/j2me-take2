@@ -27,7 +27,7 @@ const Auth = () => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        redirectBasedOnUserStatus(session.user);
       }
     });
 
@@ -46,10 +46,10 @@ const Auth = () => {
     }
     
     // Listen for auth state changes
-    const { data: { subscription }} = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription }} = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
       if (event === 'SIGNED_IN' && session) {
-        navigate("/dashboard");
+        await redirectBasedOnUserStatus(session.user);
       }
     });
     
@@ -57,6 +57,35 @@ const Auth = () => {
       subscription.unsubscribe();
     };
   }, [navigate, searchParams, toast]);
+
+  // New function to redirect based on user status
+  const redirectBasedOnUserStatus = async (user) => {
+    if (!user) return;
+    
+    try {
+      // Check if user has completed onboarding by checking if they have a profession set
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('profession, company_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      // If user doesn't have a profession or company name set, they need to complete onboarding
+      if (!profile?.profession || !profile?.company_name) {
+        console.log("User needs to complete onboarding, redirecting to /onboarding");
+        navigate("/onboarding");
+      } else {
+        console.log("User has completed onboarding, redirecting to /dashboard");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error checking user profile:", error);
+      // Default to dashboard if there's an error checking profile
+      navigate("/dashboard");
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -148,8 +177,7 @@ const Auth = () => {
       setIsLoading(false);
     } else {
       console.log("Sign in response:", data);
-      // Don't show the success toast since we're redirecting immediately
-      navigate("/dashboard");
+      // Don't navigate here, let the auth state change listener handle redirection
     }
   };
 
