@@ -153,7 +153,11 @@ export type Database = {
           company_name: string | null
           created_at: string | null
           currency: string | null
+          email: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
+          profession: string | null
           profile_image_url: string | null
           referral_source: string | null
           role: string | null
@@ -167,7 +171,11 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           currency?: string | null
+          email?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
+          profession?: string | null
           profile_image_url?: string | null
           referral_source?: string | null
           role?: string | null
@@ -181,7 +189,11 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           currency?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          profession?: string | null
           profile_image_url?: string | null
           referral_source?: string | null
           role?: string | null

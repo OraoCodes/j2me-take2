@@ -58,9 +58,10 @@ const Onboarding = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          company_name: profession,
+          profession: profession,
           service_type: serviceType,
           referral_source: referralSource,
+          company_name: profession, // Also setting company_name to profession for compatibility
         })
         .eq('id', user.id);
 
