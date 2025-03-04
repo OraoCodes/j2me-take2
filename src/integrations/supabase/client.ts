@@ -30,6 +30,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Helper for custom auth emails
 export async function sendAuthEmail(email: string, type: 'signup' | 'reset' | 'magic_link', redirectUrl: string) {
   try {
+    console.log(`Sending ${type} email to ${email}`);
+    
     const response = await supabase.functions.invoke('resend-auth-email', {
       body: {
         email,
@@ -41,6 +43,7 @@ export async function sendAuthEmail(email: string, type: 'signup' | 'reset' | 'm
       }
     });
     
+    console.log('Custom auth email response:', response);
     return response;
   } catch (error) {
     console.error('Error sending custom auth email:', error);

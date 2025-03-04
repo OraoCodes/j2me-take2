@@ -149,27 +149,64 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send the email with Resend
-    const emailResponse = await resend.emails.send({
-      from: "Gebeya <noreply@jitume.gebeya.com>",
-      to: [email],
-      subject: subject,
-      html: content,
-      text: content.replace(/<[^>]*>/g, ''), // Strip HTML for text version
-    });
-
-    console.log("Email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify(emailResponse), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
-  } catch (error: any) {
+    console.log(`Sending email to ${email} with type ${type}`);
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "Gebeya <no-reply@gebeya.co>", // Updated from jitume.gebeya.com domain
+        to: [email],
+        subject: subject,
+        html: content,
+        text: content.replace(/<[^>]*>/g, ''), // Strip HTML for text version
+      });
+      
+      console.log("Resend API response:", JSON.stringify(emailResponse));
+      
+      if (emailResponse.error) {
+        console.error("Resend API error:", emailResponse.error);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: emailResponse.error 
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Email sent successfully to ${email}`, 
+          data: emailResponse 
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    } catch (emailError) {
+      console.error("Error sending email with Resend:", emailError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Email sending error: ${emailError.message || JSON.stringify(emailError)}` 
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+  } catch (error) {
     console.error("Error in resend-auth-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || String(error) 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
