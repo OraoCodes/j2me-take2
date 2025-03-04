@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,6 +28,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [widgetAttempts, setWidgetAttempts] = useState(0);
+  const [useFallbackButton, setUseFallbackButton] = useState(false);
 
   const botId = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GebeyaJitumeBot';
 
@@ -39,6 +41,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       } catch (error) {
         console.error(`[DEBUG:${debugIdRef.current}] Failed to load Telegram widget:`, error);
         setError('Failed to load Telegram login widget. Please try again later.');
+        setUseFallbackButton(true);
       }
     };
     
@@ -53,7 +56,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   }, []);
 
   useEffect(() => {
-    if (scriptLoaded && containerRef.current && widgetAttempts < 3) {
+    if (scriptLoaded && containerRef.current && widgetAttempts < 3 && !useFallbackButton) {
       try {
         containerRef.current.innerHTML = '';
         console.log(`[DEBUG:${debugIdRef.current}] Container cleared for Telegram widget`);
@@ -81,10 +84,17 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         containerRef.current.appendChild(script);
         console.log(`[DEBUG:${debugIdRef.current}] Telegram widget script appended to container`);
         
+        // Check if widget initialized after a reasonable timeout
         setTimeout(() => {
           if (containerRef.current && !containerRef.current.querySelector('iframe')) {
             console.log(`[DEBUG:${debugIdRef.current}] Telegram widget failed to initialize after attempt ${widgetAttempts + 1}`);
-            setWidgetAttempts(prev => prev + 1);
+            
+            if (widgetAttempts >= 2) {
+              console.log(`[DEBUG:${debugIdRef.current}] Max attempts reached, switching to fallback button`);
+              setUseFallbackButton(true);
+            } else {
+              setWidgetAttempts(prev => prev + 1);
+            }
           } else {
             setWidgetInitialized(true);
           }
@@ -92,9 +102,10 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       } catch (err) {
         console.error(`[DEBUG:${debugIdRef.current}] Error initializing Telegram widget:`, err);
         setError('Error initializing Telegram login. Please refresh the page and try again.');
+        setUseFallbackButton(true);
       }
     }
-  }, [scriptLoaded, isSignUp, botId, widgetAttempts]);
+  }, [scriptLoaded, isSignUp, botId, widgetAttempts, useFallbackButton]);
 
   const handleTelegramAuth = async (user: TelegramUser) => {
     console.log(`[DEBUG:${debugIdRef.current}] Received Telegram auth:`, user);
@@ -159,19 +170,20 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   };
 
   const handleFallbackClick = () => {
+    // Open Telegram login flow manually
+    const telegramAuthUrl = `https://telegram.me/${botId}?start=auth_${isSignUp ? 'signup' : 'signin'}`;
+    
     toast({
       title: "Telegram Login",
-      description: "Attempting to reinitialize Telegram login...",
+      description: "Opening Telegram authentication. Please continue in the Telegram app.",
     });
     
-    setWidgetAttempts(0);
-    setWidgetInitialized(false);
+    // First try to open in app if possible
+    window.location.href = telegramAuthUrl;
     
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-      setScriptLoaded(false);
-      setTimeout(() => setScriptLoaded(true), 500);
-    }
+    // Reset widget attempts to try again on next render
+    setWidgetAttempts(0);
+    setUseFallbackButton(false);
   };
 
   return (
@@ -195,15 +207,17 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         </Button>
       ) : (
         <div className="w-full">
-          <div 
-            ref={containerRef} 
-            className="flex justify-center w-full min-h-[48px]"
-            aria-label={scriptLoaded ? "Telegram login button" : "Loading Telegram login button"}
-          >
-            {/* Telegram widget will be inserted here by script */}
-          </div>
+          {!useFallbackButton && (
+            <div 
+              ref={containerRef} 
+              className="flex justify-center w-full min-h-[48px]"
+              aria-label={scriptLoaded ? "Telegram login button" : "Loading Telegram login button"}
+            >
+              {/* Telegram widget will be inserted here by script */}
+            </div>
+          )}
           
-          {(!scriptLoaded || widgetAttempts >= 3 || !widgetInitialized) && (
+          {(useFallbackButton || !scriptLoaded || widgetAttempts >= 2 || !widgetInitialized) && (
             <Button
               className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white mt-2"
               onClick={handleFallbackClick}

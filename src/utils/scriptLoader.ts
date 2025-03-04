@@ -16,6 +16,7 @@ export const loadScript = (src: string, id: string): Promise<void> => {
       script.src = src;
       script.id = id;
       script.async = true;
+      script.crossOrigin = "anonymous"; // Add CORS support
       
       // Add event listeners for successful load and error
       script.onload = () => {
