@@ -87,6 +87,11 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      // Validate business name (double-check even though the component validation should prevent this)
+      if (!businessName || businessName.trim() === "") {
+        throw new Error('Business name is required');
+      }
+
       const fullWhatsappNumber = phoneNumber ? 
         `${phonePrefix}${phoneNumber.replace(/^0+/, '')}` : 
         null;
@@ -94,7 +99,7 @@ const Onboarding = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          company_name: businessName.trim() || null, // Changed from business_name to company_name
+          company_name: businessName.trim(),
           whatsapp_number: fullWhatsappNumber,
         })
         .eq('id', user.id);
@@ -109,7 +114,7 @@ const Onboarding = () => {
       console.error('Settings update error:', error);
       toast({
         title: "Error",
-        description: "Could not update your settings. Please try again.",
+        description: error instanceof Error ? error.message : "Could not update your settings. Please try again.",
         variant: "destructive",
       });
     } finally {

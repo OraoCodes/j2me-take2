@@ -14,6 +14,7 @@ const Settings = () => {
   const [companyName, setCompanyName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [companyNameError, setCompanyNameError] = useState("");
 
   useEffect(() => {
     fetchProfile();
@@ -51,6 +52,13 @@ const Settings = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate business name
+    if (!companyName || companyName.trim() === "") {
+      setCompanyNameError("Business name is required");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -65,7 +73,7 @@ const Settings = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          company_name: companyName.trim() || null,
+          company_name: companyName.trim(),
           whatsapp_number: fullWhatsappNumber || null,
         })
         .eq('id', user.id);
@@ -102,17 +110,26 @@ const Settings = () => {
           <FormSection number="1" title="Business Information">
             <div className="space-y-4">
               <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name
+                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1 flex">
+                  Business Name <span className="text-red-500 ml-1">*</span>
                 </label>
                 <Input
                   id="companyName"
                   type="text"
                   value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  onChange={(e) => {
+                    setCompanyName(e.target.value);
+                    if (e.target.value.trim() !== "") {
+                      setCompanyNameError("");
+                    }
+                  }}
                   placeholder="Enter your business name"
                   required
+                  className={companyNameError ? "border-red-500" : ""}
                 />
+                {companyNameError && (
+                  <p className="text-red-500 text-sm mt-1">{companyNameError}</p>
+                )}
               </div>
 
               <div>

@@ -59,6 +59,7 @@ export const SettingsDialog = ({
   const [selectedPrefix, setSelectedPrefix] = useState<string>("+254");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [businessNameError, setBusinessNameError] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,7 +75,22 @@ export const SettingsDialog = ({
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate business name
+    if (!businessName || businessName.trim() === "") {
+      setBusinessNameError("Business name is required");
+      return;
+    }
+    
+    setBusinessNameError("");
     await onSubmit(selectedPrefix, phoneNumber || null, businessName);
+  };
+
+  const handleBusinessNameChange = (value: string) => {
+    onBusinessNameChange(value);
+    if (value.trim() !== "") {
+      setBusinessNameError("");
+    }
   };
 
   const handleCropComplete = async (croppedImageUrl: string) => {
@@ -146,13 +162,17 @@ export const SettingsDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
+              <Label htmlFor="businessName" className="flex">
+                Business Name <span className="text-red-500 ml-1">*</span>
+              </Label>
               <div className="flex gap-2">
                 <Input
                   id="businessName"
                   value={businessName}
-                  onChange={(e) => onBusinessNameChange(e.target.value)}
+                  onChange={(e) => handleBusinessNameChange(e.target.value)}
                   placeholder="Enter your business name"
+                  required
+                  className={businessNameError ? "border-red-500" : ""}
                 />
                 <TooltipProvider>
                   <Tooltip defaultOpen>
@@ -176,6 +196,9 @@ export const SettingsDialog = ({
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              {businessNameError && (
+                <p className="text-red-500 text-sm mt-1">{businessNameError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
