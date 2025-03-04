@@ -2,7 +2,11 @@
 project_id = "ivndgetmkcwapmttsbqa"
 
 [api]
-# Disables the JWT verification so the edge function can be called by anyone
-[api.edge_functions]
-[api.edge_functions."telegram-bot"]
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions]
+[functions.telegram-bot]
 verify_jwt = false
