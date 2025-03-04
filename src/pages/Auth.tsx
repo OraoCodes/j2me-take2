@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail, Key, User } from "lucide-react";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { WhatsAppLoginButton } from "@/components/auth/WhatsAppLoginButton";
-import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -76,11 +75,22 @@ const Auth = () => {
       }
     });
     
+    // Check URL for error parameters
+    const errorMessage = searchParams.get("error_description") || searchParams.get("error");
+    if (errorMessage) {
+      console.log('Error found in URL parameters:', errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: errorMessage
+      });
+    }
+    
     return () => {
       console.log('Auth component unmounting, cleaning up subscription');
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, searchParams, toast]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -91,30 +101,42 @@ const Auth = () => {
     const password = formData.get("password") as string;
     const fullName = formData.get("fullName") as string;
 
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Sign up error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+        setIsLoading(false);
+      } else {
+        localStorage.setItem('telegram_auth_flow', 'signup');
+        toast({
+          title: "Success",
+          description: "Account created successfully!",
+        });
+        navigate("/onboarding");
+      }
+    } catch (error: any) {
+      console.error('Unexpected sign up error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error?.message || "An unexpected error occurred during sign up.",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Account created successfully!",
-      });
-      navigate("/onboarding");
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -125,20 +147,31 @@ const Auth = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+        setIsLoading(false);
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      console.error('Unexpected sign in error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error?.message || "An unexpected error occurred during sign in.",
       });
       setIsLoading(false);
-    } else {
-      navigate("/dashboard");
     }
   };
 

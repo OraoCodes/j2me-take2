@@ -33,6 +33,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const popupRef = useRef<Window | null>(null);
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
   const authTimeoutRef = useRef<number | null>(null);
+  const usernameErrorDetectedRef = useRef(false);
 
   // Create a memoized version of handleTelegramAuth to avoid recreating it on each render
   const handleTelegramAuth = useCallback(async (telegramUser: any) => {
@@ -48,7 +49,35 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       
       if (!telegramUser) {
         setIsLoading(false);
-        throw new Error('Authentication cancelled or failed');
+        
+        if (usernameErrorDetectedRef.current) {
+          // User encountered the username error
+          toast({
+            variant: "destructive",
+            title: "Telegram Username Required",
+            description: "Please set up a username in your Telegram profile settings and try again."
+          });
+          usernameErrorDetectedRef.current = false;
+        } else {
+          // Generic error
+          toast({
+            variant: "destructive",
+            title: "Authentication Cancelled",
+            description: "The Telegram authentication was cancelled or failed."
+          });
+        }
+        
+        return;
+      }
+      
+      // Check if there's a username (some platforms require it)
+      if (!telegramUser.username) {
+        console.log(`[DEBUG:${debugId}] Warning: User has no Telegram username`);
+        toast({
+          variant: "default",
+          title: "Telegram Authentication",
+          description: "Proceeding with authentication. Note: Setting a Telegram username is recommended for full functionality."
+        });
       }
       
       // Set telegram auth flow type in localStorage
@@ -180,6 +209,25 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     
     setScriptLoaded(false);
     authAttemptedRef.current = false;
+    usernameErrorDetectedRef.current = false;
+  }, []);
+
+  // Function to detect the "username invalid" error
+  const checkForUsernameError = useCallback(() => {
+    // Check the page for error messages
+    const errorMessages = Array.from(document.querySelectorAll('body *'))
+      .map(el => el.textContent?.toLowerCase())
+      .filter(text => text && text.includes('username invalid'));
+      
+    // Also check console errors if we have access (usually we don't)
+    const hasUsernameError = errorMessages.length > 0;
+    
+    if (hasUsernameError) {
+      console.log(`[DEBUG:${debugIdRef.current}] Username invalid error detected`);
+      usernameErrorDetectedRef.current = true;
+    }
+    
+    return hasUsernameError;
   }, []);
 
   useEffect(() => {
@@ -275,7 +323,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
       subscription.unsubscribe();
       console.log(`[DEBUG:${debugId}] Unsubscribed from auth state changes`);
     };
-  }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast]);
+  }, [handleTelegramAuth, cleanupTelegramResources, isSignUp, toast, checkForUsernameError]);
 
   const handleTelegramLogin = () => {
     const debugId = debugIdRef.current;
@@ -311,6 +359,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     
     setIsLoading(true);
     authAttemptedRef.current = true;
+    usernameErrorDetectedRef.current = false;
     console.log(`[DEBUG:${debugId}] Initiating Telegram auth flow, isSignUp:`, isSignUp);
     
     try {
@@ -351,11 +400,19 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
             console.log(`[DEBUG:${debugId}] Auth timeout reached, resetting state`);
             if (isLoading) {
               setIsLoading(false);
-              authAttemptedRef.current = false;
-              toast({
-                title: "Authentication timed out",
-                description: "The Telegram authentication process took too long. Please try again.",
-              });
+              // Check if there was a username error
+              if (checkForUsernameError()) {
+                toast({
+                  variant: "destructive",
+                  title: "Telegram Username Required",
+                  description: "Please set up a username in your Telegram profile settings and try again."
+                });
+              } else {
+                toast({
+                  title: "Authentication timed out",
+                  description: "The Telegram authentication process took too long. Please try again.",
+                });
+              }
             }
           }, 30000);
           
@@ -365,24 +422,18 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
               console.log(`[DEBUG:${debugId}] Telegram popup was closed`);
               window.clearInterval(popupCheckInterval);
               
-              // Give a small delay to see if onTelegramAuth gets called
+              // Delayed reset to give the callback a chance to fire
               setTimeout(() => {
                 if (isLoading) {
                   console.log(`[DEBUG:${debugId}] Auth still loading after popup closed, resetting state`);
-                  setIsLoading(false);
-                  authAttemptedRef.current = false;
                   
-                  // Check if there's a username error in the console or elsewhere
-                  const consoleErrors = document.querySelectorAll('.console-error, .error-message');
-                  const hasUsernameError = Array.from(consoleErrors).some(el => 
-                    el.textContent?.toLowerCase().includes('username invalid')
-                  );
-                  
-                  if (hasUsernameError) {
+                  // Check for username error
+                  if (checkForUsernameError() || document.documentElement.innerHTML.includes("username invalid")) {
+                    usernameErrorDetectedRef.current = true;
                     toast({
                       variant: "destructive",
-                      title: "Username invalid",
-                      description: "Telegram reported that the username is invalid. Please ensure your Telegram account is properly set up.",
+                      title: "Telegram Username Required",
+                      description: "Please set up a username in your Telegram profile settings and try again."
                     });
                   } else {
                     toast({
@@ -390,10 +441,13 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
                       description: "The Telegram authentication was cancelled. Please try again.",
                     });
                   }
+                  
+                  setIsLoading(false);
+                  authAttemptedRef.current = false;
                 }
-              }, 1000);
+              }, 1500);
             }
-          }, 1000);
+          }, 500);  // Check more frequently
           
           popupCheckIntervalRef.current = popupCheckInterval;
           return;
@@ -426,10 +480,20 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
           if (isLoading) {
             setIsLoading(false);
             authAttemptedRef.current = false;
-            toast({
-              title: "Authentication timed out",
-              description: "The Telegram authentication process took too long. Please try again.",
-            });
+            
+            // Check for username error
+            if (checkForUsernameError()) {
+              toast({
+                variant: "destructive",
+                title: "Telegram Username Required",
+                description: "Please set up a username in your Telegram profile settings and try again."
+              });
+            } else {
+              toast({
+                title: "Authentication timed out",
+                description: "The Telegram authentication process took too long. Please try again.",
+              });
+            }
           }
         }, 30000);
       }
@@ -444,18 +508,29 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
             window.clearInterval(popupCheckIntervalRef.current!);
             popupCheckIntervalRef.current = null;
             
-            // Check if we're still in the loading state after popup closed
+            // Delayed reset to give the callback a chance to fire
             setTimeout(() => {
               if (isLoading) {
                 console.log(`[DEBUG:${debugId}] Auth still loading after popup closed, resetting state`);
+                
+                // Check for username error
+                if (checkForUsernameError()) {
+                  toast({
+                    variant: "destructive",
+                    title: "Telegram Username Required",
+                    description: "Please set up a username in your Telegram profile settings and try again."
+                  });
+                } else {
+                  toast({
+                    title: "Authentication cancelled",
+                    description: "The Telegram authentication was cancelled. Please try again.",
+                  });
+                }
+                
                 setIsLoading(false);
                 authAttemptedRef.current = false;
-                toast({
-                  title: "Authentication cancelled",
-                  description: "The Telegram authentication was cancelled. Please try again.",
-                });
               }
-            }, 1000);
+            }, 1500);
           }
         }, 1000);
       }

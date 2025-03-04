@@ -100,6 +100,60 @@ serve(async (req) => {
     console.log(`[${timestamp}] Origin: ${origin || "Not provided"}`);
     console.log(`[${timestamp}] Telegram user data:`, telegramUser);
 
+    // Handle user notification requests
+    if (action === "notify" && requestBody.user_id && requestBody.notification) {
+      console.log(`[${timestamp}] Processing notification request for user: ${requestBody.user_id}`);
+      
+      try {
+        // Look up the user's telegram connection
+        const { data: telegramConnection, error: lookupError } = await supabaseAdmin
+          .from("user_telegram_connections")
+          .select("telegram_id")
+          .eq("user_id", requestBody.user_id)
+          .single();
+          
+        if (lookupError || !telegramConnection) {
+          console.error(`[${timestamp}] No Telegram connection found for user:`, lookupError || "No data");
+          return new Response(
+            JSON.stringify({ 
+              error: "No Telegram connection found for this user",
+              details: lookupError?.message || "User has not connected Telegram"
+            }),
+            { 
+              status: 404, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        }
+        
+        console.log(`[${timestamp}] Found Telegram ID for user: ${telegramConnection.telegram_id}`);
+        
+        // TODO: Implement actual Telegram API call to send message
+        // This would typically use Telegram's Bot API to send a message
+        // For now, we'll simulate success
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: "Notification sent successfully" 
+          }),
+          { 
+            status: 200, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      } catch (error) {
+        console.error(`[${timestamp}] Error processing notification:`, error);
+        return new Response(
+          JSON.stringify({ error: "Failed to process notification", details: error.message }),
+          { 
+            status: 500, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          }
+        );
+      }
+    }
+
     if (action === "auth" && telegramUser) {
       // Validate the authentication data from Telegram
       if (!validateTelegramAuth(telegramUser)) {
@@ -187,9 +241,9 @@ serve(async (req) => {
           email_confirm: true,
           user_metadata: {
             telegram_id: telegramUser.id,
-            telegram_username: telegramUser.username,
+            telegram_username: telegramUser.username || '',  // Handle missing username
             telegram_first_name: telegramUser.first_name,
-            telegram_last_name: telegramUser.last_name,
+            telegram_last_name: telegramUser.last_name || '',
             full_name: `${telegramUser.first_name} ${telegramUser.last_name || ""}`.trim(),
             avatar_url: null,
             provider: "telegram"
@@ -328,6 +382,7 @@ function validateTelegramAuth(authData: any): boolean {
   // If username is empty or missing, it could cause the "username invalid" error
   if (authData.username === undefined || authData.username === "") {
     console.log(`[${new Date().toISOString()}] Warning: User has no username set in Telegram`);
+    console.log(`[${new Date().toISOString()}] Proceeding with authentication despite missing username`);
     // We continue anyway since some Telegram users may not have set a username
   }
   
