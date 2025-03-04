@@ -69,7 +69,10 @@ const ServiceRequestsView = () => {
         table: 'service_requests' 
       }, (payload) => {
         console.log('New service request received:', payload);
-        fetchNewRequest(payload.new.id);
+        // Only fetch the new request if it belongs to the current user
+        if (payload.new && payload.new.user_id) {
+          fetchNewRequest(payload.new.id);
+        }
       })
       .subscribe();
 
@@ -80,6 +83,10 @@ const ServiceRequestsView = () => {
 
   const fetchNewRequest = async (requestId: string) => {
     try {
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) return;
+      
       const { data, error } = await supabase
         .from('service_requests')
         .select(`
@@ -90,6 +97,7 @@ const ServiceRequestsView = () => {
           )
         `)
         .eq('id', requestId)
+        .eq('user_id', userData.user.id) // Ensure it belongs to current user
         .single();
 
       if (error) throw error;
@@ -205,6 +213,13 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
 
   const fetchRequests = async () => {
     try {
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('service_requests')
         .select(`
@@ -214,6 +229,7 @@ ${request.notes ? `<b>Special Requests:</b>\n${request.notes}` : ''}
             price
           )
         `)
+        .eq('user_id', userData.user.id) // Filter by current user's ID
         .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
