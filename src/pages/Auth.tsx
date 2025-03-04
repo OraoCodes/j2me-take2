@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Key, User, AlertCircle, Check } from "lucide-react";
+import { Mail, Key, User, AlertCircle, Check, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -57,6 +59,8 @@ const Auth = () => {
         description: error.message,
       });
     } else {
+      console.log("Sign up response:", data);
+      setVerificationEmail(email);
       setVerificationSent(true);
       toast({
         title: "Success",
@@ -64,6 +68,34 @@ const Auth = () => {
       });
     }
     setIsLoading(false);
+  };
+
+  const handleResendVerification = async () => {
+    if (!verificationEmail) return;
+    
+    setResendLoading(true);
+    const { error, data } = await supabase.auth.resend({
+      type: 'signup',
+      email: verificationEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+      },
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to resend: ${error.message}`,
+      });
+    } else {
+      toast({
+        title: "Verification email resent",
+        description: "Please check your inbox and spam folder.",
+      });
+      console.log("Resend response:", data);
+    }
+    setResendLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -74,7 +106,7 @@ const Auth = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -87,6 +119,7 @@ const Auth = () => {
       });
       setIsLoading(false);
     } else {
+      console.log("Sign in response:", data);
       // Don't show the success toast since we're redirecting immediately
       navigate("/dashboard");
     }
@@ -159,13 +192,42 @@ const Auth = () => {
 
           <TabsContent value="signup">
             {verificationSent ? (
-              <Alert className="bg-green-50 border-green-200 mb-4">
-                <Check className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800">Verification email sent!</AlertTitle>
-                <AlertDescription className="text-green-700">
-                  Please check your email inbox and click the verification link to complete your registration.
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-4">
+                <Alert className="bg-blue-50 border-blue-200 mb-4">
+                  <Check className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-800">Verification email sent!</AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    We've sent a verification email to <strong>{verificationEmail}</strong>. 
+                    Please check both your inbox and spam folder.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="text-center space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Didn't receive the email? Check your spam folder or click below to resend.
+                  </p>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={handleResendVerification}
+                    disabled={resendLoading}
+                  >
+                    {resendLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        Resend verification email
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
