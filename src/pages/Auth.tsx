@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -163,10 +164,13 @@ const Auth = () => {
       const redirectUrl = `${window.location.origin}/auth?tab=signin`;
       console.log("Redirect URL:", redirectUrl);
       
+      // Important: Using redirectTo instead of a popup to avoid X-Frame-Options issue
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
+          // Remove any popup options, force full page redirect
+          skipBrowserRedirect: false
         }
       });
 
