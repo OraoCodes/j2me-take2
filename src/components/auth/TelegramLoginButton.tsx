@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { loadScript } from '@/utils/scriptLoader';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Telegram } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,10 +23,12 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [widgetInitialized, setWidgetInitialized] = useState(false);
   const navigate = useNavigate();
   const debugIdRef = useRef<string>(Math.random().toString(36).substring(2, 15));
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [widgetAttempts, setWidgetAttempts] = useState(0);
 
   // Unique value for bot_id to prevent caching issues
   const botId = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GebeyaJitumeBot';
@@ -57,7 +59,7 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
 
   // Initialize Telegram widget once script is loaded
   useEffect(() => {
-    if (scriptLoaded && containerRef.current) {
+    if (scriptLoaded && containerRef.current && widgetAttempts < 3) {
       try {
         // Clear container first
         containerRef.current.innerHTML = '';
@@ -90,12 +92,22 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
         // Append to container
         containerRef.current.appendChild(script);
         console.log(`[DEBUG:${debugIdRef.current}] Telegram widget script appended to container`);
+        
+        // Set timeout to check if widget was initialized
+        setTimeout(() => {
+          if (containerRef.current && !containerRef.current.querySelector('iframe')) {
+            console.log(`[DEBUG:${debugIdRef.current}] Telegram widget failed to initialize after attempt ${widgetAttempts + 1}`);
+            setWidgetAttempts(prev => prev + 1);
+          } else {
+            setWidgetInitialized(true);
+          }
+        }, 2000);
       } catch (err) {
         console.error(`[DEBUG:${debugIdRef.current}] Error initializing Telegram widget:`, err);
         setError('Error initializing Telegram login. Please refresh the page and try again.');
       }
     }
-  }, [scriptLoaded, isSignUp, botId]);
+  }, [scriptLoaded, isSignUp, botId, widgetAttempts]);
 
   // Handle Telegram authentication result
   const handleTelegramAuth = async (user: TelegramUser) => {
@@ -163,6 +175,24 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
     }
   };
 
+  // Fallback button click handler
+  const handleFallbackClick = () => {
+    toast({
+      title: "Telegram Login",
+      description: "Attempting to reinitialize Telegram login...",
+    });
+    
+    setWidgetAttempts(0);
+    setWidgetInitialized(false);
+    
+    // Force a reset of the widget
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+      setScriptLoaded(false);
+      setTimeout(() => setScriptLoaded(true), 500);
+    }
+  };
+
   return (
     <div className="space-y-2 w-full">
       {error && (
@@ -192,51 +222,15 @@ export const TelegramLoginButton = ({ isSignUp = false }) => {
             {/* Telegram widget will be inserted here by script */}
           </div>
           
-          {!scriptLoaded && (
+          {(!scriptLoaded || widgetAttempts >= 3 || !widgetInitialized) && (
             <Button
-              disabled
-              className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
+              className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white mt-2"
+              onClick={handleFallbackClick}
+              disabled={isLoading}
             >
-              Loading Telegram login...
+              <Telegram className="mr-2 h-4 w-4" />
+              {isSignUp ? "Sign up with Telegram" : "Sign in with Telegram"}
             </Button>
-          )}
-          
-          {/* Fallback button in case the widget doesn't load properly */}
-          {scriptLoaded && (
-            <div className="telegram-login-fallback mt-2" style={{ display: 'none' }}>
-              <Button
-                className="w-full bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
-                onClick={() => {
-                  // Show a helpful message if the widget didn't appear
-                  toast({
-                    title: "Telegram Login",
-                    description: "Please ensure you have Telegram installed and try again.",
-                  });
-                  
-                  // After a short delay, try refreshing the widget
-                  setTimeout(() => {
-                    if (containerRef.current) {
-                      containerRef.current.innerHTML = '';
-                      setScriptLoaded(false);
-                      setTimeout(() => setScriptLoaded(true), 500);
-                    }
-                  }, 1000);
-                }}
-              >
-                Connect with Telegram
-              </Button>
-              <script
-                dangerouslySetInnerHTML={{
-                  __html: `
-                    setTimeout(() => {
-                      if (!document.querySelector('iframe[src*="telegram.org"]')) {
-                        document.querySelector('.telegram-login-fallback').style.display = 'block';
-                      }
-                    }, 3000);
-                  `
-                }}
-              />
-            </div>
           )}
         </div>
       )}
