@@ -15,10 +15,13 @@ export const loadOtplessSDK = (): Promise<void> => {
       // Clean up any existing script to prevent conflicts
       const existingScript = document.getElementById('otpless-sdk');
       if (existingScript) {
-        console.log('Found existing script tag but window.otpless not available, removing...');
+        console.log('Found existing script tag, removing to ensure clean load');
         existingScript.remove();
       }
 
+      console.log('Starting fresh OTPless SDK load');
+      
+      // Create a new script element
       const script = document.createElement('script');
       script.src = 'https://otpless.com/auth.js';
       script.id = 'otpless-sdk';
@@ -26,25 +29,35 @@ export const loadOtplessSDK = (): Promise<void> => {
       
       // Add event listeners for successful load and error
       script.onload = () => {
-        console.log('OTPless SDK loaded successfully');
-        // Check if otpless object is available after loading
-        if (window.otpless) {
-          console.log('OTPless SDK initialized successfully');
-          resolve();
-        } else {
-          console.error('OTPless SDK script loaded but window.otpless is not available');
-          setTimeout(() => {
-            if (window.otpless) {
-              console.log('OTPless SDK initialized after delay');
-              resolve();
-            } else {
-              const err = new Error('OTPless SDK failed to initialize after loading');
-              console.error(err);
-              script.remove();
-              reject(err);
-            }
-          }, 1000); // Give a second for the script to initialize
-        }
+        console.log('OTPless SDK script loaded, waiting for initialization');
+        
+        // Use a polling approach to check for the otpless object
+        let attempts = 0;
+        const maxAttempts = 20; // More attempts with shorter intervals
+        const checkInterval = 200; // Check every 200ms
+        
+        const checkOtpless = () => {
+          attempts++;
+          if (window.otpless) {
+            console.log(`OTPless SDK initialized successfully after ${attempts} checks`);
+            resolve();
+            return;
+          }
+          
+          if (attempts >= maxAttempts) {
+            const err = new Error(`OTPless SDK failed to initialize after ${maxAttempts} attempts`);
+            console.error(err);
+            script.remove();
+            reject(err);
+            return;
+          }
+          
+          console.log(`Waiting for OTPless SDK to initialize (attempt ${attempts}/${maxAttempts})`);
+          setTimeout(checkOtpless, checkInterval);
+        };
+        
+        // Start polling
+        checkOtpless();
       };
       
       script.onerror = (error) => {
@@ -53,7 +66,7 @@ export const loadOtplessSDK = (): Promise<void> => {
         reject(new Error('Failed to load OTPless SDK'));
       };
       
-      // Append to document head (more reliable than body)
+      // Append to document head
       document.head.appendChild(script);
       console.log('OTPless SDK script added to document head');
     } catch (err) {
