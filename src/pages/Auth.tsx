@@ -153,6 +153,11 @@ const Auth = () => {
     checkSession();
   }, [defaultTab, searchParams, toast, navigate]);
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/auth?tab=${value}`, { replace: true });
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white p-4">
       <img 
@@ -176,9 +181,9 @@ const Auth = () => {
         <AuthErrorAlert error={providerError} />
 
         <Tabs 
-          defaultValue={defaultTab} 
+          value={activeTab}
           className="w-full"
-          onValueChange={(value) => setActiveTab(value)}
+          onValueChange={handleTabChange}
         >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -188,7 +193,7 @@ const Auth = () => {
           <TabsContent value="signin">
             <SignInForm 
               setProviderError={setProviderError} 
-              onForgotPassword={() => setActiveTab("forgot-password")}
+              onForgotPassword={() => handleTabChange("forgot-password")}
             />
           </TabsContent>
 
@@ -206,7 +211,7 @@ const Auth = () => {
             <ForgotPasswordForm />
             <div className="mt-4 text-center">
               <button
-                onClick={() => setActiveTab("signin")}
+                onClick={() => handleTabChange("signin")}
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Back to Sign In
