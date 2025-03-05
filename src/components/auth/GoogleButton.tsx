@@ -34,6 +34,7 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            app_name: 'Gebeya'
           }
         }
       });

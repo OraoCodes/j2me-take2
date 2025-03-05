@@ -7,6 +7,7 @@ export const useRedirectAuthenticated = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnboardingPage = location.pathname === "/onboarding";
+  const isAuthPage = location.pathname === "/auth";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,16 +41,19 @@ export const useRedirectAuthenticated = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
       
-      // Only redirect if the user is signed in and not already on the onboarding page
-      if (event === 'SIGNED_IN' && session && !isOnboardingPage) {
-        await redirectBasedOnUserStatus(session.user);
+      // Redirect on sign in events, but not when already on onboarding
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+        console.log("User signed in or updated, redirecting...");
+        if (!isOnboardingPage) {
+          await redirectBasedOnUserStatus(session.user);
+        }
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, isOnboardingPage]);
+  }, [navigate, isOnboardingPage, isAuthPage]);
 
   // Redirect based on user status with improved error handling
   const redirectBasedOnUserStatus = async (user) => {
