@@ -7,6 +7,22 @@ import { Header } from "@/components/Header";
 const PricingPage = () => {
   const navigate = useNavigate();
 
+  const handleChoosePlan = (planName: string, price: number, period: "monthly" | "yearly") => {
+    if (planName === "Free") {
+      navigate("/service-share");
+    } else {
+      navigate("/payment", { 
+        state: { 
+          planDetails: {
+            name: planName,
+            price: price,
+            period: period
+          }
+        }
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
@@ -46,7 +62,7 @@ const PricingPage = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 px-4">
-            {/* Free Plan (Previously Basic) */}
+            {/* Free Plan */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Leaf className="h-6 w-6 text-emerald-500" />
@@ -64,13 +80,13 @@ const PricingPage = () => {
               </ul>
               <Button 
                 className="w-full bg-emerald-500 hover:bg-emerald-600 mt-6"
-                onClick={() => navigate("/service-share")}
+                onClick={() => handleChoosePlan("Free", 0, "monthly")}
               >
                 Get Started Free
               </Button>
             </div>
 
-            {/* Starter Plan (Previously Pro) */}
+            {/* Starter Plan */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border-2 border-gebeya-pink relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-gebeya-pink text-white px-4 py-1 rounded-full text-sm">Most Popular</span>
@@ -100,15 +116,23 @@ const PricingPage = () => {
                 <li>✅ SEO Optimization & Google Indexing</li>
                 <li>✅ PDF Invoices & Receipts</li>
               </ul>
-              <Button 
-                className="w-full bg-gebeya-pink hover:bg-pink-600 mt-6"
-                onClick={() => navigate("/service-share")}
-              >
-                Choose Starter
-              </Button>
+              <div className="space-y-3 mt-6">
+                <Button 
+                  className="w-full bg-gebeya-pink hover:bg-pink-600"
+                  onClick={() => handleChoosePlan("Starter", 1500, "monthly")}
+                >
+                  Choose Monthly
+                </Button>
+                <Button 
+                  className="w-full bg-gebeya-pink hover:bg-pink-600"
+                  onClick={() => handleChoosePlan("Starter", 15000, "yearly")}
+                >
+                  Choose Yearly
+                </Button>
+              </div>
             </div>
 
-            {/* Pro Plan (Previously Business) */}
+            {/* Pro Plan */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Briefcase className="h-6 w-6 text-gebeya-orange" />
@@ -136,12 +160,20 @@ const PricingPage = () => {
                 <li>✅ Priority Customer Support</li>
                 <li>✅ Live Chat Support</li>
               </ul>
-              <Button 
-                className="w-full bg-gebeya-orange hover:bg-orange-600 mt-6"
-                onClick={() => navigate("/service-share")}
-              >
-                Go Pro
-              </Button>
+              <div className="space-y-3 mt-6">
+                <Button 
+                  className="w-full bg-gebeya-orange hover:bg-orange-600"
+                  onClick={() => handleChoosePlan("Pro", 5000, "monthly")}
+                >
+                  Choose Monthly
+                </Button>
+                <Button 
+                  className="w-full bg-gebeya-orange hover:bg-orange-600"
+                  onClick={() => handleChoosePlan("Pro", 50000, "yearly")}
+                >
+                  Choose Yearly
+                </Button>
+              </div>
             </div>
           </div>
         </div>

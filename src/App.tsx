@@ -16,6 +16,7 @@ import Settings from "@/pages/Settings";
 import PaymentMethods from "@/pages/PaymentMethods";
 import SocialLinks from "@/pages/SocialLinks";
 import StoreOptimization from "@/pages/StoreOptimization";
+import PaymentPage from "@/pages/PaymentPage";
 import "./App.css";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/service-requests" element={<Dashboard initialView="service-requests" />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
         <Route path="/service-share" element={<ServiceShare />} />
         <Route path="/payment-methods" element={<PaymentMethods />} />
         <Route path="/social-links" element={<SocialLinks />} />
