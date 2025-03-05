@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +115,13 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
       }
     }
     
+    // Add the service type to the form data before submitting
+    const hiddenServiceTypeInput = document.createElement('input');
+    hiddenServiceTypeInput.type = 'hidden';
+    hiddenServiceTypeInput.name = 'serviceType';
+    hiddenServiceTypeInput.value = selectedServiceType || '';
+    form.appendChild(hiddenServiceTypeInput);
+    
     await onSubmit(e);
   };
 
@@ -161,7 +167,8 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
               onValueChange={(value) => {
                 setSelectedProfession(value);
                 if (value !== "Other") {
-                  setSelectedServiceType(PROFESSION_TO_SERVICE_TYPE[value]);
+                  const serviceType = PROFESSION_TO_SERVICE_TYPE[value];
+                  setSelectedServiceType(serviceType);
                 } else {
                   setSelectedServiceType(null);
                 }

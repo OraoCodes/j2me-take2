@@ -12,6 +12,20 @@ import { BackButton } from "@/components/onboarding/BackButton";
 
 type Step = 'businessDetails' | 'settings' | 'serviceCreated' | 'addServices';
 
+const PROFESSION_TO_SERVICE_TYPE: Record<string, string> = {
+  "Hairdresser / Hairstylist": "Beauty & Wellness",
+  "Nail Technician": "Beauty & Wellness",
+  "Makeup Artist": "Beauty & Wellness",
+  "Personal Trainer": "Health & Fitness",
+  "Massage Therapist": "Health & Fitness",
+  "Photographer": "Professional Services",
+  "Graphic Designer": "Professional Services",
+  "Social Media Manager": "Professional Services",
+  "Barber": "Beauty & Wellness",
+  "Videographer": "Professional Services",
+  "Coach": "Education & Tutoring",
+};
+
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState<Step>('businessDetails');
   const [isLoading, setIsLoading] = useState(false);
@@ -136,8 +150,17 @@ const Onboarding = () => {
         return;
       }
 
-      if (!firstName || !lastName || !profession || !serviceType || !referralSource) {
-        console.error("Missing required fields:", { firstName, lastName, profession, serviceType, referralSource });
+      const finalServiceType = serviceType || 
+        (selectedProf !== "Other" ? PROFESSION_TO_SERVICE_TYPE[selectedProf] : null);
+
+      if (!firstName || !lastName || !profession || !finalServiceType || !referralSource) {
+        console.error("Missing required fields:", { 
+          firstName, 
+          lastName, 
+          profession, 
+          serviceType: finalServiceType, 
+          referralSource 
+        });
         toast({
           variant: "destructive",
           title: "Missing Information",
@@ -151,7 +174,7 @@ const Onboarding = () => {
         first_name: firstName,
         last_name: lastName,
         profession,
-        service_type: serviceType,
+        service_type: finalServiceType,
         referral_source: referralSource,
         company_name: profession
       });
@@ -162,7 +185,7 @@ const Onboarding = () => {
           first_name: firstName,
           last_name: lastName,
           profession: profession,
-          service_type: serviceType,
+          service_type: finalServiceType,
           referral_source: referralSource,
           company_name: profession, // Also setting company_name to profession for compatibility
         })
@@ -175,7 +198,11 @@ const Onboarding = () => {
 
       console.log("Profile updated successfully");
 
-      setBusinessDetails({ profession, serviceType, referralSource });
+      setBusinessDetails({ 
+        profession, 
+        serviceType: finalServiceType, 
+        referralSource 
+      });
       setCurrentStep('settings');
     } catch (error) {
       console.error("Business details submission error:", error);
