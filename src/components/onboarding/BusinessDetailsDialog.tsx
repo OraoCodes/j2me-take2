@@ -91,6 +91,15 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
     const firstName = form.querySelector('#firstName') as HTMLInputElement;
     const lastName = form.querySelector('#lastName') as HTMLInputElement;
     
+    // Debug logs to help identify the issue
+    console.log("Form submission values:", {
+      firstName: firstName.value,
+      lastName: lastName.value,
+      profession: selectedProfession,
+      serviceType: selectedServiceType,
+      referralSource: referralSource
+    });
+    
     if (!firstName.value || !lastName.value || !selectedProfession || !selectedServiceType || !referralSource) {
       setFormError("Please fill out all fields");
       return;

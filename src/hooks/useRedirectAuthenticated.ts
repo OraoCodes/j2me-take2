@@ -78,10 +78,20 @@ export const useRedirectAuthenticated = () => {
         return;
       }
       
+      console.log("Profile data:", profile);
+      
       // Check if all required fields are set
       if (!profile?.profession || !profile?.company_name || !profile?.first_name || 
           !profile?.last_name || !profile?.service_type || !profile?.referral_source) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
+        console.log("Missing fields:", {
+          profession: !profile?.profession,
+          company_name: !profile?.company_name,
+          first_name: !profile?.first_name,
+          last_name: !profile?.last_name,
+          service_type: !profile?.service_type,
+          referral_source: !profile?.referral_source
+        });
         navigate("/onboarding");
       } else {
         console.log("User has completed onboarding, redirecting to /dashboard");

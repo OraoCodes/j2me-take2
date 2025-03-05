@@ -112,6 +112,15 @@ const Onboarding = () => {
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     
+    console.log("Form data being submitted:", {
+      selectedProf,
+      customProf,
+      serviceType,
+      referralSource,
+      firstName,
+      lastName
+    });
+    
     const profession = selectedProf === "Other" ? customProf : selectedProf;
 
     try {
@@ -128,6 +137,7 @@ const Onboarding = () => {
       }
 
       if (!firstName || !lastName || !profession || !serviceType || !referralSource) {
+        console.error("Missing required fields:", { firstName, lastName, profession, serviceType, referralSource });
         toast({
           variant: "destructive",
           title: "Missing Information",
@@ -136,6 +146,15 @@ const Onboarding = () => {
         setIsLoading(false);
         return;
       }
+
+      console.log("Attempting to update profile with:", {
+        first_name: firstName,
+        last_name: lastName,
+        profession,
+        service_type: serviceType,
+        referral_source: referralSource,
+        company_name: profession
+      });
 
       const { error } = await supabase
         .from('profiles')
@@ -153,6 +172,8 @@ const Onboarding = () => {
         console.error("Profile update error:", error);
         throw error;
       }
+
+      console.log("Profile updated successfully");
 
       setBusinessDetails({ profession, serviceType, referralSource });
       setCurrentStep('settings');
