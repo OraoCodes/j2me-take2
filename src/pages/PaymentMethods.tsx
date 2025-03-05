@@ -40,6 +40,7 @@ const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [userWhatsappNumber, setUserWhatsappNumber] = useState<string>("");
   const [mpesaDetails, setMpesaDetails] = useState<MpesaDetails>({
     idType: "",
     phoneNumber: "",
@@ -85,6 +86,17 @@ const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
       if (!session?.session?.user) {
         navigate('/auth');
         return;
+      }
+
+      // Fetch profile data to get WhatsApp number
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('whatsapp_number')
+        .eq('id', session.session.user.id)
+        .single();
+
+      if (profileData && profileData.whatsapp_number) {
+        setUserWhatsappNumber(profileData.whatsapp_number);
       }
 
       const { data, error } = await supabase
@@ -171,6 +183,17 @@ const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
     );
   };
 
+  const handleIdTypeChange = (value: string) => {
+    setMpesaDetails(prev => {
+      // If the ID type is "phone" (Send Money), prepopulate with WhatsApp number
+      const newPhoneNumber = value === "phone" && userWhatsappNumber ? userWhatsappNumber : prev.phoneNumber;
+      return {
+        idType: value,
+        phoneNumber: newPhoneNumber
+      };
+    });
+  };
+
   const navigateBack = () => {
     if (isEmbedded) {
       // If embedded, we don't need to navigate
@@ -216,15 +239,13 @@ const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
                       </Label>
                       <Select
                         value={mpesaDetails.idType}
-                        onValueChange={(value) => 
-                          setMpesaDetails(prev => ({ ...prev, idType: value }))
-                        }
+                        onValueChange={handleIdTypeChange}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Phone number" />
+                          <SelectValue placeholder="Select ID type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="phone">Phone number</SelectItem>
+                          <SelectItem value="phone">Send Money</SelectItem>
                           <SelectItem value="tillNumber">Till Number</SelectItem>
                           <SelectItem value="paybill">Paybill</SelectItem>
                         </SelectContent>
@@ -334,15 +355,13 @@ const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
                     </Label>
                     <Select
                       value={mpesaDetails.idType}
-                      onValueChange={(value) => 
-                        setMpesaDetails(prev => ({ ...prev, idType: value }))
-                      }
+                      onValueChange={handleIdTypeChange}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Phone number" />
+                        <SelectValue placeholder="Select ID type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="phone">Phone number</SelectItem>
+                        <SelectItem value="phone">Send Money</SelectItem>
                         <SelectItem value="tillNumber">Till Number</SelectItem>
                         <SelectItem value="paybill">Paybill</SelectItem>
                       </SelectContent>
