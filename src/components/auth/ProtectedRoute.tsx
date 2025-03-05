@@ -3,12 +3,26 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 const ProtectedRoute = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [shouldShowToast, setShouldShowToast] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Show toast only after render if needed
+    if (shouldShowToast) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to access this page",
+        variant: "destructive",
+      });
+      setShouldShowToast(false);
+    }
+  }, [shouldShowToast, toast]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,18 +69,14 @@ const ProtectedRoute = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gebeya-pink"></div>
+        <Spinner className="h-12 w-12" />
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    toast({
-      title: "Authentication required",
-      description: "Please sign in to access this page",
-      variant: "destructive",
-    });
-    
+    // Set flag to show toast after render instead of during render
+    setShouldShowToast(true);
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
