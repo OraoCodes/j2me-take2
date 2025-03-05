@@ -17,32 +17,37 @@ import PaymentMethods from "@/pages/PaymentMethods";
 import SocialLinks from "@/pages/SocialLinks";
 import StoreOptimization from "@/pages/StoreOptimization";
 import PaymentPage from "@/pages/PaymentPage";
+import { ChatProvider } from "@/contexts/ChatContext";
+import { ChatBubble } from "@/components/chat/ChatBubble";
 import "./App.css";
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/service-page" element={<ServicePage />} />
-        <Route path="/services/:userId" element={<ServicePage />} />
-        <Route path="/add-services" element={<AddServices />} />
-        <Route path="/service-created" element={<ServiceCreated />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/service-requests" element={<Dashboard initialView="service-requests" />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/service-share" element={<ServiceShare />} />
-        <Route path="/payment-methods" element={<PaymentMethods />} />
-        <Route path="/social-links" element={<SocialLinks />} />
-        <Route path="/store-optimization" element={<StoreOptimization />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
+      <ChatProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/service-page" element={<ServicePage />} />
+          <Route path="/services/:userId" element={<ServicePage />} />
+          <Route path="/add-services" element={<AddServices />} />
+          <Route path="/service-created" element={<ServiceCreated />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/service-requests" element={<Dashboard initialView="service-requests" />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/service-share" element={<ServiceShare />} />
+          <Route path="/payment-methods" element={<PaymentMethods />} />
+          <Route path="/social-links" element={<SocialLinks />} />
+          <Route path="/store-optimization" element={<StoreOptimization />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <ChatBubble />
+        <Toaster />
+      </ChatProvider>
     </Router>
   );
 }
