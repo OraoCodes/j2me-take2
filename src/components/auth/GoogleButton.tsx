@@ -34,6 +34,9 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            hd: 'gebeya.com', // Optional: limit to specific domain
+            login_hint: '', // Optional: pre-fill email
+            app_name: 'Gebeya', // This will replace the default Supabase project name
           }
         }
       });
