@@ -7,6 +7,7 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { AuthErrorAlert } from "@/components/auth/AuthErrorAlert";
 import { useRedirectAuthenticated } from "@/hooks/useRedirectAuthenticated";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ const Auth = () => {
   useEffect(() => {
     setActiveTab(defaultTab);
     
+    // Check for authentication errors in the URL
     const errorCode = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
     
@@ -34,6 +36,16 @@ const Auth = () => {
         description: errorDescription || "An error occurred during sign in",
       });
     }
+
+    // Check for access token in the URL (successful OAuth sign-in)
+    const checkSession = async () => {
+      const { error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Session error:", error);
+      }
+    };
+
+    checkSession();
   }, [defaultTab, searchParams, toast]);
 
   return (

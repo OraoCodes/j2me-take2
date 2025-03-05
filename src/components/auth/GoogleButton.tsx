@@ -22,14 +22,19 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
     try {
       console.log("Starting Google sign-in process...");
       
-      const redirectUrl = `${window.location.origin}/auth?tab=signin`;
+      // Get the current origin for the redirect URL
+      const origin = window.location.origin;
+      const redirectUrl = `${origin}/auth?tab=signin`;
       console.log("Redirect URL:", redirectUrl);
       
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          skipBrowserRedirect: false
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 

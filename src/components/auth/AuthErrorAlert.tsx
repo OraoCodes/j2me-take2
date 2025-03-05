@@ -3,7 +3,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface AuthErrorAlertProps {
-  error: string;
+  error: string | null;
 }
 
 export const AuthErrorAlert = ({ error }: AuthErrorAlertProps) => {
@@ -12,6 +12,7 @@ export const AuthErrorAlert = ({ error }: AuthErrorAlertProps) => {
   // Check for specific error messages and provide more helpful information
   const isDomainError = error.includes("domain is not verified") || error.includes("validation_error");
   const isExtensionError = error.includes("Extension context invalidated");
+  const isRedirectError = error.includes("requested path is invalid") || error.includes("redirect_uri");
   
   return (
     <Alert variant="destructive" className="mt-4">
@@ -29,6 +30,12 @@ export const AuthErrorAlert = ({ error }: AuthErrorAlertProps) => {
         {isDomainError && (
           <div className="mt-2 text-sm">
             There's an issue with our email service. Please try using Google sign-in instead or contact support.
+          </div>
+        )}
+
+        {isRedirectError && (
+          <div className="mt-2 text-sm">
+            There's an issue with the authentication configuration. Please make sure the site URL and redirect URL are properly set in Supabase.
           </div>
         )}
       </AlertDescription>
