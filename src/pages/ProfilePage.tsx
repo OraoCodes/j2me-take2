@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCircle, Upload, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { UserCircle, Upload, Image as ImageIcon, ArrowLeft, Mail } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
 import { Profile } from "@/types/dashboard";
@@ -23,6 +24,7 @@ import {
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -61,6 +63,9 @@ export const ProfilePage = () => {
         setLoading(false);
         return;
       }
+
+      // Store the user's email
+      setUserEmail(user.email);
 
       let { data: profileData, error } = await supabase
         .from('profiles')
@@ -383,6 +388,21 @@ export const ProfilePage = () => {
             </div>
 
             <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700 font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  value={userEmail || ''}
+                  readOnly
+                  className="bg-gray-100 text-gray-500 border-gebeya-pink/20 cursor-not-allowed"
+                />
+                <p className="text-sm text-gray-500 italic">Email address cannot be changed</p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="company_name" className="text-gray-700 font-medium">Business Name</Label>
                 <Input
