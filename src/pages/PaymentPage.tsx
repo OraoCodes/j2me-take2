@@ -1,14 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Header } from "@/components/Header";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Spinner } from "@/components/ui/spinner";
 
 interface PlanDetails {
   name: string;
@@ -20,22 +18,11 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [paymentTab, setPaymentTab] = useState("card");
+  const [processingStripe, setProcessingStripe] = useState(false);
   
-  // Form state
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    name: "",
-  });
-  
-  const [mpesaDetails, setMpesaDetails] = useState({
-    phoneNumber: "",
-  });
-
   // Get plan details from location state
   const planDetails: PlanDetails = location.state?.planDetails || {
     name: "Unknown Plan",
@@ -43,94 +30,87 @@ const PaymentPage = () => {
     period: "monthly"
   };
 
-  const updateSubscription = async (userId: string) => {
-    try {
-      // Calculate end date based on subscription period
-      const endDate = new Date();
-      if (planDetails.period === 'yearly') {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      } else {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
-
-      // Store lowercase plan name
-      const planName = planDetails.name.toLowerCase();
+  // Check if returning from Stripe with success
+  useEffect(() => {
+    const checkStripeSuccess = async () => {
+      const sessionId = searchParams.get('session_id');
+      const paymentSuccess = searchParams.get('payment_success');
       
-      // Insert or update subscription in database
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert({
-          user_id: userId,
-          plan: planName,
-          period: planDetails.period,
-          status: 'active',
-          start_date: new Date().toISOString(),
-          end_date: endDate.toISOString(),
-        });
+      if (sessionId && paymentSuccess === 'true') {
+        setProcessingStripe(true);
         
+        try {
+          // Call the edge function to handle the successful payment
+          const { data: user } = await supabase.auth.getUser();
+          
+          if (!user?.user) {
+            throw new Error('User not authenticated');
+          }
+          
+          const { data, error } = await supabase.functions.invoke('handle-stripe-success', {
+            body: { sessionId }
+          });
+          
+          if (error) throw error;
+          
+          setShowSuccessDialog(true);
+        } catch (error) {
+          console.error('Error processing Stripe success:', error);
+          toast({
+            variant: "destructive",
+            title: "Payment Error",
+            description: "There was a problem finalizing your payment. Please contact support.",
+          });
+        } finally {
+          setProcessingStripe(false);
+        }
+      }
+    };
+    
+    checkStripeSuccess();
+  }, [searchParams]);
+
+  const handleStripePayment = async () => {
+    setIsLoading(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      
+      // Get user's email and name if available
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, company_name')
+        .eq('id', user.id)
+        .single();
+      
+      // Call the Stripe payment edge function
+      const { data, error } = await supabase.functions.invoke('create-stripe-payment', {
+        body: {
+          planName: planDetails.name,
+          planPrice: planDetails.price,
+          planPeriod: planDetails.period,
+          userId: user.id,
+          customerEmail: user.email || profile?.email,
+          customerName: profile?.company_name
+        }
+      });
+      
       if (error) throw error;
       
-      return true;
-    } catch (error) {
-      console.error('Subscription update error:', error);
-      return false;
-    }
-  };
-
-  const handleCardPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // In a real implementation, you would process payment through Stripe or another provider
-      // This is just a simulation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // After successful payment, update user subscription in database
-      const { data: session } = await supabase.auth.getSession();
-      if (session?.session?.user) {
-        const success = await updateSubscription(session.session.user.id);
-        if (!success) throw new Error("Failed to update subscription");
+      // Redirect to Stripe checkout
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
       }
-      
-      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Payment error:', error);
       toast({
         variant: "destructive",
         title: "Payment Error",
-        description: "There was a problem processing your payment.",
+        description: "There was a problem setting up the payment. Please try again.",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleMpesaPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // In a real implementation, you would integrate with MPesa API
-      // This is just a simulation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // After successful payment, update user subscription in database
-      const { data: session } = await supabase.auth.getSession();
-      if (session?.session?.user) {
-        const success = await updateSubscription(session.session.user.id);
-        if (!success) throw new Error("Failed to update subscription");
-      }
-      
-      setShowSuccessDialog(true);
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: "There was a problem processing your payment.",
-      });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -138,6 +118,18 @@ const PaymentPage = () => {
   const navigateToDashboard = () => {
     navigate('/dashboard');
   };
+
+  if (processingStripe) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
+        <Header />
+        <div className="container mx-auto px-4 py-24 max-w-xl flex flex-col items-center justify-center">
+          <Spinner className="w-10 h-10 text-gebeya-pink" />
+          <p className="mt-4 text-gray-600">Processing your payment...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
@@ -157,105 +149,22 @@ const PaymentPage = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <Tabs value={paymentTab} onValueChange={setPaymentTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="card">Card Payment</TabsTrigger>
-              <TabsTrigger value="mpesa">M-Pesa</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <div className="rounded-lg bg-gray-50 p-4 text-sm">
+              <h3 className="font-medium mb-2">Payment Information</h3>
+              <p>• You'll be redirected to Stripe's secure payment page</p>
+              <p>• All payment details are processed securely by Stripe</p>
+              <p>• Your subscription will be activated immediately after successful payment</p>
+            </div>
             
-            <TabsContent value="card">
-              <form onSubmit={handleCardPayment} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cardName">Name on Card</Label>
-                  <Input 
-                    id="cardName"
-                    value={cardDetails.name}
-                    onChange={(e) => setCardDetails({...cardDetails, name: e.target.value})}
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <Input 
-                    id="cardNumber"
-                    value={cardDetails.cardNumber}
-                    onChange={(e) => setCardDetails({...cardDetails, cardNumber: e.target.value})}
-                    placeholder="1234 5678 9012 3456"
-                    required
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Input 
-                      id="expiryDate"
-                      value={cardDetails.expiryDate}
-                      onChange={(e) => setCardDetails({...cardDetails, expiryDate: e.target.value})}
-                      placeholder="MM/YY"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input 
-                      id="cvv"
-                      value={cardDetails.cvv}
-                      onChange={(e) => setCardDetails({...cardDetails, cvv: e.target.value})}
-                      placeholder="123"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <Button 
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Processing..." : `Pay KES ${planDetails.price.toLocaleString()}`}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="mpesa">
-              <form onSubmit={handleMpesaPayment} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mpesaPhone">M-Pesa Phone Number</Label>
-                  <div className="flex">
-                    <div className="w-24">
-                      <Input value="+254" disabled className="bg-gray-50" />
-                    </div>
-                    <Input 
-                      id="mpesaPhone"
-                      className="flex-1"
-                      value={mpesaDetails.phoneNumber}
-                      onChange={(e) => setMpesaDetails({...mpesaDetails, phoneNumber: e.target.value})}
-                      placeholder="712345678"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="rounded-lg bg-gray-50 p-4 text-sm">
-                  <p>1. Click "Request Payment" below</p>
-                  <p>2. You will receive a prompt on your phone</p>
-                  <p>3. Enter your M-Pesa PIN to complete payment</p>
-                </div>
-                
-                <Button 
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Processing..." : `Request Payment of KES ${planDetails.price.toLocaleString()}`}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+            <Button 
+              onClick={handleStripePayment}
+              className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : `Pay with Stripe - KES ${planDetails.price.toLocaleString()}`}
+            </Button>
+          </div>
         </div>
         
         <Button 
