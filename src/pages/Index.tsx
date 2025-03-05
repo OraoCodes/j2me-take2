@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -36,7 +35,7 @@ const Index = () => {
     };
   }, [navigate]);
 
-  // New function to redirect based on user status
+  // Redirect based on user status
   const redirectBasedOnUserStatus = async (user) => {
     if (!user) return;
     
@@ -50,7 +49,8 @@ const Index = () => {
       
       if (error) throw error;
       
-      // If user doesn't have a profession or company name set, they need to complete onboarding
+      // Only redirect to onboarding if profession is not set
+      // Otherwise, redirect to dashboard directly
       if (!profile?.profession || !profile?.company_name) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");

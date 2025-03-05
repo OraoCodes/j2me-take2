@@ -70,6 +70,8 @@ const Auth = () => {
       
       if (error) throw error;
       
+      // Only redirect to onboarding if profession is not set
+      // Otherwise, redirect to dashboard directly
       if (!profile?.profession || !profile?.company_name) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");
