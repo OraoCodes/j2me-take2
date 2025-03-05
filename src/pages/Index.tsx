@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -20,28 +19,18 @@ const Index = () => {
     const checkAuth = async () => {
       // Check if we're redirected from Google auth and have a session
       const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const hasAuthParams = urlParams.has('access_token') || 
                            urlParams.has('refresh_token') || 
                            urlParams.has('error') ||
-                           urlParams.has('code');
+                           urlParams.has('code') ||
+                           hashParams.get('access_token') ||
+                           hashParams.get('refresh_token');
       
       if (hasAuthParams) {
-        console.log("Detected auth params in URL, handling auth callback...");
-        
-        // If there's an error in the URL params, show a toast
-        const error = urlParams.get('error');
-        const errorDescription = urlParams.get('error_description');
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: errorDescription || "An error occurred during authentication"
-          });
-          return;
-        }
-        
-        // Explicitly wait for auth state to be processed
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log("Detected auth params in URL on Index page, redirecting to auth for handling");
+        navigate("/auth");
+        return;
       }
       
       // Get current session

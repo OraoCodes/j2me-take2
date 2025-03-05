@@ -27,12 +27,14 @@ export const useRedirectAuthenticated = () => {
                              hashParams.get('access_token') ||
                              hashParams.get('refresh_token');
         
-        // If we have auth params and we're on the auth page, wait for the auth state to update
+        // If we're on the auth page and there are auth params, skip the redirect
+        // This allows the Auth component to handle the OAuth callback
         if (hasAuthParams && isAuthPage) {
-          console.log("Detected auth params on auth page, waiting for auth state update...");
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log("Detected auth params on auth page, letting Auth component handle it");
+          return;
         }
         
+        // For regular session checks, proceed as usual
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -65,6 +67,22 @@ export const useRedirectAuthenticated = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed in useRedirectAuthenticated:", event);
+      
+      // Don't handle redirects on the auth page when there are auth params in the URL
+      // This lets the Auth component handle OAuth callbacks directly
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasAuthParams = urlParams.has('access_token') || 
+                           urlParams.has('refresh_token') || 
+                           urlParams.has('error') ||
+                           urlParams.has('code') ||
+                           hashParams.get('access_token') ||
+                           hashParams.get('refresh_token');
+      
+      if (isAuthPage && hasAuthParams) {
+        console.log("Auth state change detected on auth page with auth params, skipping redirect");
+        return;
+      }
       
       // Redirect on sign in events, but not when already on appropriate pages
       if (session) {

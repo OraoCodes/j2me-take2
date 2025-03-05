@@ -17,7 +17,8 @@ const Auth = () => {
   const navigate = useNavigate();
 
   // Use custom hook to handle redirects for authenticated users
-  useRedirectAuthenticated();
+  // We're disabling this because we want to handle redirects manually for OAuth callbacks
+  // useRedirectAuthenticated();
 
   const defaultTab = searchParams.get("tab") || "signin";
 
