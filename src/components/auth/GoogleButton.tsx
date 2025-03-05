@@ -22,15 +22,15 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
     try {
       console.log("Starting Google sign-in process...");
       
-      // Get the current origin for the redirect URL
+      // Use an absolute URL for the redirectTo to avoid any ambiguity
       const origin = window.location.origin;
-      const redirectUrl = `${origin}/auth?tab=signin`;
-      console.log("Redirect URL:", redirectUrl);
+      const redirectTo = `${origin}/auth?tab=signin`;
+      console.log("Redirect URL:", redirectTo);
       
-      const { error, data } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -43,6 +43,8 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
         
         if (error.message.includes("provider is not enabled") || error.status === 400) {
           setProviderError("Google login is not properly configured. Please make sure Google provider is enabled in Supabase.");
+        } else if (error.message.includes("redirect_uri") || error.message.includes("invalid uri")) {
+          setProviderError(`Redirect URL error: ${error.message}. Please check Supabase URL configuration.`);
         } else {
           setProviderError(`Error: ${error.message}`);
         }
@@ -54,8 +56,8 @@ export const GoogleButton = ({ variant = "outline", text, setProviderError }: Go
         });
         setGoogleLoading(false);
       } else {
-        console.log("Google sign-in initiated successfully:", data);
-        setGoogleLoading(false);
+        console.log("Google sign-in initiated successfully");
+        // Don't set loading to false here as we're about to redirect
       }
     } catch (e) {
       console.error("Unexpected error during Google sign-in:", e);

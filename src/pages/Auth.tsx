@@ -28,7 +28,7 @@ const Auth = () => {
     const errorDescription = searchParams.get("error_description");
     
     if (errorCode) {
-      console.error("Auth error:", errorCode, errorDescription);
+      console.error("Auth error from URL:", errorCode, errorDescription);
       setProviderError(`Authentication error: ${errorDescription || errorCode}`);
       toast({
         variant: "destructive",
@@ -37,15 +37,34 @@ const Auth = () => {
       });
     }
 
-    // Check for access token in the URL (successful OAuth sign-in)
-    const checkSession = async () => {
-      const { error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Session error:", error);
+    // Handle the OAuth callback 
+    const handleAuthCallback = async () => {
+      // The #access_token hash fragment might be present on OAuth redirects
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      if (hashParams.get('access_token') || hashParams.get('refresh_token') || searchParams.get('code')) {
+        console.log("Detected auth callback params, getting session");
+        
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Error processing auth callback:", error);
+            setProviderError(`Error completing authentication: ${error.message}`);
+          } else if (data?.session) {
+            console.log("Successfully authenticated:", data.session.user.id);
+            toast({
+              title: "Authentication Successful",
+              description: "You have been signed in successfully!",
+            });
+          }
+        } catch (err) {
+          console.error("Unexpected error during auth callback:", err);
+          setProviderError("An unexpected error occurred while completing authentication");
+        }
       }
     };
 
-    checkSession();
+    handleAuthCallback();
   }, [defaultTab, searchParams, toast]);
 
   return (
