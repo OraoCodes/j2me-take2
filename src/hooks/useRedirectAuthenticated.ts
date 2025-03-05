@@ -68,7 +68,7 @@ export const useRedirectAuthenticated = () => {
       
       // Redirect on sign in events, but not when already on appropriate pages
       if (session) {
-        if ((event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
           console.log("User authenticated, redirecting...");
           if (!isOnboardingPage && !isDashboardPage) {
             await redirectBasedOnUserStatus(session.user);
