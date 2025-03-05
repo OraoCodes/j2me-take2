@@ -8,21 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 const ProtectedRoute = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [shouldShowToast, setShouldShowToast] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Show toast only after render if needed
-    if (shouldShowToast) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to access this page",
-        variant: "destructive",
-      });
-      setShouldShowToast(false);
-    }
-  }, [shouldShowToast, toast]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -75,8 +62,15 @@ const ProtectedRoute = () => {
   }
 
   if (!isAuthenticated) {
-    // Set flag to show toast after render instead of during render
-    setShouldShowToast(true);
+    // Display toast outside of render
+    setTimeout(() => {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to access this page",
+        variant: "destructive",
+      });
+    }, 0);
+    
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
