@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,9 +25,80 @@ const Onboarding = () => {
   const [showCropDialog, setShowCropDialog] = useState(false);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
   const [businessName, setBusinessName] = useState('');
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Please sign in again to continue with onboarding.",
+          });
+          navigate("/auth?tab=signin");
+          return;
+        }
+        
+        if (!session) {
+          console.error("No active session found");
+          toast({
+            variant: "destructive",
+            title: "Authentication Required",
+            description: "Please sign in to continue with onboarding.",
+          });
+          navigate("/auth?tab=signin");
+          return;
+        }
+        
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            // Don't redirect - let the user complete onboarding
+          }
+          
+          setIsAuthChecked(true);
+        } catch (profileErr) {
+          console.error("Profile check error:", profileErr);
+          setIsAuthChecked(true);
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "An unexpected error occurred. Please try signing in again.",
+        });
+        navigate("/auth?tab=signin");
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed in onboarding:", event);
+      
+      if (event === 'SIGNED_OUT') {
+        navigate("/auth?tab=signin");
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   const handleBusinessDetailsSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,19 +114,19 @@ const Onboarding = () => {
     
     const profession = selectedProf === "Other" ? customProf : selectedProf;
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to complete onboarding.",
-      });
-      navigate("/auth");
-      return;
-    }
-
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to complete onboarding.",
+        });
+        navigate("/auth");
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -69,11 +139,15 @@ const Onboarding = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile update error:", error);
+        throw error;
+      }
 
       setBusinessDetails({ profession, serviceType, referralSource });
       setCurrentStep('settings');
     } catch (error) {
+      console.error("Business details submission error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -91,7 +165,6 @@ const Onboarding = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Validate business name (double-check even though the component validation should prevent this)
       if (!businessName || businessName.trim() === "") {
         throw new Error('Business name is required');
       }
@@ -137,8 +210,8 @@ const Onboarding = () => {
   const handleCropComplete = async (croppedImageUrl: string) => {
     try {
       setIsLoading(true);
-      setShowCropDialog(false); // Close dialog immediately to prevent double cropping
-      
+      setShowCropDialog(false);
+
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
       const { data: { user } } = await supabase.auth.getUser();
@@ -223,6 +296,21 @@ const Onboarding = () => {
       setCurrentStep('serviceCreated');
     }
   };
+
+  if (!isAuthChecked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <img 
+            src="/lovable-uploads/bc4b57d4-e29b-4e44-8e1c-82ec09ca6fd6.png" 
+            alt="Gebeya" 
+            className="h-12 mx-auto mb-4" 
+          />
+          <p className="text-lg text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">

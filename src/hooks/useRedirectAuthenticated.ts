@@ -33,7 +33,9 @@ export const useRedirectAuthenticated = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
-      if (session) {
+      
+      // Only redirect if the user is signed in
+      if (event === 'SIGNED_IN' && session) {
         await redirectBasedOnUserStatus(session.user);
       }
     });
@@ -43,7 +45,7 @@ export const useRedirectAuthenticated = () => {
     };
   }, [navigate]);
 
-  // Redirect based on user status
+  // Redirect based on user status with improved error handling
   const redirectBasedOnUserStatus = async (user) => {
     if (!user) {
       console.log("No user object found, not redirecting");
@@ -61,11 +63,16 @@ export const useRedirectAuthenticated = () => {
       
       if (error) {
         console.error("Error fetching profile:", error);
-        throw error;
+        // Only redirect to onboarding if there's a specific database error
+        // For other errors (like network), don't redirect to avoid loops
+        if (error.code && error.code.startsWith('PGRST')) {
+          console.log("Database-related error, redirecting to onboarding");
+          navigate("/onboarding");
+        }
+        return;
       }
       
-      // Only redirect to onboarding if profession is not set
-      // Otherwise, redirect to dashboard directly
+      // Only redirect to onboarding if profession or company_name is not set
       if (!profile?.profession || !profile?.company_name) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");
@@ -75,9 +82,7 @@ export const useRedirectAuthenticated = () => {
       }
     } catch (error) {
       console.error("Error checking user profile:", error);
-      // Default to dashboard if there's an error checking profile
-      console.log("Redirecting to dashboard due to error");
-      navigate("/dashboard");
+      // Don't redirect on unexpected errors to avoid loops
     }
   };
 };
