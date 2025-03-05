@@ -46,15 +46,15 @@ const PricingPage = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 px-4">
-            {/* Basic/Free Plan */}
+            {/* Free Plan (Previously Basic) */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Leaf className="h-6 w-6 text-emerald-500" />
-                <h3 className="text-2xl font-bold">Basic</h3>
+                <h3 className="text-2xl font-bold">Free</h3>
               </div>
               <div className="space-y-2">
-                <p className="text-3xl font-bold">Free<span className="text-base font-normal text-muted-foreground"> forever</span></p>
-                <p className="text-muted-foreground">For Starters</p>
+                <p className="text-3xl font-bold">KES 0<span className="text-base font-normal text-muted-foreground"> forever</span></p>
+                <p className="text-muted-foreground">For Beginners</p>
               </div>
               <ul className="space-y-4">
                 <li>✅ WhatsApp Booking Form</li>
@@ -66,18 +66,18 @@ const PricingPage = () => {
                 className="w-full bg-emerald-500 hover:bg-emerald-600 mt-6"
                 onClick={() => navigate("/service-share")}
               >
-                Select Free Plan
+                Get Started Free
               </Button>
             </div>
 
-            {/* Pro Plan */}
+            {/* Starter Plan (Previously Pro) */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6 border-2 border-gebeya-pink relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-gebeya-pink text-white px-4 py-1 rounded-full text-sm">Most Popular</span>
               </div>
               <div className="flex items-center gap-2 mb-4">
                 <Diamond className="h-6 w-6 text-gebeya-pink" />
-                <h3 className="text-2xl font-bold">Pro</h3>
+                <h3 className="text-2xl font-bold">Starter</h3>
               </div>
               <div className="space-y-2">
                 <div className="space-y-1">
@@ -91,29 +91,28 @@ const PricingPage = () => {
                 </div>
               </div>
               <ul className="space-y-4">
-                <li className="font-medium">Everything in Basic, plus:</li>
+                <li className="font-medium">Everything in Free, plus:</li>
                 <li>✅ Unlimited Service Listings</li>
                 <li>✅ Custom Domain & Branding</li>
-                <li>✅ Online Payments (MPesa, Card, PayPal, Stripe, Flutterwave)</li>
+                <li>✅ Online Payments (MPesa, Card, PayPal)</li>
                 <li>✅ Automated Booking System</li>
                 <li>✅ Customer Reviews & Testimonials</li>
                 <li>✅ SEO Optimization & Google Indexing</li>
                 <li>✅ PDF Invoices & Receipts</li>
-                <li>✅ Live Chat Support</li>
               </ul>
               <Button 
                 className="w-full bg-gebeya-pink hover:bg-pink-600 mt-6"
                 onClick={() => navigate("/service-share")}
               >
-                Upgrade to Pro
+                Choose Starter
               </Button>
             </div>
 
-            {/* Business Plan */}
+            {/* Pro Plan (Previously Business) */}
             <div className="bg-white p-8 rounded-xl shadow-lg space-y-6">
               <div className="flex items-center gap-2 mb-4">
                 <Briefcase className="h-6 w-6 text-gebeya-orange" />
-                <h3 className="text-2xl font-bold">Business</h3>
+                <h3 className="text-2xl font-bold">Pro</h3>
               </div>
               <div className="space-y-2">
                 <div className="space-y-1">
@@ -125,22 +124,23 @@ const PricingPage = () => {
                   <p className="text-3xl font-bold">KES 50,000<span className="text-base font-normal text-muted-foreground">/year</span></p>
                   <p className="text-sm text-green-600">Save 25% + Free Custom Domain 🎁</p>
                 </div>
-                <p className="text-muted-foreground">For High-Volume Providers & Agencies</p>
+                <p className="text-muted-foreground">For Businesses & Agencies</p>
               </div>
               <ul className="space-y-4">
-                <li className="font-medium">Everything in Pro, plus:</li>
+                <li className="font-medium">Everything in Starter, plus:</li>
                 <li>✅ WhatsApp AI Chatbot for Auto-Responses & Bookings</li>
                 <li>✅ Loyalty & Subscription-Based Services</li>
                 <li>✅ Team Access (Multiple Staff Accounts)</li>
-                <li>✅ Integration with Third-Party Apps (CRM, Zapier, Webhooks)</li>
+                <li>✅ Integration with Third-Party Apps (CRM, Zapier)</li>
                 <li>✅ Advanced Analytics & Insights</li>
                 <li>✅ Priority Customer Support</li>
+                <li>✅ Live Chat Support</li>
               </ul>
               <Button 
                 className="w-full bg-gebeya-orange hover:bg-orange-600 mt-6"
                 onClick={() => navigate("/service-share")}
               >
-                Go Business
+                Go Pro
               </Button>
             </div>
           </div>
