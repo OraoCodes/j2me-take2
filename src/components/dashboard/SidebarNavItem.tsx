@@ -12,6 +12,7 @@ interface SidebarNavItemProps {
     label: string;
     icon?: ReactNode;
     onClick?: () => void;
+    linkTo?: string;
   }>;
   onClick?: () => void;
   isSelected?: boolean;

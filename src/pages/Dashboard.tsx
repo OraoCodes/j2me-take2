@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, BadgeDollarSign,
-  Calendar, ArrowRight
+  Calendar, ArrowRight, Wallet
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -198,6 +198,12 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowAvailability(true);
       },
       isSelected: showAvailability
+    },
+    { 
+      icon: <Wallet />, 
+      label: "Payments",
+      linkTo: "/payment-methods",
+      isSelected: false
     }
   ];
 
