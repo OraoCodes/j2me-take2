@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -15,8 +16,20 @@ const Index = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Check if we're redirected from Google auth and have a session
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasAuthParams = urlParams.has('access_token') || 
+                           urlParams.has('refresh_token') || 
+                           urlParams.has('error') ||
+                           urlParams.has('code');
+      
+      if (hasAuthParams) {
+        console.log("Detected auth params in URL, handling auth callback...");
+      }
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        console.log("Session found in Index, redirecting...");
         await redirectBasedOnUserStatus(session.user);
       }
     };
@@ -25,6 +38,7 @@ const Index = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed in Index:", event);
       if (session) {
         await redirectBasedOnUserStatus(session.user);
       }
@@ -43,15 +57,15 @@ const Index = () => {
       // Check if user has completed onboarding by checking if they have a profession set
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('profession, company_name')
+        .select('profession, company_name, first_name, last_name, service_type, referral_source')
         .eq('id', user.id)
         .single();
       
       if (error) throw error;
       
-      // Only redirect to onboarding if profession is not set
-      // Otherwise, redirect to dashboard directly
-      if (!profile?.profession || !profile?.company_name) {
+      // Only redirect to onboarding if required fields are not set
+      if (!profile?.profession || !profile?.company_name || !profile?.first_name || 
+          !profile?.last_name || !profile?.service_type || !profile?.referral_source) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");
       } else {
@@ -60,8 +74,8 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Error checking user profile:", error);
-      // Default to dashboard if there's an error checking profile
-      navigate("/dashboard");
+      // Default to onboarding if there's an error checking profile
+      navigate("/onboarding");
     }
   };
 

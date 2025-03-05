@@ -8,6 +8,7 @@ export const useRedirectAuthenticated = () => {
   const location = useLocation();
   const isOnboardingPage = location.pathname === "/onboarding";
   const isAuthPage = location.pathname === "/auth";
+  const isDashboardPage = location.pathname === "/dashboard";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,12 +24,17 @@ export const useRedirectAuthenticated = () => {
         if (session) {
           console.log("Session found, checking user profile...");
           
-          // Don't redirect if already on the onboarding page to prevent loops
-          if (!isOnboardingPage) {
+          // Don't redirect if already on the onboarding or dashboard page to prevent loops
+          if (!isOnboardingPage && !isDashboardPage) {
             await redirectBasedOnUserStatus(session.user);
           }
         } else {
           console.log("No active session found");
+          // If user is not authenticated and tries to access restricted pages, redirect to auth
+          if (!isAuthPage && !location.pathname.startsWith("/auth") && 
+              (location.pathname.includes("dashboard") || location.pathname === "/onboarding")) {
+            navigate("/auth?tab=signin");
+          }
         }
       } catch (err) {
         console.error("Error checking authentication:", err);
@@ -41,19 +47,22 @@ export const useRedirectAuthenticated = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
       
-      // Redirect on sign in events, but not when already on onboarding
+      // Redirect on sign in events, but not when already on appropriate pages
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
         console.log("User signed in or updated, redirecting...");
-        if (!isOnboardingPage) {
+        if (!isOnboardingPage && !isDashboardPage) {
           await redirectBasedOnUserStatus(session.user);
         }
+      } else if (event === 'SIGNED_OUT') {
+        // Redirect to auth page when signed out
+        navigate("/auth?tab=signin");
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, isOnboardingPage, isAuthPage]);
+  }, [navigate, isOnboardingPage, isAuthPage, isDashboardPage, location.pathname]);
 
   // Redirect based on user status with improved error handling
   const redirectBasedOnUserStatus = async (user) => {
