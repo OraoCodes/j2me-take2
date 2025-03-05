@@ -3,6 +3,12 @@ DROP POLICY IF EXISTS "Users can view their own data" ON users;
 DROP POLICY IF EXISTS "Users can update their own data" ON users;
 DROP POLICY IF EXISTS "Profiles are viewable by everyone" ON profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON users;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON users;
+DROP POLICY IF EXISTS "Enable update for users based on id" ON users;
+DROP POLICY IF EXISTS "Enable read access for all users" ON profiles;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON profiles;
+DROP POLICY IF EXISTS "Enable update for users based on id" ON profiles;
 
 -- Enable RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
