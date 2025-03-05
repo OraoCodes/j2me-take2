@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -249,6 +248,10 @@ const SocialLinks = () => {
     );
   };
 
+  const navigateBack = () => {
+    navigate('/payment-methods');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
@@ -351,13 +354,27 @@ const SocialLinks = () => {
           ))}
         </div>
 
-        <div className="mt-12">
+        <div className="mt-12 flex justify-center gap-4">
+          <Button
+            variant="outline"
+            className="w-32"
+            onClick={navigateBack}
+          >
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            className="w-32"
+            onClick={() => navigate("/store-optimization")}
+          >
+            Skip
+          </Button>
           <Button
             onClick={saveSocialLinks}
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
+            className="w-32 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
-            {isLoading ? "Saving..." : "Continue"}
+            {isLoading ? "Saving..." : "Next"}
           </Button>
         </div>
       </div>
