@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCircle, Upload, Image as ImageIcon, ArrowLeft, Mail } from "lucide-react";
+import { UserCircle, Upload, Image as ImageIcon, ArrowLeft, Mail, CreditCard } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
-import { Profile } from "@/types/dashboard";
+import { Profile, Subscription } from "@/types/dashboard";
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useNavigate } from "react-router-dom";
@@ -20,10 +19,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -64,7 +65,6 @@ export const ProfilePage = () => {
         return;
       }
 
-      // Store the user's email
       setUserEmail(user.email);
 
       let { data: profileData, error } = await supabase
@@ -80,6 +80,20 @@ export const ProfilePage = () => {
       }
 
       setProfile(profileData);
+
+      const { data: subscriptionData, error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subscriptionError) {
+        console.error('Error fetching subscription:', subscriptionError);
+      } else {
+        setSubscription(subscriptionData);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
@@ -293,6 +307,34 @@ export const ProfilePage = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric'
+    });
+  };
+
+  const getSubscriptionBadge = () => {
+    if (!subscription) return null;
+    
+    const variants: Record<string, string> = {
+      'free': 'secondary',
+      'basic': 'outline',
+      'premium': 'default',
+      'business': 'destructive'
+    };
+    
+    const badgeVariant = variants[subscription.plan.toLowerCase()] || 'secondary';
+    
+    return (
+      <Badge variant={badgeVariant as any} className="ml-2">
+        {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <>
@@ -384,6 +426,55 @@ export const ProfilePage = () => {
               </div>
               {uploading && (
                 <p className="text-sm text-gebeya-pink mt-3 animate-pulse">Uploading...</p>
+              )}
+            </div>
+
+            <div className="mb-8 p-4 border border-gebeya-pink/20 rounded-lg bg-pink-50/50">
+              <div className="flex items-center mb-2">
+                <CreditCard className="w-5 h-5 mr-2 text-gebeya-pink" />
+                <h2 className="text-lg font-semibold text-gray-800">Subscription Status</h2>
+                {getSubscriptionBadge()}
+              </div>
+              
+              {subscription ? (
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p>
+                    <span className="font-medium">Status:</span>{" "}
+                    <span className={`${subscription.status === 'active' ? 'text-green-600' : 'text-amber-600'} font-medium`}>
+                      {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                    </span>
+                  </p>
+                  {subscription.period && (
+                    <p>
+                      <span className="font-medium">Billing:</span>{" "}
+                      {subscription.period.charAt(0).toUpperCase() + subscription.period.slice(1)}
+                    </p>
+                  )}
+                  <p>
+                    <span className="font-medium">Valid until:</span>{" "}
+                    {formatDate(subscription.end_date)}
+                  </p>
+                  <p className="mt-2">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-gebeya-pink hover:text-gebeya-orange"
+                      onClick={() => navigate('/pricing')}
+                    >
+                      View/Change Plans
+                    </Button>
+                  </p>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  <p>You're currently on the Free plan.</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-gebeya-pink hover:text-gebeya-orange mt-1"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    Upgrade your plan
+                  </Button>
+                </div>
               )}
             </div>
 

@@ -37,6 +37,18 @@ export interface Profile {
   created_at: string | null;
 }
 
+export interface Subscription {
+  id: string;
+  plan: string;
+  period: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SetupStep {
   number: number;
   title: string;
