@@ -209,8 +209,10 @@ const SocialLinks = () => {
 
       const { error } = await supabase
         .from('social_links')
-        .upsert(socialLinksData)
-        .select();
+        .upsert(socialLinksData, {
+          onConflict: 'user_id,platform_id',
+          ignoreDuplicates: false
+        });
 
       if (error) throw error;
 
