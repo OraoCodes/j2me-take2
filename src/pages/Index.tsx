@@ -10,9 +10,11 @@ import { Testimonials } from "@/components/Testimonials";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -25,11 +27,34 @@ const Index = () => {
       
       if (hasAuthParams) {
         console.log("Detected auth params in URL, handling auth callback...");
+        
+        // If there's an error in the URL params, show a toast
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: errorDescription || "An error occurred during authentication"
+          });
+          return;
+        }
+        
+        // Explicitly wait for auth state to be processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        return;
+      }
+      
       if (session) {
         console.log("Session found in Index, redirecting...");
+        // Redirect based on profile completion status
         await redirectBasedOnUserStatus(session.user);
       }
     };
@@ -40,20 +65,24 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed in Index:", event);
       if (session) {
-        await redirectBasedOnUserStatus(session.user);
+        if (event === 'SIGNED_IN' || event === 'SIGNED_UP' || event === 'TOKEN_REFRESHED') {
+          await redirectBasedOnUserStatus(session.user);
+        }
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
 
   // Redirect based on user status
   const redirectBasedOnUserStatus = async (user) => {
     if (!user) return;
     
     try {
+      console.log("Checking profile for user:", user.id);
+      
       // Check if user has completed onboarding by checking if they have a profession set
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -61,12 +90,33 @@ const Index = () => {
         .eq('id', user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Profile fetch error:", error);
+        
+        // If it's a data error (not found), redirect to onboarding
+        if (error.code?.startsWith('PGRST')) {
+          console.log("Profile not found or incomplete, redirecting to /onboarding");
+          navigate("/onboarding");
+          return;
+        }
+        
+        throw error;
+      }
+      
+      console.log("Profile data:", profile);
       
       // Only redirect to onboarding if required fields are not set
       if (!profile?.profession || !profile?.company_name || !profile?.first_name || 
           !profile?.last_name || !profile?.service_type || !profile?.referral_source) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
+        console.log("Missing fields:", {
+          profession: !profile?.profession,
+          company_name: !profile?.company_name,
+          first_name: !profile?.first_name,
+          last_name: !profile?.last_name,
+          service_type: !profile?.service_type,
+          referral_source: !profile?.referral_source
+        });
         navigate("/onboarding");
       } else {
         console.log("User has completed onboarding, redirecting to /dashboard");
@@ -75,6 +125,11 @@ const Index = () => {
     } catch (error) {
       console.error("Error checking user profile:", error);
       // Default to onboarding if there's an error checking profile
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "There was a problem loading your profile. Please try again."
+      });
       navigate("/onboarding");
     }
   };
