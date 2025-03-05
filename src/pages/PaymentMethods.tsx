@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -31,7 +32,11 @@ interface PaymentMethodRecord {
   wallet_enabled: boolean;
 }
 
-const PaymentMethods = () => {
+interface PaymentMethodsProps {
+  isEmbedded?: boolean;
+}
+
+const PaymentMethods = ({ isEmbedded = false }: PaymentMethodsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +148,9 @@ const PaymentMethods = () => {
         description: "Payment methods saved successfully!",
       });
 
-      navigate('/social-links');
+      if (!isEmbedded) {
+        navigate('/social-links');
+      }
     } catch (error) {
       console.error('Error saving payment methods:', error);
       toast({
@@ -165,9 +172,109 @@ const PaymentMethods = () => {
   };
 
   const navigateBack = () => {
+    if (isEmbedded) {
+      // If embedded, we don't need to navigate
+      return;
+    }
     navigate('/add-services');
   };
 
+  // Content for the embedded version (in dashboard)
+  if (isEmbedded) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-white rounded-lg border p-6">
+          <h2 className="text-xl font-semibold mb-4">Payment Methods</h2>
+          <p className="text-gray-600 mb-6">
+            Configure the payment methods your customers can use when booking your services.
+          </p>
+          
+          {/* Payment Methods */}
+          <div className="space-y-4">
+            {paymentMethods.map((method) => (
+              <div
+                key={method.id}
+                className="bg-white rounded-xl border border-gray-100 overflow-hidden"
+              >
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    {method.icon}
+                    <span className="font-medium">{method.name}</span>
+                  </div>
+                  <Switch
+                    checked={method.enabled}
+                    onCheckedChange={() => togglePaymentMethod(method.id)}
+                  />
+                </div>
+                
+                {/* Mpesa Details Section */}
+                {method.id === "mpesa" && method.enabled && (
+                  <div className="border-t border-gray-100 p-4 space-y-4 animate-fade-in">
+                    <div className="space-y-2">
+                      <Label htmlFor="idType" className="text-sm font-medium flex gap-1">
+                        ID type <span className="text-red-500">*</span>
+                      </Label>
+                      <Select
+                        value={mpesaDetails.idType}
+                        onValueChange={(value) => 
+                          setMpesaDetails(prev => ({ ...prev, idType: value }))
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Phone number" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="phone">Phone number</SelectItem>
+                          <SelectItem value="tillNumber">Till Number</SelectItem>
+                          <SelectItem value="paybill">Paybill</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber" className="text-sm font-medium flex gap-1">
+                        Phone <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="flex gap-2">
+                        <div className="w-24">
+                          <Input
+                            value="+254"
+                            disabled
+                            className="bg-gray-50"
+                          />
+                        </div>
+                        <Input
+                          id="phoneNumber"
+                          value={mpesaDetails.phoneNumber}
+                          onChange={(e) => 
+                            setMpesaDetails(prev => ({ ...prev, phoneNumber: e.target.value }))
+                          }
+                          placeholder="Enter phone number"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-6">
+            <Button 
+              onClick={savePaymentMethods}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
+            >
+              {isLoading ? "Saving..." : "Save Payment Methods"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original standalone page content
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />

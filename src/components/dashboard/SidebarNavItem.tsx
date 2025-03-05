@@ -71,18 +71,29 @@ export const SidebarNavItem = ({
       {hasSubmenu && isOpen && submenuItems && (
         <div className="ml-9 mt-1 space-y-1">
           {submenuItems.map((subItem) => (
-            <a
-              key={subItem.label}
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                if (subItem.onClick) subItem.onClick();
-              }}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
-            >
-              {subItem.icon}
-              {subItem.label}
-            </a>
+            subItem.linkTo ? (
+              <Link
+                key={subItem.label}
+                to={subItem.linkTo}
+                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
+              >
+                {subItem.icon}
+                {subItem.label}
+              </Link>
+            ) : (
+              <a
+                key={subItem.label}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (subItem.onClick) subItem.onClick();
+                }}
+                className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
+              >
+                {subItem.icon}
+                {subItem.label}
+              </a>
+            )
           ))}
         </div>
       )}

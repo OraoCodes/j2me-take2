@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, BadgeDollarSign,
-  Calendar, ArrowRight, Wallet
+  Calendar, ArrowRight, Wallet, CreditCard, Receipt
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CreateService from "@/pages/CreateService";
@@ -44,6 +44,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
   const [showCustomers, setShowCustomers] = useState(initialView === "customers");
   const [showMarketing, setShowMarketing] = useState(initialView === "marketing");
   const [showAvailability, setShowAvailability] = useState(initialView === "availability");
+  const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -202,8 +203,21 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
     { 
       icon: <Wallet />, 
       label: "Payments",
-      linkTo: "/payment-methods",
-      isSelected: false
+      hasSubmenu: true,
+      isOpen: isPaymentsOpen,
+      submenuItems: [
+        { 
+          label: "Payment Methods", 
+          icon: <CreditCard className="w-4 h-4" />,
+          linkTo: "/dashboard/payments/methods"
+        },
+        { 
+          label: "Transactions", 
+          icon: <Receipt className="w-4 h-4" />,
+          linkTo: "/dashboard/payments/transactions"
+        }
+      ],
+      onClick: () => setIsPaymentsOpen(!isPaymentsOpen)
     }
   ];
 

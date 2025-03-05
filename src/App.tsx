@@ -14,6 +14,7 @@ import PricingPage from "@/pages/Pricing";
 import ServiceShare from "@/pages/ServiceShare";
 import Settings from "@/pages/Settings";
 import PaymentMethods from "@/pages/PaymentMethods";
+import Payments from "@/pages/Payments";
 import SocialLinks from "@/pages/SocialLinks";
 import StoreOptimization from "@/pages/StoreOptimization";
 import PaymentPage from "@/pages/PaymentPage";
@@ -43,6 +44,8 @@ function App() {
             <Route path="/service-created" element={<ServiceCreated />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/service-requests" element={<Dashboard initialView="service-requests" />} />
+            <Route path="/dashboard/payments/methods" element={<Payments initialTab="methods" />} />
+            <Route path="/dashboard/payments/transactions" element={<Payments initialTab="transactions" />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/service-share" element={<ServiceShare />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />
