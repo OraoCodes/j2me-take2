@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { AuthErrorAlert } from "@/components/auth/AuthErrorAlert";
-import { useRedirectAuthenticated } from "@/hooks/useRedirectAuthenticated";
 import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
@@ -16,8 +14,7 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Use custom hook to handle redirects for authenticated users
-  // We're disabling this because we want to handle redirects manually for OAuth callbacks
+  // We're handling redirects manually for OAuth callbacks
   // useRedirectAuthenticated();
 
   const defaultTab = searchParams.get("tab") || "signin";
@@ -100,6 +97,58 @@ const Auth = () => {
     };
 
     handleAuthCallback();
+
+    // Also check for direct authentication changes (like email sign-ups)
+    const checkSession = async () => {
+      // Skip if we already have auth params in the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasAuthParams = urlParams.has('access_token') || 
+                            urlParams.has('refresh_token') || 
+                            urlParams.has('error') ||
+                            urlParams.has('code') ||
+                            hashParams.get('access_token') ||
+                            hashParams.get('refresh_token');
+      
+      if (hasAuthParams) {
+        return;
+      }
+      
+      // Check if we already have a session (for direct email signups)
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error checking session:", error);
+        return;
+      }
+      
+      if (data?.session) {
+        console.log("Session found in Auth page (direct auth):", data.session.user.id);
+        
+        // Check if user has completed profile and redirect accordingly
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('profession, company_name, first_name, last_name, service_type, referral_source')
+          .eq('id', data.session.user.id)
+          .single();
+        
+        if (profileError || 
+            !profile?.profession || 
+            !profile?.company_name || 
+            !profile?.first_name || 
+            !profile?.last_name || 
+            !profile?.service_type || 
+            !profile?.referral_source) {
+          console.log("User needs to complete onboarding, redirecting to /onboarding");
+          navigate("/onboarding");
+        } else {
+          console.log("User has completed onboarding, redirecting to /dashboard");
+          navigate("/dashboard");
+        }
+      }
+    };
+    
+    checkSession();
   }, [defaultTab, searchParams, toast, navigate]);
 
   return (

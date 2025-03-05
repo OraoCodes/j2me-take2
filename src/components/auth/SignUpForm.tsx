@@ -7,6 +7,7 @@ import { Mail, Key } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { GoogleButton } from "./GoogleButton";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface SignUpFormProps {
   setProviderError: (error: string | null) => void;
@@ -15,6 +16,7 @@ interface SignUpFormProps {
 export const SignUpForm = ({ setProviderError }: SignUpFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,14 +51,28 @@ export const SignUpForm = ({ setProviderError }: SignUpFormProps) => {
         });
         setProviderError(error.message);
       } else {
-        // Success case - no need to wait for email verification
+        // Success case - user has been created
         toast({
           title: "Account Created",
-          description: "Your account has been created successfully. You can now sign in.",
+          description: "Your account has been created successfully.",
         });
         
-        // Automatically switch to sign in tab after successful signup
-        window.location.href = `${window.location.origin}/auth?tab=signin`;
+        // Check if the user is confirmed (if email verification is disabled in Supabase settings)
+        if (data.user?.confirmed_at || data.session) {
+          console.log("User is confirmed or session exists, redirecting to onboarding");
+          
+          // Redirect to onboarding page since this is a new user
+          navigate("/onboarding");
+        } else {
+          // If email confirmation is required, let the user know
+          toast({
+            title: "Verification Email Sent",
+            description: "Please check your email to confirm your account before signing in.",
+          });
+          
+          // Redirect to sign in tab
+          window.location.href = `${window.location.origin}/auth?tab=signin`;
+        }
       }
     } catch (err) {
       console.error("Unexpected error during signup:", err);
