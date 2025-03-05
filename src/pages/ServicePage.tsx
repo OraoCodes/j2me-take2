@@ -9,6 +9,7 @@ import { ServiceBanner } from '@/components/service-page/ServiceBanner';
 import { BusinessProfile } from '@/components/service-page/BusinessProfile';
 import { SearchAndCategories } from '@/components/service-page/SearchAndCategories';
 import { ServiceCard } from '@/components/service-page/ServiceCard';
+import { SocialLinksFooter } from '@/components/service-page/SocialLinksFooter';
 import ServiceChat from '@/components/service-chat/ServiceChat';
 import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
@@ -276,6 +277,8 @@ const ServicePage = () => {
             {searchQuery ? "No services found matching your search." : "No services available at the moment."}
           </div>
         )}
+
+        {userId && <SocialLinksFooter userId={userId} />}
 
         {selectedService && (
           <ServiceCheckoutDialog
