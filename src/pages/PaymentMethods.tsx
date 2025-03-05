@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -10,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { BackButton } from "@/components/onboarding/BackButton";
 
 interface PaymentMethod {
   id: string;
@@ -166,10 +164,13 @@ const PaymentMethods = () => {
     );
   };
 
+  const navigateBack = () => {
+    navigate('/add-services');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
-      <BackButton previousRoute="/add-services" className="md:fixed" />
       <div className="container mx-auto px-4 py-24 max-w-2xl">
         {/* Progress Steps */}
         <div className="flex justify-center mb-12">
@@ -271,18 +272,25 @@ const PaymentMethods = () => {
         </div>
 
         {/* Navigation */}
-        <div className="mt-12">
+        <div className="mt-12 flex justify-center gap-4">
           <Button
-            onClick={() => navigate("/add-products")}
             variant="outline"
-            className="w-full h-12 mb-4"
+            className="w-32"
+            onClick={navigateBack}
+          >
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            className="w-32"
+            onClick={() => navigate("/social-links")}
           >
             Skip
           </Button>
           <Button
             onClick={savePaymentMethods}
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
+            className="w-32 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90"
           >
             {isLoading ? "Saving..." : "Next"}
           </Button>
