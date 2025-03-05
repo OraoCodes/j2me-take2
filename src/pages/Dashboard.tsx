@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,7 @@ import Payments from "./Payments";
 
 interface DashboardProps {
   initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability" | "payments" | "wallet";
-  initialTab?: "methods" | "transactions";
+  initialTab?: "methods";
 }
 
 const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
@@ -246,34 +245,18 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
     { 
       icon: <CreditCard />, 
       label: "Payments",
-      hasSubmenu: true,
-      isOpen: isPaymentsOpen,
       isSelected: showPayments,
-      submenuItems: [
-        { 
-          label: "Payment Methods", 
-          icon: <CreditCard className="w-4 h-4" />,
-          linkTo: "/dashboard/payments/methods"
-        },
-        { 
-          label: "Transactions", 
-          icon: <Receipt className="w-4 h-4" />,
-          linkTo: "/dashboard/payments/transactions"
-        }
-      ],
       onClick: () => {
-        if (!showPayments) {
-          setShowCategories(false);
-          setShowServices(false);
-          setShowServiceRequests(false);
-          setShowCustomers(false);
-          setShowMarketing(false);
-          setShowAvailability(false);
-          setShowWallet(false);
-          setShowPayments(true);
-          navigate("/dashboard/payments");
-        }
-        setIsPaymentsOpen(!isPaymentsOpen);
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(false);
+        setShowMarketing(false);
+        setShowAvailability(false);
+        setShowWallet(false);
+        setShowPayments(true);
+        navigate("/dashboard/payments");
+        setIsPaymentsOpen(false);
       }
     }
   ];
@@ -376,7 +359,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
             )}
 
             {showPayments && (
-              <Payments initialTab={initialTab} />
+              <Payments />
             )}
 
             {showWallet && (
