@@ -47,6 +47,7 @@ function App() {
             <Route path="/dashboard/payments" element={<Dashboard initialView="payments" />} />
             <Route path="/dashboard/payments/methods" element={<Dashboard initialView="payments" initialTab="methods" />} />
             <Route path="/dashboard/payments/transactions" element={<Dashboard initialView="payments" initialTab="transactions" />} />
+            <Route path="/dashboard/wallet" element={<Dashboard initialView="wallet" />} />
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/service-share" element={<ServiceShare />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />

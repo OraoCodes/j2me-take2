@@ -6,6 +6,7 @@ import {
   Calendar, ArrowRight, Wallet, CreditCard, Receipt
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import CreateService from "@/pages/CreateService";
 import ServiceRequestsView from "@/components/service-requests/ServiceRequestsView";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -25,7 +26,7 @@ import AvailabilitySettings from "./AvailabilitySettings";
 import Payments from "./Payments";
 
 interface DashboardProps {
-  initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability" | "payments";
+  initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability" | "payments" | "wallet";
   initialTab?: "methods" | "transactions";
 }
 
@@ -311,6 +312,50 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
               <>
                 <SetupGuideSection steps={setupSteps} />
                 <BasicPlanSection />
+
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Wallet</h2>
+                  </div>
+                  
+                  <div className="w-full">
+                    <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-xl p-8 text-white w-full">
+                      <h3 className="text-lg font-medium mb-2">Available Balance</h3>
+                      <p className="text-3xl font-bold mb-4">{formatCurrency(walletBalance)}</p>
+                      <Button 
+                        variant="secondary" 
+                        className="bg-white text-gebeya-pink hover:bg-gray-100 font-medium shadow-sm"
+                      >
+                        Withdraw
+                      </Button>
+                    </div>
+                    
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                      <div className="p-4 border-b border-gray-100">
+                        <h3 className="font-medium">Recent Transactions</h3>
+                      </div>
+                      {transactions.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                          {transactions.map((transaction, index) => (
+                            <div key={index} className="p-4 flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">{transaction.description}</p>
+                                <p className="text-sm text-gray-500">{formatDate(transaction.date)}</p>
+                              </div>
+                              <p className={transaction.type === 'credit' ? 'text-green-600 font-medium' : 'text-gray-800 font-medium'}>
+                                {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center text-gray-500">
+                          <p>No transactions yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </>
             )}
 
@@ -346,51 +391,6 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
 
             {showPayments && (
               <Payments initialTab={initialTab} />
-            )}
-            
-            {!showCategories && !showServices && !showServiceRequests && 
-             !showCustomers && !showCreateService && !showMarketing &&
-             !showAvailability && !showPayments && (
-              <div className="mt-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">Wallet</h2>
-                </div>
-                
-                <div className="w-full">
-                  <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-xl p-8 text-white w-full">
-                    <h3 className="text-lg font-medium mb-2">Available Balance</h3>
-                    <p className="text-3xl font-bold mb-4">{formatCurrency(walletBalance)}</p>
-                    <Button variant="secondary" className="bg-white hover:bg-gray-100 text-gebeya-pink font-medium shadow-sm">
-                      Withdraw
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-4 border-b border-gray-100">
-                      <h3 className="font-medium">Recent Transactions</h3>
-                    </div>
-                    {transactions.length > 0 ? (
-                      <div className="divide-y divide-gray-100">
-                        {transactions.map((transaction, index) => (
-                          <div key={index} className="p-4 flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{transaction.description}</p>
-                              <p className="text-sm text-gray-500">{formatDate(transaction.date)}</p>
-                            </div>
-                            <p className={transaction.type === 'credit' ? 'text-green-600 font-medium' : 'text-gray-800 font-medium'}>
-                              {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-6 text-center text-gray-500">
-                        <p>No transactions yet</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </div>
