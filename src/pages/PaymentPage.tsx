@@ -43,6 +43,40 @@ const PaymentPage = () => {
     period: "monthly"
   };
 
+  const updateSubscription = async (userId: string) => {
+    try {
+      // Calculate end date based on subscription period
+      const endDate = new Date();
+      if (planDetails.period === 'yearly') {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
+
+      // Store lowercase plan name
+      const planName = planDetails.name.toLowerCase();
+      
+      // Insert or update subscription in database
+      const { error } = await supabase
+        .from('subscriptions')
+        .upsert({
+          user_id: userId,
+          plan: planName,
+          period: planDetails.period,
+          status: 'active',
+          start_date: new Date().toISOString(),
+          end_date: endDate.toISOString(),
+        });
+        
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error('Subscription update error:', error);
+      return false;
+    }
+  };
+
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -55,21 +89,8 @@ const PaymentPage = () => {
       // After successful payment, update user subscription in database
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { error } = await supabase
-          .from('subscriptions')
-          .upsert({
-            user_id: session.session.user.id,
-            plan: planDetails.name.toLowerCase(),
-            period: planDetails.period,
-            status: 'active',
-            start_date: new Date().toISOString(),
-            end_date: new Date(new Date().setFullYear(
-              planDetails.period === 'yearly' ? new Date().getFullYear() + 1 : new Date().getFullYear(), 
-              planDetails.period === 'monthly' ? new Date().getMonth() + 1 : new Date().getMonth()
-            )).toISOString(),
-          });
-          
-        if (error) throw error;
+        const success = await updateSubscription(session.session.user.id);
+        if (!success) throw new Error("Failed to update subscription");
       }
       
       setShowSuccessDialog(true);
@@ -97,21 +118,8 @@ const PaymentPage = () => {
       // After successful payment, update user subscription in database
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
-        const { error } = await supabase
-          .from('subscriptions')
-          .upsert({
-            user_id: session.session.user.id,
-            plan: planDetails.name.toLowerCase(),
-            period: planDetails.period,
-            status: 'active',
-            start_date: new Date().toISOString(),
-            end_date: new Date(new Date().setFullYear(
-              planDetails.period === 'yearly' ? new Date().getFullYear() + 1 : new Date().getFullYear(), 
-              planDetails.period === 'monthly' ? new Date().getMonth() + 1 : new Date().getMonth()
-            )).toISOString(),
-          });
-          
-        if (error) throw error;
+        const success = await updateSubscription(session.session.user.id);
+        if (!success) throw new Error("Failed to update subscription");
       }
       
       setShowSuccessDialog(true);
