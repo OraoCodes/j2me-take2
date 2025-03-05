@@ -8,39 +8,61 @@ import { QRCodeSection } from "./marketing/QRCodeSection";
 import { MetaTags } from "../shared/MetaTags";
 import { generateQRCodeUrl, createStyledQRCode } from "@/utils/qrCode";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export const Marketing = () => {
   const [storeUrl, setStoreUrl] = useState("");
   const [loading, setLoading] = useState(true);
-  const [businessName, setBusinessName] = useState("");
+  const [businessName, setBusinessName] = useState("My Business");
   const [profileImage, setProfileImage] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchStoreUrl = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // First get the current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          throw userError;
+        }
+        
         if (user) {
+          // Set a default store URL with the user ID
           setStoreUrl(`/services/${user.id}`);
           
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('company_name, profile_image_url')
-            .eq('id', user.id)
-            .single();
+          // Then try to fetch the profile data
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('company_name, profile_image_url')
+              .eq('id', user.id)
+              .single();
 
-          if (profile?.company_name) {
-            setBusinessName(profile.company_name);
-          } else {
-            setBusinessName("My Business");
-          }
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              // Continue anyway, we already have default values
+            }
 
-          if (profile?.profile_image_url) {
-            setProfileImage(profile.profile_image_url);
+            if (profile?.company_name) {
+              setBusinessName(profile.company_name);
+            }
+
+            if (profile?.profile_image_url) {
+              setProfileImage(profile.profile_image_url);
+            }
+          } catch (profileError) {
+            console.error("Error in profile fetch:", profileError);
+            // Continue with defaults
           }
+        } else {
+          setError("No user found. Please log in again.");
         }
       } catch (error) {
         console.error("Error fetching store URL:", error);
+        setError("Failed to load marketing data. Please try refreshing the page.");
       } finally {
         setLoading(false);
       }
@@ -77,7 +99,7 @@ export const Marketing = () => {
   // Log the URL for debugging
   console.log("Generated full URL for sharing:", fullUrl);
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = () => {
     // Make sure to use the full URL when copying
     navigator.clipboard.writeText(getFullUrl());
     toast({
@@ -143,6 +165,24 @@ export const Marketing = () => {
         <div className="animate-pulse space-y-4">
           <div className="h-32 bg-gray-200 rounded-lg w-full"></div>
           <div className="h-64 bg-gray-200 rounded-lg w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <h1 className="text-2xl font-semibold">Marketing</h1>
+        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <div className="text-center p-8">
+          <p>Please try refreshing the page or contact support if the issue persists.</p>
         </div>
       </div>
     );
