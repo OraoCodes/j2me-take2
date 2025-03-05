@@ -76,6 +76,10 @@ const StoreOptimization = () => {
     }
   };
 
+  const navigateBack = () => {
+    navigate('/social-links');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-white">
       <Header />
@@ -158,12 +162,26 @@ const StoreOptimization = () => {
         </div>
 
         {/* Navigation */}
-        <div className="mt-12">
+        <div className="mt-12 flex justify-center gap-4">
+          <Button
+            variant="outline"
+            className="w-32"
+            onClick={navigateBack}
+          >
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            className="w-32"
+            onClick={() => navigate("/pricing")}
+          >
+            Skip
+          </Button>
           <Button
             onClick={handleSubmit}
-            className="w-full h-12 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white font-medium"
+            className="w-32 bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90 text-white font-medium"
           >
-            Continue
+            Next
           </Button>
         </div>
       </div>
