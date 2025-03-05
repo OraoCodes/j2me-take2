@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Home, Package, Grid, Users, BadgeDollarSign,
@@ -22,12 +22,14 @@ import { fetchServices, deleteService, updateServiceCategory } from "@/utils/ser
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ServiceCategories from "./ServiceCategories";
 import AvailabilitySettings from "./AvailabilitySettings";
+import Payments from "./Payments";
 
 interface DashboardProps {
-  initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability";
+  initialView?: "service-requests" | "services" | "categories" | "customers" | "marketing" | "availability" | "payments";
+  initialTab?: "methods" | "transactions";
 }
 
-const Dashboard = ({ initialView }: DashboardProps = {}) => {
+const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
@@ -44,6 +46,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
   const [showCustomers, setShowCustomers] = useState(initialView === "customers");
   const [showMarketing, setShowMarketing] = useState(initialView === "marketing");
   const [showAvailability, setShowAvailability] = useState(initialView === "availability");
+  const [showPayments, setShowPayments] = useState(initialView === "payments");
   const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,6 +64,9 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
       setShowServices(true);
     } else if (initialView === "categories") {
       setShowCategories(true);
+    } else if (initialView === "payments") {
+      setShowPayments(true);
+      setIsPaymentsOpen(true);
     }
   }, [initialView]);
 
@@ -138,6 +144,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowCustomers(false);
         setShowMarketing(false);
         setShowAvailability(false);
+        setShowPayments(false);
         navigate("/dashboard");
       }
     },
@@ -151,6 +158,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowCustomers(false);
         setShowMarketing(false);
         setShowAvailability(false);
+        setShowPayments(false);
         navigate("/dashboard/service-requests");
       }
     },
@@ -172,6 +180,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowCustomers(true);
         setShowMarketing(false);
         setShowAvailability(false);
+        setShowPayments(false);
       }
     },
     { 
@@ -184,6 +193,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowCustomers(false);
         setShowMarketing(true);
         setShowAvailability(false);
+        setShowPayments(false);
       },
       isSelected: showMarketing
     },
@@ -197,6 +207,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
         setShowCustomers(false);
         setShowMarketing(false);
         setShowAvailability(true);
+        setShowPayments(false);
       },
       isSelected: showAvailability
     },
@@ -205,6 +216,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
       label: "Payments",
       hasSubmenu: true,
       isOpen: isPaymentsOpen,
+      isSelected: showPayments,
       submenuItems: [
         { 
           label: "Payment Methods", 
@@ -217,7 +229,19 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
           linkTo: "/dashboard/payments/transactions"
         }
       ],
-      onClick: () => setIsPaymentsOpen(!isPaymentsOpen)
+      onClick: () => {
+        if (!showPayments) {
+          setShowCategories(false);
+          setShowServices(false);
+          setShowServiceRequests(false);
+          setShowCustomers(false);
+          setShowMarketing(false);
+          setShowAvailability(false);
+          setShowPayments(true);
+          navigate("/dashboard/payments");
+        }
+        setIsPaymentsOpen(!isPaymentsOpen);
+      }
     }
   ];
 
@@ -281,7 +305,7 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
 
             {!showCategories && !showServices && !showServiceRequests && 
              !showCustomers && !showCreateService && !showMarketing &&
-             !showAvailability && (
+             !showAvailability && !showPayments && (
               <>
                 <SetupGuideSection steps={setupSteps} />
                 <BasicPlanSection />
@@ -316,6 +340,10 @@ const Dashboard = ({ initialView }: DashboardProps = {}) => {
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <ServiceCategories />
               </div>
+            )}
+
+            {showPayments && (
+              <Payments initialTab={initialTab} />
             )}
           </div>
         </div>

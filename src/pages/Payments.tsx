@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaymentMethods from "./PaymentMethods";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -25,9 +25,16 @@ interface PaymentsProps {
 }
 
 const Payments = ({ initialTab = "methods" }: PaymentsProps) => {
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [activeTab, setActiveTab] = useState<string>(initialTab || "methods");
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Update active tab when initialTab prop changes
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
