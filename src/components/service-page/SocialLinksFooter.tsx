@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Facebook, Instagram, Link2, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SocialLink {
   platform_id: string;
@@ -20,6 +21,7 @@ export const SocialLinksFooter: React.FC<SocialLinksFooterProps> = ({ userId }) 
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFreeTier, setIsFreeTier] = useState(true);
 
   useEffect(() => {
     const fetchSocialLinks = async () => {
@@ -43,14 +45,35 @@ export const SocialLinksFooter: React.FC<SocialLinksFooterProps> = ({ userId }) 
       }
     };
 
+    const fetchSubscriptionStatus = async () => {
+      try {
+        // Check if the user has a premium subscription
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching subscription status:', error);
+        } else {
+          // If there's an active subscription, they're not on free tier
+          setIsFreeTier(!data);
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    };
+
     if (userId) {
       fetchSocialLinks();
+      fetchSubscriptionStatus();
     }
   }, [userId]);
 
   if (loading) return null;
-  if (error) return null;
-  if (socialLinks.length === 0) return null;
+  if (error && socialLinks.length === 0) return null;
 
   const renderIcon = (platformId: string) => {
     switch (platformId) {
@@ -137,23 +160,42 @@ export const SocialLinksFooter: React.FC<SocialLinksFooterProps> = ({ userId }) 
 
   return (
     <div className="py-8 mt-8 border-t border-gray-200">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Connect With Us</h3>
-      </div>
-      <div className="flex flex-wrap justify-center gap-4">
-        {socialLinks.map((link) => (
-          <a
-            key={link.platform_id}
-            href={getLink(link)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow duration-200"
+      {socialLinks.length > 0 && (
+        <>
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Connect With Us</h3>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4">
+            {socialLinks.map((link) => (
+              <a
+                key={link.platform_id}
+                href={getLink(link)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                {renderIcon(link.platform_id)}
+                <span className="text-sm font-medium">{getLinkTitle(link)}</span>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      {isFreeTier && (
+        <div className="mt-8 text-center">
+          <div className="mb-3">
+            <h3 className="text-lg font-medium">Want a professional service page like this?</h3>
+            <p className="text-sm text-gray-600 mt-1">Create your own business service page in minutes</p>
+          </div>
+          <Button 
+            onClick={() => window.open('https://jitume.gebeya.com', '_blank')}
+            className="bg-gebeya-pink hover:bg-gebeya-pink/90 text-white px-6"
           >
-            {renderIcon(link.platform_id)}
-            <span className="text-sm font-medium">{getLinkTitle(link)}</span>
-          </a>
-        ))}
-      </div>
+            Create your own page
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
