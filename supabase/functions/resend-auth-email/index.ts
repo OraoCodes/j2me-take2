@@ -331,8 +331,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending email to ${email} with type ${type}`);
     
     try {
+      // Using the onboarding@resend.dev which is a verified sender in the free tier
       const emailResponse = await resend.emails.send({
-        from: "Gebeya <no-reply@gebeya.co>", 
+        from: "Gebeya <onboarding@resend.dev>", 
         to: [email],
         subject: subject,
         html: content,

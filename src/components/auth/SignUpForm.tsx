@@ -41,12 +41,24 @@ export const SignUpForm = ({ setProviderError }: SignUpFormProps) => {
       console.log("Custom email response:", emailResponse);
       
       if (!emailResponse.success) {
+        // Check for domain verification errors
+        const errorMessage = emailResponse.error?.includes("domain is not verified") || emailResponse.error?.includes("validation_error")
+          ? "Email service configuration issue. Please try Google sign-in instead."
+          : `Failed to send verification email: ${emailResponse.error}`;
+          
         toast({
           variant: "destructive",
           title: "Email Error",
-          description: `Failed to send verification email: ${emailResponse.error}`,
+          description: errorMessage,
         });
+        
         setSignupResponse({error: emailResponse.error});
+        
+        // If there's a domain verification error, don't show the verification sent screen
+        if (!(emailResponse.error?.includes("domain is not verified") || emailResponse.error?.includes("validation_error"))) {
+          setVerificationEmail(email);
+          setVerificationSent(true);
+        }
       } else {
         setVerificationEmail(email);
         setVerificationSent(true);
