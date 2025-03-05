@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -14,6 +14,7 @@ const Auth = () => {
   const [providerError, setProviderError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "signin");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Use custom hook to handle redirects for authenticated users
   useRedirectAuthenticated();
@@ -39,23 +40,56 @@ const Auth = () => {
 
     // Handle the OAuth callback 
     const handleAuthCallback = async () => {
-      // The #access_token hash fragment might be present on OAuth redirects
+      // Check for authentication parameters (from OAuth redirects)
+      const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      if (hashParams.get('access_token') || hashParams.get('refresh_token') || searchParams.get('code')) {
+      
+      const hasAuthParams = urlParams.has('access_token') || 
+                            urlParams.has('refresh_token') || 
+                            urlParams.has('error') ||
+                            urlParams.has('code') ||
+                            hashParams.get('access_token') ||
+                            hashParams.get('refresh_token');
+      
+      if (hasAuthParams) {
         console.log("Detected auth callback params, getting session");
         
         try {
+          // Wait briefly for auth state to settle
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const { data, error } = await supabase.auth.getSession();
           
           if (error) {
             console.error("Error processing auth callback:", error);
             setProviderError(`Error completing authentication: ${error.message}`);
           } else if (data?.session) {
-            console.log("Successfully authenticated:", data.session.user.id);
+            console.log("Successfully authenticated via OAuth:", data.session.user.id);
             toast({
               title: "Authentication Successful",
               description: "You have been signed in successfully!",
             });
+            
+            // Check if user has completed profile and redirect accordingly
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('profession, company_name, first_name, last_name, service_type, referral_source')
+              .eq('id', data.session.user.id)
+              .single();
+            
+            if (profileError || 
+                !profile?.profession || 
+                !profile?.company_name || 
+                !profile?.first_name || 
+                !profile?.last_name || 
+                !profile?.service_type || 
+                !profile?.referral_source) {
+              console.log("User needs to complete onboarding, redirecting to /onboarding");
+              navigate("/onboarding");
+            } else {
+              console.log("User has completed onboarding, redirecting to /dashboard");
+              navigate("/dashboard");
+            }
           }
         } catch (err) {
           console.error("Unexpected error during auth callback:", err);
@@ -65,7 +99,7 @@ const Auth = () => {
     };
 
     handleAuthCallback();
-  }, [defaultTab, searchParams, toast]);
+  }, [defaultTab, searchParams, toast, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white p-4">
