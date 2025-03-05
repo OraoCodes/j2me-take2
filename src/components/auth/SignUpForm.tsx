@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Key } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { sendAuthEmail } from "@/integrations/supabase/client";
 import { GoogleButton } from "./GoogleButton";
-import { VerificationSent } from "./VerificationSent";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignUpFormProps {
   setProviderError: (error: string | null) => void;
@@ -15,63 +14,49 @@ interface SignUpFormProps {
 
 export const SignUpForm = ({ setProviderError }: SignUpFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState("");
-  const [signupResponse, setSignupResponse] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setSignupResponse(null);
+    setProviderError(null);
     
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     try {
-      console.log("Attempting custom signup for email:", email);
+      console.log("Attempting direct signup for email:", email);
       
-      const emailResponse = await sendAuthEmail(
-        email, 
-        'signup',
-        `${window.location.origin}/auth?tab=signin`
-      );
+      // Use Supabase's built-in signup method instead of our custom email verification
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Set emailRedirectTo to the signin page
+          emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+        }
+      });
       
-      console.log("Custom email response:", emailResponse);
+      console.log("Signup response:", data, error);
       
-      if (!emailResponse.success) {
-        // Check for domain verification errors
-        const errorMessage = emailResponse.error?.includes("domain is not verified") || emailResponse.error?.includes("validation_error")
-          ? "Email service configuration issue. Please try Google sign-in instead."
-          : `Failed to send verification email: ${emailResponse.error}`;
-          
+      if (error) {
+        console.error("Error during signup:", error);
         toast({
           variant: "destructive",
-          title: "Email Error",
-          description: errorMessage,
+          title: "Sign Up Error",
+          description: error.message || "Failed to create account",
         });
-        
-        setSignupResponse({error: emailResponse.error});
-        
-        // If there's a domain verification error, don't show the verification sent screen
-        if (!(emailResponse.error?.includes("domain is not verified") || emailResponse.error?.includes("validation_error"))) {
-          setVerificationEmail(email);
-          setVerificationSent(true);
-        }
+        setProviderError(error.message);
       } else {
-        setVerificationEmail(email);
-        setVerificationSent(true);
-        setSignupResponse({
-          user: {
-            email: email,
-            confirmation_sent_at: new Date().toISOString()
-          }
-        });
+        // Success case - no need to wait for email verification
         toast({
-          title: "Success",
-          description: "Verification email sent! Please check your inbox (and spam folder) to complete registration.",
+          title: "Account Created",
+          description: "Your account has been created successfully. You can now sign in.",
         });
+        
+        // Automatically switch to sign in tab after successful signup
+        window.location.href = `${window.location.origin}/auth?tab=signin`;
       }
     } catch (err) {
       console.error("Unexpected error during signup:", err);
@@ -80,21 +65,11 @@ export const SignUpForm = ({ setProviderError }: SignUpFormProps) => {
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
-      setSignupResponse({error: "Unexpected error occurred"});
+      setProviderError("Unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (verificationSent) {
-    return (
-      <VerificationSent 
-        verificationEmail={verificationEmail}
-        signupResponse={signupResponse}
-        setProviderError={setProviderError}
-      />
-    );
-  }
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
