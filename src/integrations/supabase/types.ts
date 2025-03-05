@@ -9,464 +9,244 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      availability_settings: {
+      users: {
         Row: {
-          created_at: string | null
-          day_of_week: number
-          end_time: string
           id: string
-          is_available: boolean | null
-          start_time: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_available?: boolean | null
-          start_time: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_available?: boolean | null
-          start_time?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      blocked_dates: {
-        Row: {
-          blocked_date: string
-          created_at: string | null
-          id: string
-          reason: string | null
-          user_id: string
-        }
-        Insert: {
-          blocked_date: string
-          created_at?: string | null
-          id?: string
-          reason?: string | null
-          user_id: string
-        }
-        Update: {
-          blocked_date?: string
-          created_at?: string | null
-          id?: string
-          reason?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      customers: {
-        Row: {
+          email: string
           created_at: string
-          email: string | null
-          last_request_date: string
-          name: string
-          phone_number: string
-          user_id: string
+          updated_at: string
         }
         Insert: {
+          id?: string
+          email: string
           created_at?: string
-          email?: string | null
-          last_request_date?: string
-          name: string
-          phone_number: string
-          user_id: string
+          updated_at?: string
         }
         Update: {
+          id?: string
+          email?: string
           created_at?: string
-          email?: string | null
-          last_request_date?: string
-          name?: string
-          phone_number?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      page_views: {
-        Row: {
-          created_at: string | null
-          id: string
-          last_viewed_at: string | null
-          user_id: string
-          view_count: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          last_viewed_at?: string | null
-          user_id: string
-          view_count?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          last_viewed_at?: string | null
-          user_id?: string
-          view_count?: number | null
-        }
-        Relationships: []
-      }
-      payment_methods: {
-        Row: {
-          cash_enabled: boolean | null
-          created_at: string
-          id: string
-          mpesa_enabled: boolean | null
-          mpesa_id_type: string | null
-          mpesa_phone: string | null
-          user_id: string
-          wallet_enabled: boolean | null
-        }
-        Insert: {
-          cash_enabled?: boolean | null
-          created_at?: string
-          id?: string
-          mpesa_enabled?: boolean | null
-          mpesa_id_type?: string | null
-          mpesa_phone?: string | null
-          user_id: string
-          wallet_enabled?: boolean | null
-        }
-        Update: {
-          cash_enabled?: boolean | null
-          created_at?: string
-          id?: string
-          mpesa_enabled?: boolean | null
-          mpesa_id_type?: string | null
-          mpesa_phone?: string | null
-          user_id?: string
-          wallet_enabled?: boolean | null
+          updated_at?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          banner_image_url: string | null
-          company_name: string | null
-          created_at: string | null
-          currency: string | null
-          email: string | null
-          first_name: string | null
           id: string
-          last_name: string | null
-          profession: string | null
-          profile_image_url: string | null
-          referral_source: string | null
-          role: string | null
-          service_page_link: string | null
-          service_requests_per_month: string | null
-          service_type: string | null
-          whatsapp_number: string | null
-        }
-        Insert: {
-          banner_image_url?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          currency?: string | null
-          email?: string | null
-          first_name?: string | null
-          id: string
-          last_name?: string | null
-          profession?: string | null
-          profile_image_url?: string | null
-          referral_source?: string | null
-          role?: string | null
-          service_page_link?: string | null
-          service_requests_per_month?: string | null
-          service_type?: string | null
-          whatsapp_number?: string | null
-        }
-        Update: {
-          banner_image_url?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          currency?: string | null
-          email?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          profession?: string | null
-          profile_image_url?: string | null
-          referral_source?: string | null
-          role?: string | null
-          service_page_link?: string | null
-          service_requests_per_month?: string | null
-          service_type?: string | null
-          whatsapp_number?: string | null
-        }
-        Relationships: []
-      }
-      service_categories: {
-        Row: {
+          full_name: string | null
+          avatar_url: string | null
           created_at: string
-          id: string
-          is_visible: boolean | null
-          name: string
-          sequence: number | null
-          user_id: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string
-          id?: string
-          is_visible?: boolean | null
-          name: string
-          sequence?: number | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_visible?: boolean | null
-          name?: string
-          sequence?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      service_images: {
-        Row: {
-          created_at: string
           id: string
-          image_url: string
-          sequence: number | null
-          service_id: string
-        }
-        Insert: {
+          full_name?: string | null
+          avatar_url?: string | null
           created_at?: string
-          id?: string
-          image_url: string
-          sequence?: number | null
-          service_id: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string
           id?: string
-          image_url?: string
-          sequence?: number | null
-          service_id?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "service_images_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
-      service_requests: {
+      j2me_apps: {
         Row: {
-          created_at: string
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string | null
           id: string
-          location: string | null
-          notes: string | null
-          paid: boolean | null
-          scheduled_at: string | null
-          service_id: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          customer_email?: string | null
-          customer_name: string
-          customer_phone?: string | null
-          id?: string
-          location?: string | null
-          notes?: string | null
-          paid?: boolean | null
-          scheduled_at?: string | null
-          service_id: string
-          status?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          customer_email?: string | null
-          customer_name?: string
-          customer_phone?: string | null
-          id?: string
-          location?: string | null
-          notes?: string | null
-          paid?: boolean | null
-          scheduled_at?: string | null
-          service_id?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_requests_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      services: {
-        Row: {
-          category_id: string | null
-          created_at: string
+          title: string
           description: string | null
-          id: string
-          image_url: string | null
-          instant_booking: boolean | null
-          is_active: boolean | null
-          name: string
-          price: number
-          user_id: string
+          version: string
+          file_url: string
+          icon_url: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          category_id?: string | null
-          created_at?: string
-          description?: string | null
           id?: string
-          image_url?: string | null
-          instant_booking?: boolean | null
-          is_active?: boolean | null
-          name: string
-          price: number
-          user_id: string
+          title: string
+          description?: string | null
+          version: string
+          file_url: string
+          icon_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          category_id?: string | null
-          created_at?: string
-          description?: string | null
           id?: string
-          image_url?: string | null
-          instant_booking?: boolean | null
-          is_active?: boolean | null
-          name?: string
-          price?: number
-          user_id?: string
+          title?: string
+          description?: string | null
+          version?: string
+          file_url?: string
+          icon_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "services_category_id_fkey"
+            foreignKeyName: "j2me_apps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      app_categories: {
+        Row: {
+          app_id: string
+          category_id: string
+        }
+        Insert: {
+          app_id: string
+          category_id: string
+        }
+        Update: {
+          app_id?: string
+          category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_categories_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "j2me_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_categories_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "service_categories"
+            referencedRelation: "categories"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
-      social_links: {
+      downloads: {
         Row: {
-          created_at: string
-          enabled: boolean | null
           id: string
-          location: string | null
-          platform_id: string
-          title: string | null
-          url: string | null
-          user_id: string
-          username: string | null
+          app_id: string
+          user_id: string | null
+          downloaded_at: string
         }
         Insert: {
-          created_at?: string
-          enabled?: boolean | null
           id?: string
-          location?: string | null
-          platform_id: string
-          title?: string | null
-          url?: string | null
-          user_id: string
-          username?: string | null
+          app_id: string
+          user_id?: string | null
+          downloaded_at?: string
         }
         Update: {
-          created_at?: string
-          enabled?: boolean | null
           id?: string
-          location?: string | null
-          platform_id?: string
-          title?: string | null
-          url?: string | null
-          user_id?: string
-          username?: string | null
+          app_id?: string
+          user_id?: string | null
+          downloaded_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "downloads_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "j2me_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "downloads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      subscriptions: {
+      ratings: {
         Row: {
-          created_at: string
-          end_date: string
           id: string
-          period: string
-          plan: string
-          start_date: string
-          status: string
+          app_id: string
+          user_id: string | null
+          rating: number
+          comment: string | null
+          created_at: string
           updated_at: string
-          user_id: string
         }
         Insert: {
-          created_at?: string
-          end_date: string
           id?: string
-          period: string
-          plan: string
-          start_date?: string
-          status?: string
+          app_id: string
+          user_id?: string | null
+          rating: number
+          comment?: string | null
+          created_at?: string
           updated_at?: string
-          user_id: string
         }
         Update: {
+          id?: string
+          app_id?: string
+          user_id?: string | null
+          rating?: number
+          comment?: string | null
           created_at?: string
-          end_date?: string
-          id?: string
-          period?: string
-          plan?: string
-          start_date?: string
-          status?: string
           updated_at?: string
-          user_id?: string
         }
-        Relationships: []
-      }
-      user_telegram_connections: {
-        Row: {
-          connected_at: string | null
-          id: string
-          telegram_chat_id: number
-          user_id: string
-        }
-        Insert: {
-          connected_at?: string | null
-          id?: string
-          telegram_chat_id: number
-          user_id: string
-        }
-        Update: {
-          connected_at?: string | null
-          id?: string
-          telegram_chat_id?: number
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ratings_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "j2me_apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      increment_page_views: {
-        Args: {
-          user_id_param: string
-        }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
