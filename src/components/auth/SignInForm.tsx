@@ -1,4 +1,3 @@
-
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +9,10 @@ import { GoogleButton } from "./GoogleButton";
 
 interface SignInFormProps {
   setProviderError: (error: string | null) => void;
+  onForgotPassword: () => void;
 }
 
-export const SignInForm = ({ setProviderError }: SignInFormProps) => {
+export const SignInForm = ({ setProviderError, onForgotPassword }: SignInFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -88,7 +88,16 @@ export const SignInForm = ({ setProviderError }: SignInFormProps) => {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="signin-password">Password</Label>
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm text-gebeya-pink hover:text-gebeya-orange transition-colors"
+          >
+            Forgot password?
+          </button>
+        </div>
         <div className="relative">
           <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input

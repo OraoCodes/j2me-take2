@@ -186,15 +186,10 @@ const Auth = () => {
           </TabsList>
 
           <TabsContent value="signin">
-            <SignInForm setProviderError={setProviderError} />
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setActiveTab("forgot-password")}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Forgot your password?
-              </button>
-            </div>
+            <SignInForm 
+              setProviderError={setProviderError} 
+              onForgotPassword={() => setActiveTab("forgot-password")}
+            />
           </TabsContent>
 
           <TabsContent value="signup">
