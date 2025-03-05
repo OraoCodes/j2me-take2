@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { AuthErrorAlert } from "@/components/auth/AuthErrorAlert";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -185,10 +187,46 @@ const Auth = () => {
 
           <TabsContent value="signin">
             <SignInForm setProviderError={setProviderError} />
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setActiveTab("forgot-password")}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Forgot your password?
+              </button>
+            </div>
           </TabsContent>
 
           <TabsContent value="signup">
             <SignUpForm setProviderError={setProviderError} />
+          </TabsContent>
+
+          <TabsContent value="forgot-password">
+            <div className="text-center space-y-2 mb-4">
+              <h3 className="text-xl font-semibold">Reset Password</h3>
+              <p className="text-sm text-muted-foreground">
+                Enter your email address and we'll send you a link to reset your password.
+              </p>
+            </div>
+            <ForgotPasswordForm />
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setActiveTab("signin")}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reset-password">
+            <div className="text-center space-y-2 mb-4">
+              <h3 className="text-xl font-semibold">Set New Password</h3>
+              <p className="text-sm text-muted-foreground">
+                Please enter your new password below.
+              </p>
+            </div>
+            <ResetPasswordForm />
           </TabsContent>
         </Tabs>
       </div>
