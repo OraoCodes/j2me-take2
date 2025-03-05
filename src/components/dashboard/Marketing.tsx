@@ -18,27 +18,32 @@ export const Marketing = () => {
 
   useEffect(() => {
     const fetchStoreUrl = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setStoreUrl(`/services/${user.id}`);
-        
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_name, profile_image_url')
-          .eq('id', user.id)
-          .single();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setStoreUrl(`/services/${user.id}`);
+          
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_name, profile_image_url')
+            .eq('id', user.id)
+            .single();
 
-        if (profile?.company_name) {
-          setBusinessName(profile.company_name);
-        } else {
-          setBusinessName("My Business");
-        }
+          if (profile?.company_name) {
+            setBusinessName(profile.company_name);
+          } else {
+            setBusinessName("My Business");
+          }
 
-        if (profile?.profile_image_url) {
-          setProfileImage(profile.profile_image_url);
+          if (profile?.profile_image_url) {
+            setProfileImage(profile.profile_image_url);
+          }
         }
+      } catch (error) {
+        console.error("Error fetching store URL:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchStoreUrl();
@@ -47,7 +52,7 @@ export const Marketing = () => {
   // Generate the absolute URL to ensure it works when deployed
   // Handle both local development and production URLs correctly
   const getFullUrl = () => {
-    if (!storeUrl) return "";
+    if (!storeUrl) return window.location.origin;
     
     // For Netlify deployments, use their environment variable if available
     const netlifyUrl = process.env.REACT_APP_URL || 
@@ -128,6 +133,20 @@ export const Marketing = () => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <h1 className="text-2xl font-semibold">Marketing</h1>
+        </div>
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg w-full"></div>
+          <div className="h-64 bg-gray-200 rounded-lg w-full"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
