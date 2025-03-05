@@ -1,4 +1,3 @@
-
 import {
   Carousel,
   CarouselContent,
@@ -21,12 +20,11 @@ export const Hero = () => {
         <div className="flex flex-col lg:flex-row items-center gap-12">
           <div className="text-left lg:w-1/2 max-w-2xl">
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight animate-fade-up text-gebeya-purple" style={{ lineHeight: 1.1 }}>
-              Spend more time serving clients.{' '}
-              <br />
-              Let <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">Jitume</span> handle the rest.
+              Built on the shoulders of giants – and a little AI magic{' '}
+              <span className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange bg-clip-text text-transparent">~ Martin</span>
             </h1>
             <p className="mt-6 text-xl text-gray-600 animate-fade-up [animation-delay:200ms]">
-              Jitume automates client inquiries, bookings, and payments so you never lose a client to delayed responses or waste time on repetitive messages.
+              Hey Martin, tested most of the details—you're gonna be shocked. Nothing breaks, I have full access to your Supabase and agents locally. I can create features, implement, and test before pushing to prod. Might just have M-Pesa payments live before morning… but I guess we'll never know.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 items-start animate-fade-up [animation-delay:400ms]">
               <Button 
