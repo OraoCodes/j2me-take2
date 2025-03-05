@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
   const [showAvailability, setShowAvailability] = useState(initialView === "availability");
   const [showPayments, setShowPayments] = useState(initialView === "payments");
   const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
+  const [showWallet, setShowWallet] = useState(initialView === "wallet");
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const navigate = useNavigate();
@@ -70,6 +72,8 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
     } else if (initialView === "payments") {
       setShowPayments(true);
       setIsPaymentsOpen(true);
+    } else if (initialView === "wallet") {
+      setShowWallet(true);
     }
   }, [initialView]);
 
@@ -123,6 +127,8 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
       setShowCustomers(false);
       setShowMarketing(false);
       setShowAvailability(false);
+      setShowWallet(false);
+      setShowPayments(false);
       navigate("/dashboard");
     }},
     { label: "Category", onClick: () => {
@@ -132,6 +138,8 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
       setShowCustomers(false);
       setShowMarketing(false);
       setShowAvailability(false);
+      setShowWallet(false);
+      setShowPayments(false);
       navigate("/dashboard");
     }},
   ];
@@ -148,6 +156,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
         setShowMarketing(false);
         setShowAvailability(false);
         setShowPayments(false);
+        setShowWallet(false);
         navigate("/dashboard");
       }
     },
@@ -162,6 +171,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
         setShowMarketing(false);
         setShowAvailability(false);
         setShowPayments(false);
+        setShowWallet(false);
         navigate("/dashboard/service-requests");
       }
     },
@@ -184,6 +194,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
         setShowMarketing(false);
         setShowAvailability(false);
         setShowPayments(false);
+        setShowWallet(false);
       }
     },
     { 
@@ -197,6 +208,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
         setShowMarketing(true);
         setShowAvailability(false);
         setShowPayments(false);
+        setShowWallet(false);
       },
       isSelected: showMarketing
     },
@@ -211,11 +223,28 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
         setShowMarketing(false);
         setShowAvailability(true);
         setShowPayments(false);
+        setShowWallet(false);
       },
       isSelected: showAvailability
     },
     { 
       icon: <Wallet />, 
+      label: "Wallet",
+      onClick: () => {
+        setShowCategories(false);
+        setShowServices(false);
+        setShowServiceRequests(false);
+        setShowCustomers(false);
+        setShowMarketing(false);
+        setShowAvailability(false);
+        setShowPayments(false);
+        setShowWallet(true);
+        navigate("/dashboard/wallet");
+      },
+      isSelected: showWallet
+    },
+    { 
+      icon: <CreditCard />, 
       label: "Payments",
       hasSubmenu: true,
       isOpen: isPaymentsOpen,
@@ -240,6 +269,7 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
           setShowCustomers(false);
           setShowMarketing(false);
           setShowAvailability(false);
+          setShowWallet(false);
           setShowPayments(true);
           navigate("/dashboard/payments");
         }
@@ -308,54 +338,10 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
 
             {!showCategories && !showServices && !showServiceRequests && 
              !showCustomers && !showCreateService && !showMarketing &&
-             !showAvailability && !showPayments && (
+             !showAvailability && !showPayments && !showWallet && (
               <>
                 <SetupGuideSection steps={setupSteps} />
                 <BasicPlanSection />
-
-                <div className="mt-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Wallet</h2>
-                  </div>
-                  
-                  <div className="w-full">
-                    <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-xl p-8 text-white w-full">
-                      <h3 className="text-lg font-medium mb-2">Available Balance</h3>
-                      <p className="text-3xl font-bold mb-4">{formatCurrency(walletBalance)}</p>
-                      <Button 
-                        variant="secondary" 
-                        className="bg-white text-gebeya-pink hover:bg-gray-100 font-medium shadow-sm"
-                      >
-                        Withdraw
-                      </Button>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                      <div className="p-4 border-b border-gray-100">
-                        <h3 className="font-medium">Recent Transactions</h3>
-                      </div>
-                      {transactions.length > 0 ? (
-                        <div className="divide-y divide-gray-100">
-                          {transactions.map((transaction, index) => (
-                            <div key={index} className="p-4 flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">{transaction.description}</p>
-                                <p className="text-sm text-gray-500">{formatDate(transaction.date)}</p>
-                              </div>
-                              <p className={transaction.type === 'credit' ? 'text-green-600 font-medium' : 'text-gray-800 font-medium'}>
-                                {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center text-gray-500">
-                          <p>No transactions yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </>
             )}
 
@@ -391,6 +377,53 @@ const Dashboard = ({ initialView, initialTab }: DashboardProps = {}) => {
 
             {showPayments && (
               <Payments initialTab={initialTab} />
+            )}
+
+            {showWallet && (
+              <div className="space-y-6">
+                <div>
+                  <h1 className="text-2xl font-bold mb-2">Wallet</h1>
+                  <p className="text-gray-600">Manage your funds and view transaction history</p>
+                </div>
+                
+                <div className="w-full">
+                  <div className="bg-gradient-to-r from-gebeya-pink to-gebeya-orange rounded-xl p-8 text-white w-full">
+                    <h3 className="text-lg font-medium mb-2">Available Balance</h3>
+                    <p className="text-3xl font-bold mb-4">{formatCurrency(walletBalance)}</p>
+                    <Button 
+                      variant="secondary" 
+                      className="bg-white text-gebeya-pink hover:bg-gray-100 font-medium shadow-sm"
+                    >
+                      Withdraw
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mt-6">
+                    <div className="p-4 border-b border-gray-100">
+                      <h3 className="font-medium">Recent Transactions</h3>
+                    </div>
+                    {transactions.length > 0 ? (
+                      <div className="divide-y divide-gray-100">
+                        {transactions.map((transaction, index) => (
+                          <div key={index} className="p-4 flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{transaction.description}</p>
+                              <p className="text-sm text-gray-500">{formatDate(transaction.date)}</p>
+                            </div>
+                            <p className={transaction.type === 'credit' ? 'text-green-600 font-medium' : 'text-gray-800 font-medium'}>
+                              {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-gray-500">
+                        <p>No transactions yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
