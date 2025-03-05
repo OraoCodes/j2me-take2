@@ -46,11 +46,23 @@ CREATE POLICY "Enable update for users based on id" ON profiles
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-    INSERT INTO public.profiles (id, full_name, avatar_url)
+    INSERT INTO public.profiles (
+        id,
+        first_name,
+        last_name,
+        profession,
+        service_type,
+        referral_source,
+        company_name
+    )
     VALUES (
         new.id,
-        new.raw_user_meta_data->>'full_name',
-        new.raw_user_meta_data->>'avatar_url'
+        new.raw_user_meta_data->>'first_name',
+        new.raw_user_meta_data->>'last_name',
+        new.raw_user_meta_data->>'profession',
+        new.raw_user_meta_data->>'service_type',
+        new.raw_user_meta_data->>'referral_source',
+        new.raw_user_meta_data->>'company_name'
     );
     RETURN new;
 END;
