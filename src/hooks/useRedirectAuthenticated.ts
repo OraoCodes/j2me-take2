@@ -1,10 +1,12 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useRedirectAuthenticated = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOnboardingPage = location.pathname === "/onboarding";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -19,7 +21,11 @@ export const useRedirectAuthenticated = () => {
         
         if (session) {
           console.log("Session found, checking user profile...");
-          await redirectBasedOnUserStatus(session.user);
+          
+          // Don't redirect if already on the onboarding page to prevent loops
+          if (!isOnboardingPage) {
+            await redirectBasedOnUserStatus(session.user);
+          }
         } else {
           console.log("No active session found");
         }
@@ -34,8 +40,8 @@ export const useRedirectAuthenticated = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
       
-      // Only redirect if the user is signed in
-      if (event === 'SIGNED_IN' && session) {
+      // Only redirect if the user is signed in and not already on the onboarding page
+      if (event === 'SIGNED_IN' && session && !isOnboardingPage) {
         await redirectBasedOnUserStatus(session.user);
       }
     });
@@ -43,7 +49,7 @@ export const useRedirectAuthenticated = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, isOnboardingPage]);
 
   // Redirect based on user status with improved error handling
   const redirectBasedOnUserStatus = async (user) => {
