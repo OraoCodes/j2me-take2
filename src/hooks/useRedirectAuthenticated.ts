@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +8,23 @@ export const useRedirectAuthenticated = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await redirectBasedOnUserStatus(session.user);
+      try {
+        console.log("Checking session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return;
+        }
+        
+        if (session) {
+          console.log("Session found, checking user profile...");
+          await redirectBasedOnUserStatus(session.user);
+        } else {
+          console.log("No active session found");
+        }
+      } catch (err) {
+        console.error("Error checking authentication:", err);
       }
     };
 
@@ -17,6 +32,7 @@ export const useRedirectAuthenticated = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
       if (session) {
         await redirectBasedOnUserStatus(session.user);
       }
@@ -29,9 +45,13 @@ export const useRedirectAuthenticated = () => {
 
   // Redirect based on user status
   const redirectBasedOnUserStatus = async (user) => {
-    if (!user) return;
+    if (!user) {
+      console.log("No user object found, not redirecting");
+      return;
+    }
     
     try {
+      console.log("Checking profile for user:", user.id);
       // Check if user has completed onboarding by checking if they have a profession set
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -39,7 +59,10 @@ export const useRedirectAuthenticated = () => {
         .eq('id', user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
       
       // Only redirect to onboarding if profession is not set
       // Otherwise, redirect to dashboard directly
@@ -53,6 +76,7 @@ export const useRedirectAuthenticated = () => {
     } catch (error) {
       console.error("Error checking user profile:", error);
       // Default to dashboard if there's an error checking profile
+      console.log("Redirecting to dashboard due to error");
       navigate("/dashboard");
     }
   };

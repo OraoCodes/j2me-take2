@@ -14,34 +14,46 @@ interface SignInFormProps {
 
 export const SignInForm = ({ setProviderError }: SignInFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setFormError(null);
     
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    console.log("Starting sign-in process for:", email);
+
     try {
+      console.log("Attempting Supabase auth signIn...");
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Signin error:", error);
+        console.error("Sign-in error:", error);
+        setFormError(error.message);
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "Sign In Failed",
           description: error.message,
         });
       } else {
-        console.log("Sign in response:", data);
+        console.log("Sign-in successful:", data);
+        // Success will be handled by the auth state change listener
+        toast({
+          title: "Success",
+          description: "You've been signed in successfully!",
+        });
       }
     } catch (err) {
-      console.error("Unexpected error during signin:", err);
+      console.error("Unexpected error during sign-in:", err);
+      setFormError("An unexpected error occurred. Please try again.");
       toast({
         variant: "destructive",
         title: "Error",
@@ -54,6 +66,12 @@ export const SignInForm = ({ setProviderError }: SignInFormProps) => {
 
   return (
     <form onSubmit={handleSignIn} className="space-y-4">
+      {formError && (
+        <div className="p-3 text-sm bg-red-50 border border-red-200 text-red-600 rounded-md">
+          {formError}
+        </div>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="signin-email">Email</Label>
         <div className="relative">
@@ -68,6 +86,7 @@ export const SignInForm = ({ setProviderError }: SignInFormProps) => {
           />
         </div>
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="signin-password">Password</Label>
         <div className="relative">
@@ -81,6 +100,7 @@ export const SignInForm = ({ setProviderError }: SignInFormProps) => {
           />
         </div>
       </div>
+      
       <Button 
         type="submit" 
         className="w-full bg-gradient-to-r from-gebeya-pink to-gebeya-orange hover:opacity-90" 
