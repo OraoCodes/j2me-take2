@@ -60,10 +60,10 @@ export const useRedirectAuthenticated = () => {
     
     try {
       console.log("Checking profile for user:", user.id);
-      // Check if user has completed onboarding by checking if they have a profession set
+      // Check if user has completed onboarding by checking if they have all required fields
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('profession, company_name')
+        .select('profession, company_name, first_name, last_name, service_type, referral_source')
         .eq('id', user.id)
         .single();
       
@@ -78,8 +78,9 @@ export const useRedirectAuthenticated = () => {
         return;
       }
       
-      // Only redirect to onboarding if profession or company_name is not set
-      if (!profile?.profession || !profile?.company_name) {
+      // Check if all required fields are set
+      if (!profile?.profession || !profile?.company_name || !profile?.first_name || 
+          !profile?.last_name || !profile?.service_type || !profile?.referral_source) {
         console.log("User needs to complete onboarding, redirecting to /onboarding");
         navigate("/onboarding");
       } else {

@@ -127,6 +127,16 @@ const Onboarding = () => {
         return;
       }
 
+      if (!firstName || !lastName || !profession || !serviceType || !referralSource) {
+        toast({
+          variant: "destructive",
+          title: "Missing Information",
+          description: "Please fill out all required fields.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({

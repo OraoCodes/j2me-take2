@@ -77,23 +77,33 @@ interface BusinessDetailsDialogProps {
 export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessDetailsDialogProps) => {
   const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [referralSource, setReferralSource] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    // Reset any previous errors
+    setFormError(null);
+    
+    // Check if all fields are filled
+    const form = e.currentTarget;
+    const firstName = form.querySelector('#firstName') as HTMLInputElement;
+    const lastName = form.querySelector('#lastName') as HTMLInputElement;
+    
+    if (!firstName.value || !lastName.value || !selectedProfession || !selectedServiceType || !referralSource) {
+      setFormError("Please fill out all fields");
+      return;
+    }
+    
     // If "Other" is selected and customProfession is provided, 
-    // use it to set the company_name which will be used as profession display
+    // use it as the profession
     if (selectedProfession === "Other") {
-      const form = e.currentTarget;
       const customProfessionInput = form.querySelector('#customProfession') as HTMLInputElement;
       
-      if (customProfessionInput && customProfessionInput.value) {
-        // Create a hidden field for company_name to store the custom profession
-        const hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = 'company_name';
-        hiddenField.value = customProfessionInput.value;
-        form.appendChild(hiddenField);
+      if (!customProfessionInput || !customProfessionInput.value.trim()) {
+        setFormError("Please enter your profession");
+        return;
       }
     }
     
@@ -115,7 +125,7 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
         <form onSubmit={handleFormSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName">First Name*</Label>
               <Input
                 id="firstName"
                 name="firstName"
@@ -124,7 +134,7 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName">Last Name*</Label>
               <Input
                 id="lastName"
                 name="lastName"
@@ -135,7 +145,7 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="profession">What's your profession?</Label>
+            <Label htmlFor="profession">What's your profession?*</Label>
             <Select 
               name="profession" 
               required 
@@ -143,6 +153,8 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
                 setSelectedProfession(value);
                 if (value !== "Other") {
                   setSelectedServiceType(PROFESSION_TO_SERVICE_TYPE[value]);
+                } else {
+                  setSelectedServiceType(null);
                 }
               }}
             >
@@ -173,7 +185,7 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="serviceType">Type of Service</Label>
+            <Label htmlFor="serviceType">Type of Service*</Label>
             <Select 
               name="serviceType" 
               required
@@ -198,8 +210,12 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="referralSource">How did you hear about us?</Label>
-            <Select name="referralSource" required>
+            <Label htmlFor="referralSource">How did you hear about us?*</Label>
+            <Select 
+              name="referralSource" 
+              required
+              onValueChange={setReferralSource}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select how you found us" />
               </SelectTrigger>
@@ -215,6 +231,12 @@ export const BusinessDetailsDialog = ({ isOpen, isLoading, onSubmit }: BusinessD
               </SelectContent>
             </Select>
           </div>
+
+          {formError && (
+            <div className="text-sm font-medium text-red-500 dark:text-red-400">
+              {formError}
+            </div>
+          )}
 
           <Button 
             type="submit" 
